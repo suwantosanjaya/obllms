@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Model for User Management (Mahasiswa, Dosen, QA, Admin)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String   @default("$2a$10$xyz") // Hashed password
+  role      String   @default("mahasiswa") // 'mahasiswa', 'dosen', 'qa', 'admin'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  enrollments Enrollment[] // For Mahasiswa
+  courses     Course[]     @relation("CourseInstructor") // For Dosen
+  submissions Submission[] // For Mahasiswa
+  feedbacks   Feedback[] // For Mahasiswa and QA interactions
+}
+
+// Model for Fakultas (Faculty)
+model Fakultas {
+  id        String    @id @default(cuid())
+  code      String    @unique // e.g., "FT", "FE"
+  name      String    // e.g., "Fakultas Teknik"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  prodis    Prodi[]
+  subjects  Subject[]
+}
+
+// Model for Prodi (Program Studi)
+model Prodi {
+  id         String   @id @default(cuid())
+  code       String   @unique // e.g., "TI", "SI"
+  name       String   // e.g., "Teknik Informatika"
+  fakultasId String
+  fakultas   Fakultas @relation(fields: [fakultasId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  subjects   Subject[]
+}
+
+// Model for Master Courses (Katalog Mata Kuliah)
+model Subject {
+  id          String    @id @default(cuid())
+  code        String    @unique // e.g., CS101
+  title       String
+  description String?
+  type        String    @default("wajib")       // 'wajib' | 'pilihan'
+  scope       String    @default("prodi")       // 'universitas' | 'fakultas' | 'prodi'
+  fakultasId  String?
+  prodiId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  fakultas    Fakultas? @relation(fields: [fakultasId], references: [id])
+  prodi       Prodi?    @relation(fields: [prodiId], references: [id])
+  courses     Course[]  // Offerings of this subject
+}
+
+// Model for Course Offerings (Sesi Kelas per Semester)
+model Course {
+  id           String   @id @default(cuid())
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  semester     String   @default("Ganjil") // 'Ganjil', 'Genap', 'Pendek'
+  academicYear String   @default("2025/2026") // e.g., '2025/2026'
+  instructorId String
+  instructor   User     @relation("CourseInstructor", fields: [instructorId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Settings for 30 LMS-OBL elements
+  config CourseConfig?
+
+  // Relations
+  enrollments Enrollment[]
+  assessments Assessment[]
+  clos        CourseLearningOutcome[] // OBL mapping
+  modules     CourseModule[] // Weekly Materials
+  forums      ForumThread[] // Q&A
+}
+
+// Join table for Mahasiswa and Courses
+model Enrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  courseId  String
+  status    String   @default("active") // 'active', 'completed', 'dropped'
+  srlTarget Int      @default(0) // Self-Regulated Learning target (e.g. 5 hours)
+  createdAt DateTime @default(now())
+
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Tracking Progress
+  gameProfile GamificationProfile?
+  reflections SrlReflection[]
+
+  @@unique([studentId, courseId])
+}
+
+// Model for Graduate Profile (Profil Lulusan)
+model GraduateProfile {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., GP-1
+  title       String // e.g., Software Engineer, UI/UX Designer
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  plos ProgramLearningOutcome[]
+}
+
+// Model for Program Learning Outcomes (PLO) / Capaian Pembelajaran Lulusan (CPL)
+model ProgramLearningOutcome {
+  id                String   @id @default(cuid())
+  code              String   @unique // e.g., PLO-1, PLO-2
+  description       String
+  graduateProfileId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  graduateProfile GraduateProfile?        @relation(fields: [graduateProfileId], references: [id], onDelete: Cascade)
+  clos            CourseLearningOutcome[]
+}
+
+// Model for Outcome Based Learning (OBL) CLOs / Capaian Pembelajaran Mata Kuliah (CPMK)
+model CourseLearningOutcome {
+  id          String  @id @default(cuid())
+  courseId    String
+  ploId       String? // Mapping to PLO
+  code        String // e.g., CLO-1
+  description String
+
+  course Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  plo    ProgramLearningOutcome? @relation(fields: [ploId], references: [id])
+
+  // Relations
+  assessmentClos   AssessmentCLO[]      // Which assessment-CLO mappings reference this CLO
+  submissionScores SubmissionCLOScore[] // Per-submission scores for this CLO
+  modules          CourseModule[]       // Which materials teach this CLO
+  threads          ForumThread[]        // Questions asked about this CLO
+}
+
+// Model for Assessments (Tugas / Kuis)
+model Assessment {
+  id          String    @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  type        String // 'quiz', 'assignment', 'project'
+  dueDate     DateTime?
+  maxScore    Int       @default(100)
+
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions    Submission[]
+  assessmentClos AssessmentCLO[] // CLOs measured by this assessment with weights
+}
+
+// Join table: Assessment <-> CLO with percentage weight
+model AssessmentCLO {
+  id           String  @id @default(cuid())
+  assessmentId String
+  cloId        String
+  weight       Float   // Percentage weight 0-100, all CLOs in assessment must sum to 100
+
+  assessment Assessment            @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  clo        CourseLearningOutcome @relation(fields: [cloId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, cloId])
+}
+
+// Model for Student Submissions
+model Submission {
+  id           String   @id @default(cuid())
+  assessmentId String
+  studentId    String
+  content      String?  // Text submission or file URL
+  score        Float?   // Weighted average of all CLO scores (auto-computed)
+  feedback     String?  // General feedback from Dosen
+  submittedAt  DateTime @default(now())
+
+  student    User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessment Assessment          @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  cloScores  SubmissionCLOScore[] // Per-CLO breakdown scores
+
+  @@unique([studentId, assessmentId]) // One submission per student per assessment
+}
+
+// Per-CLO score for a submission
+model SubmissionCLOScore {
+  id           String @id @default(cuid())
+  submissionId String
+  cloId        String
+  score        Float  // Score 0-100 for this specific CLO
+
+  submission Submission            @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  clo        CourseLearningOutcome @relation(fields: [cloId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, cloId])
+}
+
+// Model for Quality Assurance & Community Feedback
+model Feedback {
+  id         String   @id @default(cuid())
+  userId     String // Who gave the feedback
+  targetId   String // could be Course ID, or System ID
+  targetType String // 'course', 'system'
+  content    String
+  rating     Int? // 1-5 scale
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- NEW SYSTEM ELEMENTS ---
+
+// 1. Course Config (Dynamic feature flags per course)
+model CourseConfig {
+  id       String @id @default(cuid())
+  courseId String @unique
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  isSrlEnabled          Boolean @default(true) // Self-Regulated Learning
+  isGamificationEnabled Boolean @default(true) // Badges, Levels, Points
+  isForumEnabled        Boolean @default(true) // Communication
+  isReflectionsEnabled  Boolean @default(true) // SRL Journals
+  isAnalyticsEnabled    Boolean @default(true) // Student Analytics
+
+  difficulty String? // Basic, Advanced, etc.
+}
+
+// 2. Course Materials / Modules (Mapped to CLO)
+model CourseModule {
+  id         String  @id @default(cuid())
+  courseId   String
+  title      String
+  content    String? // Rich text or embedded URL (Video, PDF, etc)
+  weekNumber Int? // For scheduling
+  cloId      String? // The primary outcome this teaches
+
+  course    Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  clo       CourseLearningOutcome? @relation(fields: [cloId], references: [id])
+  createdAt DateTime               @default(now())
+}
+
+// 3. SRL & Metacognition (Journals / Reflections)
+model SrlReflection {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  weekNumber   Int?
+  content      String // Journal entry
+  targetMet    Boolean? // Did student meet their plan?
+  createdAt    DateTime @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// 4. Forum & Q&A (Interaction aligned to OBL)
+model ForumThread {
+  id         String   @id @default(cuid())
+  courseId   String
+  authorId   String
+  title      String
+  content    String
+  cloId      String? // Which outcome this question is about
+  isResolved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  course  Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  clo     CourseLearningOutcome? @relation(fields: [cloId], references: [id])
+  replies ForumReply[]
+}
+
+model ForumReply {
+  id           String   @id @default(cuid())
+  threadId     String
+  authorId     String
+  content      String
+  isBestAnswer Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  thread ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
+
+// 5. Gamification (Points & Badges)
+model GamificationProfile {
+  id           String  @id @default(cuid())
+  enrollmentId String  @unique
+  points       Int     @default(0)
+  level        Int     @default(1)
+  badges       String? // JSON Array of badge names
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// 6. Analytics Activity Log
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  action    String // 'VIEW_MATERIAL', 'SUBMIT_QUIZ', 'ASK_QUESTION'
+  details   String? // JSON string for additional context
+  timestamp DateTime @default(now())
+}
