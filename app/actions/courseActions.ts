@@ -4,13 +4,21 @@ import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 // DOSEN ACTIONS
-export async function getSubjects() {
+export async function getSubjects(departmentId?: string | null) {
     try {
+        const whereClause = departmentId ? {
+            OR: [
+                { departmentId: departmentId },
+                { scope: 'universitas' }
+            ]
+        } : {}
+
         const subjects = await prisma.subject.findMany({
+            where: whereClause,
             orderBy: { title: 'asc' },
             include: {
-                prodi: { include: { fakultas: true } },
-                fakultas: true,
+                department: { include: { faculty: true } },
+                faculty: true,
             }
         })
         return { success: true, subjects }
@@ -30,6 +38,9 @@ export async function createCourse(data: {
     isForumEnabled?: boolean;
     isReflectionsEnabled?: boolean;
     isAnalyticsEnabled?: boolean;
+    schedule?: string;
+    classCode?: string;
+    departmentId?: string | null;
 }) {
     try {
         const course = await prisma.course.create({
@@ -37,7 +48,10 @@ export async function createCourse(data: {
                 subjectId: data.subjectId,
                 semester: data.semester,
                 academicYear: data.academicYear,
+                classCode: data.classCode || "Kelas Reguler",
                 instructorId: data.instructorId,
+                schedule: data.schedule,
+                departmentId: data.departmentId,
                 config: {
                     create: {
                         isSrlEnabled: data.isSrlEnabled ?? true,
@@ -49,18 +63,55 @@ export async function createCourse(data: {
                 }
             }
         })
-        revalidatePath('/dosen')
+        revalidatePath('/teacher')
+        revalidatePath('/qa/schedules')
+        revalidatePath('/qa')
         return { success: true, course }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create course", error)
-        return { success: false, error: "Failed to create course" }
+        return { success: false, error: error.message || "Failed to create course" }
     }
 }
 
-export async function getInstructorCourses(instructorId: string) {
+export async function deleteCourse(courseId: string) {
     try {
+        await prisma.course.delete({
+            where: { id: courseId }
+        })
+        revalidatePath('/teacher')
+        revalidatePath('/qa/schedules')
+        revalidatePath('/qa')
+        return { success: true }
+    } catch (error: any) {
+        console.error("Failed to delete course", error)
+        return { success: false, error: "Gagal menghapus kelas. Pastikan kelas ini belum memiliki mahasiswa yang terdaftar." }
+    }
+}
+
+export async function updateCourseSchedule(courseId: string, schedule: string) {
+    try {
+        const course = await prisma.course.update({
+            where: { id: courseId },
+            data: { schedule }
+        })
+        revalidatePath('/qa')
+        revalidatePath('/teacher/courses')
+        return { success: true, course }
+    } catch (error) {
+        console.error("Failed to update course schedule", error)
+        return { success: false, error: "Failed to update schedule" }
+    }
+}
+
+export async function getInstructorCourses(instructorId: string, activeProdiId?: string | null) {
+    try {
+        const whereClause: any = { instructorId }
+        if (activeProdiId) {
+            whereClause.departmentId = activeProdiId
+        }
+        
         const courses = await prisma.course.findMany({
-            where: { instructorId },
+            where: whereClause,
             include: {
                 subject: true,
                 _count: {
@@ -76,10 +127,16 @@ export async function getInstructorCourses(instructorId: string) {
 }
 
 // MAHASISWA ACTIONS
-export async function getStudentCourses(studentId: string) {
+export async function getStudentCourses(studentId: string, activeProdiId?: string | null) {
     try {
+        const whereClause: any = { studentId }
+        if (activeProdiId) {
+            whereClause.course = {
+                departmentId: activeProdiId
+            }
+        }
         const enrollments = await prisma.enrollment.findMany({
-            where: { studentId },
+            where: whereClause,
             include: {
                 course: {
                     include: {
@@ -103,24 +160,29 @@ export async function enrollStudent(studentId: string, courseId: string) {
                 courseId
             }
         })
-        revalidatePath('/mahasiswa')
-        revalidatePath('/dosen')
+        revalidatePath('/student')
+        revalidatePath('/teacher')
         return { success: true, enrollment }
     } catch (error) {
         return { success: false, error: "Failed to enroll student" }
     }
 }
 
-export async function getAvailableCourses(studentId: string) {
+export async function getAvailableCourses(studentId: string, activeProdiId?: string | null) {
     try {
-        const courses = await prisma.course.findMany({
-            where: {
-                enrollments: {
-                    none: {
-                        studentId: studentId
-                    }
+        const whereClause: any = {
+            enrollments: {
+                none: {
+                    studentId: studentId
                 }
-            },
+            }
+        }
+        if (activeProdiId) {
+            whereClause.departmentId = activeProdiId
+        }
+        
+        const courses = await prisma.course.findMany({
+            where: whereClause,
             include: {
                 subject: true,
                 instructor: {
@@ -146,12 +208,11 @@ export async function getCourseDetails(courseId: string) {
         const course = await prisma.course.findUnique({
             where: { id: courseId },
             include: {
-                subject: true,
+                subject: { include: { subjectClos: { include: { clo: true } } } },
                 instructor: {
                     select: { id: true, name: true }
                 },
                 config: true,
-                clos: true,
                 modules: {
                     include: { clo: true },
                     orderBy: { weekNumber: 'asc' }
@@ -194,7 +255,7 @@ export async function createCourseModule(data: {
         const module = await prisma.courseModule.create({
             data: payload
         })
-        revalidatePath(`/dosen/course/${data.courseId}`)
+        revalidatePath(`/teacher/course/${data.courseId}`)
         return { success: true, module }
     } catch (error) {
         console.error("Failed to create course module", error)
@@ -207,7 +268,7 @@ export async function deleteCourseModule(moduleId: string, courseId: string) {
         await prisma.courseModule.delete({
             where: { id: moduleId }
         })
-        revalidatePath(`/dosen/course/${courseId}`)
+        revalidatePath(`/teacher/course/${courseId}`)
         return { success: true }
     } catch (error) {
         return { success: false, error: "Failed to delete module" }
@@ -241,7 +302,7 @@ export async function updateCourseConfig(courseId: string, data: {
             }
         })
 
-        revalidatePath(`/dosen/course/${courseId}`)
+        revalidatePath(`/teacher/course/${courseId}`)
         return { success: true }
     } catch (error) {
         console.error("Failed to update config", error)
@@ -249,12 +310,24 @@ export async function updateCourseConfig(courseId: string, data: {
     }
 }
 
-export async function getStudentDashboardMetrics(studentId: string) {
+export async function getStudentDashboardMetrics(studentId: string, activeProdiId?: string | null) {
     try {
+        const courseFilter = activeProdiId ? {
+            subject: {
+                OR: [
+                    { departmentId: activeProdiId },
+                    { scope: 'universitas' }
+                ]
+            }
+        } : {}
+
         // 1. Fetch upcoming assessments (deadlines)
         const upcomingAssessments = await prisma.assessment.findMany({
             where: {
-                course: { enrollments: { some: { studentId } } },
+                course: { 
+                    ...courseFilter,
+                    enrollments: { some: { studentId } } 
+                },
                 dueDate: { gte: new Date() } // Future due dates
             },
             include: { course: true, assessmentClos: { include: { clo: true } } },
@@ -264,13 +337,19 @@ export async function getStudentDashboardMetrics(studentId: string) {
 
         // 2. Fetch SRL Metrics
         const enrollments = await prisma.enrollment.findMany({
-            where: { studentId }
+            where: { 
+                studentId,
+                ...(activeProdiId ? { course: courseFilter } : {})
+            }
         })
         const srlTarget = enrollments.reduce((acc, curr) => acc + curr.srlTarget, 0)
 
         const reflections = await prisma.srlReflection.findMany({
             where: {
-                enrollment: { studentId },
+                enrollment: { 
+                    studentId,
+                    ...(activeProdiId ? { course: courseFilter } : {})
+                },
                 targetMet: true
             }
         })
@@ -309,7 +388,11 @@ export async function getStudentDashboardMetrics(studentId: string) {
 
         // 5. Progress Materi (simplification: completed courses / enrolled courses)
         const completedEnrollments = await prisma.enrollment.count({
-            where: { studentId, status: 'completed' }
+            where: { 
+                studentId, 
+                status: 'completed',
+                ...(activeProdiId ? { course: courseFilter } : {})
+            }
         })
         const totalEnroll = enrollments.length;
         const progressMateri = totalEnroll > 0 ? Math.round((completedEnrollments / totalEnroll) * 100) + "%" : "0%"
@@ -330,11 +413,23 @@ export async function getStudentDashboardMetrics(studentId: string) {
     }
 }
 
-export async function getInstructorDashboardMetrics(instructorId: string) {
+export async function getInstructorDashboardMetrics(instructorId: string, activeProdiId?: string | null) {
     try {
+        const courseFilter = activeProdiId ? {
+            subject: {
+                OR: [
+                    { departmentId: activeProdiId },
+                    { scope: 'universitas' }
+                ]
+            }
+        } : {}
+
         // 1. Fetch courses owned by this instructor
         const courses = await prisma.course.findMany({
-            where: { instructorId },
+            where: { 
+                instructorId,
+                ...courseFilter
+            },
             include: {
                 _count: { select: { enrollments: true } },
                 assessments: {

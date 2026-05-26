@@ -18,12 +18,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { createAssessment } from '@/app/actions/assessmentActions'
-import { getCLOsByCourse } from '@/app/actions/obeActions'
+import { getCLOsBySubject } from '@/app/actions/obeActions'
 
 type CLO = { id: string; code: string; description: string }
 type SelectedCLO = { cloId: string; weight: number }
 
-export function CreateAssessmentDialog({ courses }: { courses: { id: string, title: string }[] }) {
+export function CreateAssessmentDialog({ courses }: { courses: { id: string, subjectId: string, title: string }[] }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -41,13 +41,28 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, tit
             setSelectedClos([])
             return
         }
+        const selectedCourse = courses.find(c => c.id === selectedCourseId)
+        if (!selectedCourse?.subjectId) {
+            setAvailableClos([])
+            setSelectedClos([])
+            return
+        }
+
         setCloLoading(true)
-        getCLOsByCourse(selectedCourseId).then(res => {
-            setAvailableClos(res.success ? res.clos : [])
+        getCLOsBySubject(selectedCourse.subjectId).then(res => {
+            const uniqueClosMap = new Map()
+            if (res.success) {
+                res.mappings.forEach((m: any) => {
+                    if (!uniqueClosMap.has(m.clo.id)) {
+                        uniqueClosMap.set(m.clo.id, m.clo)
+                    }
+                })
+            }
+            setAvailableClos(Array.from(uniqueClosMap.values()))
             setSelectedClos([])
             setCloLoading(false)
         })
-    }, [selectedCourseId])
+    }, [selectedCourseId, courses])
 
     function addClo(cloId: string) {
         if (selectedClos.find(c => c.cloId === cloId)) return

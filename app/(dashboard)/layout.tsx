@@ -12,7 +12,7 @@ export default function DashboardLayout({
 }: {
     children: React.ReactNode
 }) {
-    const { role, _hasHydrated } = useUserStore()
+    const { activeRole, role, _hasHydrated } = useUserStore()
     const router = useRouter()
     const [isMounted, setIsMounted] = useState(false)
 
@@ -20,15 +20,17 @@ export default function DashboardLayout({
         setIsMounted(true)
     }, [])
 
+    const currentRole = activeRole || role
+
     useEffect(() => {
         // Only enforce route protection once the component has mounted 
         // AND Zustand persist has finished hydrating from localStorage
-        if (isMounted && _hasHydrated && !role) {
+        if (isMounted && _hasHydrated && !currentRole) {
             router.replace('/')
         }
-    }, [isMounted, _hasHydrated, role, router])
+    }, [isMounted, _hasHydrated, currentRole, router])
 
-    if (!isMounted || !_hasHydrated || !role) {
+    if (!isMounted || !_hasHydrated || !currentRole) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-muted/10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

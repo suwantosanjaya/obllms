@@ -24,6 +24,7 @@ async function main() {
     await prisma.enrollment.deleteMany()
     await prisma.course.deleteMany()
     await prisma.subject.deleteMany()
+    await prisma.curriculumYear.deleteMany()
     await prisma.prodi.deleteMany()
     await prisma.fakultas.deleteMany()
     await prisma.user.deleteMany()
@@ -35,18 +36,52 @@ async function main() {
     const defaultPasswordHash = await bcrypt.hash('password123', 10)
 
     for (let i = 1; i <= 10; i++) {
-        const role = i <= 3 ? 'dosen' : 'mahasiswa'
+        let role = 'student'
+        if (i <= 3) role = 'teacher'
+        if (i === 4) role = 'qa'
+        if (i === 5) role = 'super_admin'
+        if (i === 6) role = 'admin'
         users.push(await prisma.user.create({
             data: {
                 email: `user${i}@kampus.edu`,
-                name: role === 'dosen' ? `Dr. Dosen ${i}` : `Mahasiswa ${i}`,
+                name: role === 'teacher' ? `Teacher ${i}` : (role === 'qa' ? 'Tim Kurikulum (QA)' : (role === 'super_admin' ? 'Super Admin' : (role === 'admin' ? 'Prodi Admin' : `Student ${i}`))),
                 password: defaultPasswordHash,
                 role: role
             }
         }))
     }
-    const dosens = users.filter(u => u.role === 'dosen')
-    const mahasiswas = users.filter(u => u.role === 'mahasiswa')
+    const dosens = users.filter(u => u.role === 'teacher')
+    const mahasiswas = users.filter(u => u.role === 'student')
+    const qaUser = users.find(u => u.role === 'qa')
+
+    // 1.5 Create Fakultas and Prodi
+    const ft = await prisma.fakultas.create({ data: { code: 'FT', name: 'Fakultas Teknik' } })
+    const fe = await prisma.fakultas.create({ data: { code: 'FE', name: 'Fakultas Ekonomi' } })
+    const fi = await prisma.fakultas.create({ data: { code: 'FI', name: 'Fakultas Ilmu Komputer' } })
+
+    const prodiTI = await prisma.prodi.create({ data: { code: 'TI', name: 'Teknik Informatika', fakultasId: ft.id } })
+    const prodiSI = await prisma.prodi.create({ data: { code: 'SI', name: 'Sistem Informasi', fakultasId: fi.id } })
+    const prodiMNJ = await prisma.prodi.create({ data: { code: 'MNJ', name: 'Manajemen', fakultasId: fe.id } })
+
+    // Update QA user to be in Prodi TI and SI
+    if (qaUser) {
+        await prisma.user.update({
+            where: { id: qaUser.id },
+            data: { prodis: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
+        })
+    }
+
+    // Give first dosen two prodis for testing multi-prodi
+    if (dosens.length > 0) {
+        await prisma.user.update({
+            where: { id: dosens[0].id },
+            data: { prodis: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
+        })
+    }
+
+    // 1.8 Create Curriculum Years
+    const curr2023 = await prisma.curriculumYear.create({ data: { name: '2023/2024', isActive: false } })
+    const curr2024 = await prisma.curriculumYear.create({ data: { name: '2024/2025', isActive: true } })
 
     // 2. Create 10 Graduate Profiles
     const gps = []
@@ -55,7 +90,9 @@ async function main() {
             data: {
                 code: `GP-${i}`,
                 title: `Profil Lulusan ${i}`,
-                description: `Deskripsi untuk Profil Lulusan ke-${i}`
+                description: `Deskripsi untuk Profil Lulusan ke-${i}`,
+                prodiId: i <= 5 ? prodiTI.id : prodiSI.id,
+                curriculumYearId: curr2024.id
             }
         }))
     }
@@ -67,19 +104,16 @@ async function main() {
             data: {
                 code: `PLO-${i}`,
                 description: `Deskripsi Program Learning Outcome ke-${i}`,
-                graduateProfileId: gps[i - 1].id
+                prodiId: i <= 5 ? prodiTI.id : prodiSI.id,
+                curriculumYearId: curr2024.id,
+                graduateProfiles: {
+                    connect: [{ id: gps[i - 1].id }]
+                }
             }
         }))
     }
 
-    // 1.5 Create Fakultas and Prodi
-    const ft = await prisma.fakultas.create({ data: { code: 'FT', name: 'Fakultas Teknik' } })
-    const fe = await prisma.fakultas.create({ data: { code: 'FE', name: 'Fakultas Ekonomi' } })
-    const fi = await prisma.fakultas.create({ data: { code: 'FI', name: 'Fakultas Ilmu Komputer' } })
-
-    const prodiTI = await prisma.prodi.create({ data: { code: 'TI', name: 'Teknik Informatika', fakultasId: ft.id } })
-    const prodiSI = await prisma.prodi.create({ data: { code: 'SI', name: 'Sistem Informasi', fakultasId: fi.id } })
-    const prodiMNJ = await prisma.prodi.create({ data: { code: 'MNJ', name: 'Manajemen', fakultasId: fe.id } })
+    // (Fakultas and Prodi were created earlier)
 
     // 4. Create 10 Master Subjects (Katalog Mata Kuliah)
     const subjectData = [
@@ -152,10 +186,13 @@ async function main() {
     for (let i = 0; i < 10; i++) {
         clos.push(await prisma.courseLearningOutcome.create({
             data: {
-                courseId: courses[i].id,
-                ploId: plos[i].id,
+                subjectId: subjects[i].id,
+                curriculumYearId: curr2024.id,
                 code: `CLO-${i + 1}`,
                 description: `Mahasiswa mampu memahami materi ${i + 1}`,
+                plos: {
+                    connect: [{ id: plos[i].id }]
+                }
             }
         }))
     }
@@ -195,10 +232,13 @@ async function main() {
     for (let i = 0; i < 10; i++) {
         extraClos.push(await prisma.courseLearningOutcome.create({
             data: {
-                courseId: courses[i].id,
-                ploId: plos[(i + 1) % 10].id,
+                subjectId: subjects[i].id,
+                curriculumYearId: curr2024.id,
                 code: `CLO-${i + 1}B`,
                 description: `Mahasiswa mampu menerapkan konsep ${i + 1}`,
+                plos: {
+                    connect: [{ id: plos[(i + 1) % 10].id }]
+                }
             }
         }))
     }

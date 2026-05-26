@@ -27,7 +27,7 @@ export async function createAssessment(data: {
                 }
             }
         })
-        revalidatePath('/dosen/assessments')
+        revalidatePath('/teacher/assessments')
         return { success: true, assessment }
     } catch (error: unknown) {
         return { success: false, error: (error as Error).message }
@@ -110,7 +110,7 @@ export async function gradeSubmission(
             }
         })
 
-        revalidatePath('/dosen/assessments')
+        revalidatePath('/teacher/assessments')
         return { success: true, submission: updated }
     } catch (error: unknown) {
         return { success: false, error: (error as Error).message }
@@ -171,7 +171,7 @@ export async function submitAssessment(assessmentId: string, studentId: string, 
                 content: fileUrl
             }
         })
-        revalidatePath('/mahasiswa/assessments')
+        revalidatePath('/student/assessments')
         return { success: true, submission }
     } catch (error: unknown) {
         return { success: false, error: (error as Error).message }

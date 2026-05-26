@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileSearch, CheckSquare, LineChart, BookOpen, Search } from 'lucide-react'
+import { FileSearch, CheckSquare, LineChart, BookOpen, Search, CalendarClock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,13 +11,31 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { getQADashboardMetrics } from '@/app/actions/obeActions'
+import { getSessionUser } from '@/app/actions/userActions'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
-export default function QADashboard() {
+export default async function QADashboard() {
+    const qaUser = await getSessionUser()
+    if (!qaUser || !qaUser.roles?.includes('qa')) {
+        redirect('/')
+    }
+
+    const metricsRes = await getQADashboardMetrics(qaUser.activeDepartmentId)
+    const metrics = metricsRes.success ? metricsRes.metrics : {
+        alignmentRate: 0,
+        reviewNeededCount: 0,
+        totalPlosMeasured: 0,
+        totalPlos: 0,
+        reviewTableData: []
+    }
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Quality Assurance (Prodi)</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Quality Assurance (Departemen)</h1>
                     <p className="text-muted-foreground mt-1">Pemantauan keselarasan kurikulum (PLO-CLO) dan metrik kualitas.</p>
                 </div>
             </div>
@@ -30,7 +48,7 @@ export default function QADashboard() {
                         <CheckSquare className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">94%</div>
+                        <div className="text-2xl font-bold">{metrics?.alignmentRate}%</div>
                         <p className="text-xs text-muted-foreground mt-1">Sesuai standar OBL</p>
                     </CardContent>
                 </Card>
@@ -40,18 +58,22 @@ export default function QADashboard() {
                         <FileSearch className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">3</div>
-                        <p className="text-xs text-muted-foreground mt-1">Menunggu persetujuan prodi</p>
+                        <div className="text-2xl font-bold">{metrics?.reviewNeededCount}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Mata kuliah butuh review</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Skor Kepuasan (Student)</CardTitle>
-                        <LineChart className="h-4 w-4 text-blue-500" />
+                        <CardTitle className="text-sm font-medium">Jadwal Mata Kuliah</CardTitle>
+                        <CalendarClock className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">4.2/5</div>
-                        <p className="text-xs text-muted-foreground mt-1">Rata-rata evaluasi dosen</p>
+                        <div className="text-2xl font-bold mt-1">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href="/qa/schedules">Kelola Jadwal</Link>
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">Pengaturan jadwal dosen</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -60,7 +82,7 @@ export default function QADashboard() {
                         <BookOpen className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12/12</div>
+                        <div className="text-2xl font-bold">{metrics?.totalPlosMeasured}/{metrics?.totalPlos}</div>
                         <p className="text-xs text-muted-foreground mt-1">PLO diukur semester ini</p>
                     </CardContent>
                 </Card>
@@ -75,10 +97,6 @@ export default function QADashboard() {
                             <CardDescription>
                                 Review pemetaan mata kuliah terhadap Program Learning Outcomes (PLO).
                             </CardDescription>
-                        </div>
-                        <div className="flex relative items-center w-64">
-                            <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input type="search" placeholder="Cari mata kuliah..." className="pl-8" />
                         </div>
                     </div>
                 </CardHeader>
@@ -96,30 +114,32 @@ export default function QADashboard() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow>
-                                    <TableCell className="font-medium">CS101</TableCell>
-                                    <TableCell>Algoritma Dasar</TableCell>
-                                    <TableCell>Dr. Andi</TableCell>
-                                    <TableCell>100% (3 CLO ➔ 3 PLO)</TableCell>
-                                    <TableCell><Badge className="bg-green-500">Approved</Badge></TableCell>
-                                    <TableCell className="text-right"><Button variant="ghost" size="sm">Detail</Button></TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-medium">CS202</TableCell>
-                                    <TableCell>Pemrograman Lanjut</TableCell>
-                                    <TableCell>Siti Rahma, MT</TableCell>
-                                    <TableCell>85% (1 CLO belum dipetakan)</TableCell>
-                                    <TableCell><Badge variant="outline" className="text-orange-500 border-orange-500">Review</Badge></TableCell>
-                                    <TableCell className="text-right"><Button variant="ghost" size="sm">Beri Catatan</Button></TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-medium">IS301</TableCell>
-                                    <TableCell>Manajemen Basis Data</TableCell>
-                                    <TableCell>Prof. Budi</TableCell>
-                                    <TableCell>100% (5 CLO ➔ 2 PLO)</TableCell>
-                                    <TableCell><Badge className="bg-green-500">Approved</Badge></TableCell>
-                                    <TableCell className="text-right"><Button variant="ghost" size="sm">Detail</Button></TableCell>
-                                </TableRow>
+                                {metrics?.reviewTableData.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                            Belum ada data mata kuliah.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    metrics?.reviewTableData.map((row: any) => (
+                                        <TableRow key={row.id}>
+                                            <TableCell className="font-medium">{row.code}</TableCell>
+                                            <TableCell>{row.title}</TableCell>
+                                            <TableCell>{row.instructors}</TableCell>
+                                            <TableCell>{row.alignmentPercentage}% ({row.mappedCloCount} dari {row.cloCount} CLO dipetakan)</TableCell>
+                                            <TableCell>
+                                                {row.status === 'Approved' ? (
+                                                    <Badge className="bg-green-500">Approved</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-orange-500 border-orange-500">Review</Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="sm">Detail</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>

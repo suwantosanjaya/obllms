@@ -13,40 +13,83 @@ model User {
   email     String   @unique
   name      String
   password  String   @default("$2a$10$xyz") // Hashed password
-  role      String   @default("mahasiswa") // 'mahasiswa', 'dosen', 'qa', 'admin'
+  role      String   @default("student") // 'student', 'teacher', 'qa', 'admin', 'super_admin'
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
+  departments Department[]      @relation("UserDepartments")
+  departmentRoles UserDepartmentRole[]
   enrollments Enrollment[] // For Mahasiswa
   courses     Course[]     @relation("CourseInstructor") // For Dosen
   submissions Submission[] // For Mahasiswa
   feedbacks   Feedback[] // For Mahasiswa and QA interactions
+  headedDepartments Department[] @relation("ActiveHead")
+  headHistories DepartmentHeadHistory[]
 }
 
-// Model for Fakultas (Faculty)
-model Fakultas {
+// Model for role-per-department assignments
+model UserDepartmentRole {
+  id           String @id @default(cuid())
+  userId       String
+  departmentId String
+  role         String // 'qa', 'teacher', 'admin', 'student'
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId, role])
+}
+
+
+// Model for University
+model University {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  faculties Faculty[]
+}
+
+// Model for Faculty
+model Faculty {
   id        String    @id @default(cuid())
   code      String    @unique // e.g., "FT", "FE"
   name      String    // e.g., "Fakultas Teknik"
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  prodis    Prodi[]
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id])
+  departments Department[]
   subjects  Subject[]
 }
 
 // Model for Prodi (Program Studi)
-model Prodi {
+model Department {
   id         String   @id @default(cuid())
   code       String   @unique // e.g., "TI", "SI"
   name       String   // e.g., "Teknik Informatika"
-  fakultasId String
-  fakultas   Fakultas @relation(fields: [fakultasId], references: [id])
+  facultyId  String
+  faculty    Faculty @relation(fields: [facultyId], references: [id])
+  activeHeadId String?
+  activeHead   User? @relation("ActiveHead", fields: [activeHeadId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  subjects   Subject[]
+  subjects         Subject[]
+  graduateProfiles GraduateProfile[]
+  plos             ProgramLearningOutcome[]
+  courses          Course[]
+  users            User[]                   @relation("UserDepartments")
+  userRoles        UserDepartmentRole[]
+  clos             CourseLearningOutcome[]
+  departmentCurriculums DepartmentCurriculum[]
+  headHistories    DepartmentHeadHistory[]
+  visionMissions   InstitutionVisionMission[]
 }
 
 // Model for Master Courses (Katalog Mata Kuliah)
@@ -56,16 +99,18 @@ model Subject {
   title       String
   description String?
   type        String    @default("wajib")       // 'wajib' | 'pilihan'
-  scope       String    @default("prodi")       // 'universitas' | 'fakultas' | 'prodi'
-  fakultasId  String?
-  prodiId     String?
+  scope       String    @default("department")  // 'university' | 'faculty' | 'department'
+  credits     Int       @default(3)             // SKS (Credit Hours)
+  facultyId  String?
+  departmentId     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  fakultas    Fakultas? @relation(fields: [fakultasId], references: [id])
-  prodi       Prodi?    @relation(fields: [prodiId], references: [id])
+  faculty     Faculty? @relation(fields: [facultyId], references: [id])
+  department  Department?    @relation(fields: [departmentId], references: [id])
   courses     Course[]  // Offerings of this subject
+  subjectClos SubjectCLO[] // Many-to-many CLO mappings with weights
 }
 
 // Model for Course Offerings (Sesi Kelas per Semester)
@@ -73,8 +118,12 @@ model Course {
   id           String   @id @default(cuid())
   subjectId    String
   subject      Subject  @relation(fields: [subjectId], references: [id])
+  departmentId      String?  // Optional for backward compatibility, but QA created classes will have this
+  department        Department?   @relation(fields: [departmentId], references: [id])
   semester     String   @default("Ganjil") // 'Ganjil', 'Genap', 'Pendek'
   academicYear String   @default("2025/2026") // e.g., '2025/2026'
+  classCode    String?  @default("Kelas Reguler") // e.g., 'Kelas A', 'Kelas B'
+  schedule     String?  // e.g., "Senin, 08:00 - 10:30, Ruang 101"
   instructorId String
   instructor   User     @relation("CourseInstructor", fields: [instructorId], references: [id])
   createdAt    DateTime @default(now())
@@ -86,7 +135,6 @@ model Course {
   // Relations
   enrollments Enrollment[]
   assessments Assessment[]
-  clos        CourseLearningOutcome[] // OBL mapping
   modules     CourseModule[] // Weekly Materials
   forums      ForumThread[] // Q&A
 }
@@ -110,49 +158,91 @@ model Enrollment {
   @@unique([studentId, courseId])
 }
 
-// Model for Graduate Profile (Profil Lulusan)
-model GraduateProfile {
+// Model for Institution Vision and Mission
+model InstitutionVisionMission {
   id          String   @id @default(cuid())
-  code        String   @unique // e.g., GP-1
-  title       String // e.g., Software Engineer, UI/UX Designer
-  description String?
+  code        String   // e.g., VM-1
+  description String
+  type        String   @default("vision") // 'vision' | 'mission'
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  graduateProfiles GraduateProfile[]
+}
+
+// Model for Graduate Profile (Profil Lulusan)
+model GraduateProfile {
+  id              String   @id @default(cuid())
+  code            String   // e.g., GP-1
+  title           String // e.g., Software Engineer, UI/UX Designer
+  description     String?
+  visionMissionId  String?
+  departmentId          String?
+  curriculumYearId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
-  plos ProgramLearningOutcome[]
+  visionMission   InstitutionVisionMission? @relation(fields: [visionMissionId], references: [id])
+  department      Department?                    @relation(fields: [departmentId], references: [id])
+  curriculumYear  CurriculumYear?           @relation(fields: [curriculumYearId], references: [id])
+  plos            ProgramLearningOutcome[]
 }
 
 // Model for Program Learning Outcomes (PLO) / Capaian Pembelajaran Lulusan (CPL)
 model ProgramLearningOutcome {
   id                String   @id @default(cuid())
-  code              String   @unique // e.g., PLO-1, PLO-2
+  code              String   // e.g., PLO-1, PLO-2
   description       String
-  graduateProfileId String?
+  departmentId           String?
+  curriculumYearId  String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   // Relations
-  graduateProfile GraduateProfile?        @relation(fields: [graduateProfileId], references: [id], onDelete: Cascade)
-  clos            CourseLearningOutcome[]
+  department        Department?           @relation(fields: [departmentId], references: [id])
+  curriculumYear    CurriculumYear?  @relation(fields: [curriculumYearId], references: [id])
+  graduateProfiles  GraduateProfile[]
+  clos              CourseLearningOutcome[]
+  subjectClos       SubjectCLO[]     // Many-to-many mapping from Subject to specific PLO-CLO
 }
 
 // Model for Outcome Based Learning (OBL) CLOs / Capaian Pembelajaran Mata Kuliah (CPMK)
+// Bank CLO per Prodi - satu CLO bisa dipakai di banyak Subject dengan bobot berbeda
 model CourseLearningOutcome {
-  id          String  @id @default(cuid())
-  courseId    String
-  ploId       String? // Mapping to PLO
-  code        String // e.g., CLO-1
-  description String
+  id               String  @id @default(cuid())
+  departmentId          String?
+  curriculumYearId String?
+  code             String // e.g., CLO-1
+  description      String
 
-  course Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  plo    ProgramLearningOutcome? @relation(fields: [ploId], references: [id])
+  department     Department?                   @relation(fields: [departmentId], references: [id])
+  curriculumYear CurriculumYear?          @relation(fields: [curriculumYearId], references: [id])
+  plos           ProgramLearningOutcome[]
+  subjectClos    SubjectCLO[]             // Many-to-many mapping to subjects
 
   // Relations
   assessmentClos   AssessmentCLO[]      // Which assessment-CLO mappings reference this CLO
   submissionScores SubmissionCLOScore[] // Per-submission scores for this CLO
   modules          CourseModule[]       // Which materials teach this CLO
   threads          ForumThread[]        // Questions asked about this CLO
+}
+
+// Junction table for Subject <-> CLO Many-to-Many mapping with weight
+model SubjectCLO {
+  id        String  @id @default(cuid())
+  subjectId String
+  cloId     String
+  ploId     String
+  weight    Float   @default(0) // Percentage weight of this PLO-CLO in the Subject (0-100)
+
+  subject Subject                @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  clo     CourseLearningOutcome  @relation(fields: [cloId], references: [id], onDelete: Cascade)
+  plo     ProgramLearningOutcome @relation(fields: [ploId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, cloId, ploId])
 }
 
 // Model for Assessments (Tugas / Kuis)
@@ -315,4 +405,51 @@ model ActivityLog {
   action    String // 'VIEW_MATERIAL', 'SUBMIT_QUIZ', 'ASK_QUESTION'
   details   String? // JSON string for additional context
   timestamp DateTime @default(now())
+}
+
+// 6. Curriculum Year (Tahun Kurikulum)
+model CurriculumYear {
+  id        String   @id @default(cuid())
+  name      String   @unique // e.g., "2024/2025"
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  startYear Int?
+  endYear   Int?
+  
+  graduateProfiles GraduateProfile[]
+  plos             ProgramLearningOutcome[]
+  clos             CourseLearningOutcome[]
+  departmentCurriculums DepartmentCurriculum[]
+}
+
+// 7. Model for Curriculum Approval Status
+model DepartmentCurriculum {
+  id               String   @id @default(cuid())
+  departmentId     String
+  curriculumYearId String
+  status           String   @default("DRAFT") // 'DRAFT', 'APPROVED', 'REVISION'
+  approvedBy       String?  // userId of Head of Department
+  approvedAt       DateTime?
+  
+  department     Department     @relation(fields: [departmentId], references: [id])
+  curriculumYear CurriculumYear @relation(fields: [curriculumYearId], references: [id])
+
+  @@unique([departmentId, curriculumYearId])
+}
+
+// 8. Model for Department Head Appointment History
+model DepartmentHeadHistory {
+  id           String   @id @default(cuid())
+  departmentId String
+  userId       String
+  startYear    Int
+  endYear      Int
+  appointmentDate DateTime?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -8,10 +8,10 @@ import { Loader2, LogIn } from 'lucide-react'
 import { useUserStore } from '@/lib/store/useUserStore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { seedSimulatedUsers, loginWithEmail } from '@/app/actions/userActions'
+import { seedSimulatedUsers, loginWithEmail, setActiveProdiCookie } from '@/app/actions/userActions'
 
 export default function Home() {
-  const { setRole, setUserName, setUserId } = useUserStore()
+  const { activeRole, _hasHydrated, setActiveRole, setRoles, setUserName, setUserId } = useUserStore()
   const router = useRouter()
   const [isInitializing, setIsInitializing] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -21,6 +21,16 @@ export default function Home() {
     // Seed DB if it's empty on first load
     seedSimulatedUsers().then(() => setIsInitializing(false))
   }, [])
+
+  useEffect(() => {
+    if (_hasHydrated && activeRole) {
+      if (activeRole === 'head_of_department') {
+        router.push('/qa/curriculum')
+      } else {
+        router.push(`/${activeRole}`)
+      }
+    }
+  }, [_hasHydrated, activeRole, router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -34,27 +44,45 @@ export default function Home() {
     const res = await loginWithEmail(email, password)
 
     if (res.success && res.user) {
-      setRole(res.user.role as 'mahasiswa' | 'dosen' | 'qa' | 'admin')
+      console.log('Login successful. res.user:', res.user)
+      setActiveRole(res.user.activeRole as 'student' | 'teacher' | 'qa' | 'admin' | 'super_admin')
+      setRoles(res.user.roles || [])
       setUserName(res.user.name)
       setUserId(res.user.id)
+      
+      const userDepartments = res.user.departments || []
+      useUserStore.getState().setProdis(userDepartments)
+      if (res.user.departmentRoles) {
+        useUserStore.getState().setDepartmentRoles(res.user.departmentRoles)
+      }
 
-      // Route based on role
-      const path = `/${res.user.role}`
-      router.push(path)
+      // Auto-select the first department if available
+      if (userDepartments.length > 0) {
+        const defaultDepId = userDepartments[0].id
+        useUserStore.getState().setActiveDepartmentId(defaultDepId)
+        await setActiveProdiCookie(defaultDepId)
+      }
+
+      if (res.user.activeRole === 'head_of_department') {
+          router.push('/qa/curriculum')
+      } else {
+          const path = `/${res.user.activeRole}`
+          router.push(path)
+      }
     } else {
       setError(res.error || "Gagal masuk. Periksa kembali kredensial Anda.")
       setLoading(false)
     }
   }
 
-  if (isInitializing) {
+  if (isInitializing || (_hasHydrated && activeRole)) {
     return <div className="min-h-screen flex items-center justify-center bg-muted/10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
   }
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center space-y-8 bg-muted/10 py-12 px-4">
       <div className="text-center space-y-4">
-        <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OBL LMS</h1>
+        <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OBLMS</h1>
         <p className="text-xl text-muted-foreground">Outcome Based Learning Management System</p>
       </div>
 
@@ -99,10 +127,10 @@ export default function Home() {
             <div className="pt-2 text-xs text-muted-foreground space-y-1 bg-muted/30 p-3 rounded-md">
               <p className="font-semibold text-foreground/80">Akun Simulasi (Password: password123):</p>
               <ul className="list-disc list-inside">
-                <li><span className="font-medium text-primary">Dosen:</span> user1@.. s.d. user3@..</li>
-                <li><span className="font-medium text-emerald-600">Mahasiswa:</span> user4@.. s.d. user10@..</li>
-                <li><span className="font-medium text-amber-600">QA:</span> siti@university.edu</li>
-                <li><span className="font-medium text-rose-600">Admin:</span> admin@university.edu</li>
+                <li><span className="font-medium text-primary">Teacher:</span> user1@kampus.edu s.d. user3@kampus.edu</li>
+                <li><span className="font-medium text-amber-600">QA:</span> user4@kampus.edu</li>
+                <li><span className="font-medium text-rose-600">Super Admin / Admin:</span> user5@kampus.edu / user6@kampus.edu</li>
+                <li><span className="font-medium text-emerald-600">Student:</span> user7@kampus.edu s.d. user10@kampus.edu</li>
               </ul>
             </div>
           </CardContent>
