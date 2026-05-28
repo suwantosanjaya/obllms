@@ -11,7 +11,7 @@ import { Plus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { createVisionMission } from '@/app/actions/obeActions'
 
-export function CreateVisionMissionDialog({ isLocked, departmentId }: { isLocked?: boolean, departmentId?: string }) {
+export function CreateVisionMissionDialog({ isLocked, departmentId, curriculumYearId }: { isLocked?: boolean, departmentId?: string, curriculumYearId?: string }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { toast } = useToast()
@@ -26,7 +26,7 @@ export function CreateVisionMissionDialog({ isLocked, departmentId }: { isLocked
         e.preventDefault()
         setLoading(true)
 
-        const result = await createVisionMission({ ...formData, departmentId })
+        const result = await createVisionMission({ ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
             toast({ title: 'Success', description: 'Departemen Vision/Mission created successfully.' })

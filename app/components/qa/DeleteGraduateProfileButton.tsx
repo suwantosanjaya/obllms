@@ -36,8 +36,8 @@ export function DeleteGraduateProfileButton({ id, code }: { id: string, code: st
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={loading}>
-                    <Trash2 className="w-4 h-4 text-red-600" />
+                <Button variant="ghost" size="icon" disabled={loading} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4" />
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -49,7 +49,7 @@ export function DeleteGraduateProfileButton({ id, code }: { id: string, code: st
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                    <AlertDialogAction onClick={handleDelete} variant="destructive">
                         {loading ? 'Deleting...' : 'Delete'}
                     </AlertDialogAction>
                 </AlertDialogFooter>

@@ -43,7 +43,12 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
     try {
         const user = await prisma.user.findUnique({
             where: { email: email.toLowerCase() },
-            include: { departments: true, departmentRoles: { include: { department: true } } }
+            include: { 
+                departments: true, 
+                departmentRoles: { include: { department: true } },
+                teacherProfile: true,
+                studentProfile: true
+            }
         })
 
         if (!user) {
@@ -51,6 +56,11 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
         }
 
         if (!user.isActive) {
+            if (user.approvalStatus === 'PENDING') {
+                return { success: false, error: 'Akun ini menunggu proses persetujuan administrator. Silakan hubungi pihak terkait untuk mengaktifkan akun.' }
+            } else if (user.approvalStatus === 'REJECTED') {
+                return { success: false, error: 'Pendaftaran akun Anda telah ditolak oleh administrator.' }
+            }
             return { success: false, error: 'Akun Anda telah dinonaktifkan.' }
         }
 
@@ -59,12 +69,40 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
             return { success: false, error: 'Password salah.' }
         }
 
-        // Exclude password from the returned object for security
-        const { password, ...userWithoutPassword } = user
+        if (user.approvalStatus === 'PENDING') {
+            return { success: false, error: 'Akun Anda sedang menunggu persetujuan dari Admin/QA. Silakan cek kembali nanti.' }
+        }
+        if (user.approvalStatus === 'REJECTED') {
+            return { success: false, error: 'Pendaftaran akun Anda ditolak.' }
+        }
+
+        if (user.mustChangePassword) {
+            return { success: true, requirePasswordChange: true, email: user.email }
+        }
 
         // Parse roles
         const roles = user.role.split(',').map(r => r.trim())
         const activeRole = roles[0]
+
+        // Check for missing profiles
+        let missingRole = null
+        if (roles.includes('teacher') && !user.teacherProfile) {
+            missingRole = 'teacher'
+        } else if (roles.includes('student') && !user.studentProfile) {
+            missingRole = 'student'
+        }
+
+        if (missingRole) {
+            return { 
+                success: true, 
+                requireProfileCompletion: true, 
+                missingRole, 
+                email: user.email 
+            }
+        }
+
+        // Exclude password from the returned object for security
+        const { password, ...userWithoutPassword } = user
 
         // If user is a super admin, give them access to ALL departments
         if (roles.includes('super_admin')) {
@@ -131,14 +169,6 @@ export async function getSessionUser() {
 
     if (!user) return null
     
-    const activeDepartmentIdCookie = cookieStore.get('activeDepartmentId')
-    let activeDepartmentId = activeDepartmentIdCookie?.value
-
-    // Fallback: If no active department is set but user has departments, use the first one
-    if (!activeDepartmentId && user.departments.length > 0) {
-        activeDepartmentId = user.departments[0].id
-    }
-
     const roles = user.role.split(',').map(r => r.trim())
     let activeRole = cookieStore.get('activeRole')?.value
     
@@ -146,8 +176,36 @@ export async function getSessionUser() {
         activeRole = roles[0]
     }
 
+    // Determine allowed departments for the active role
+    let visibleDepartments: any[] = []
+    if (activeRole === 'super_admin') {
+        visibleDepartments = await prisma.department.findMany({ orderBy: { name: 'asc' } })
+    } else {
+        visibleDepartments = user.departmentRoles
+            .filter(dr => dr.role.split(',').map(r => r.trim()).includes(activeRole as string) && dr.department)
+            .map(dr => dr.department)
+    }
+
+    const activeDepartmentIdCookie = cookieStore.get('activeDepartmentId')
+    let activeDepartmentId = activeDepartmentIdCookie?.value
+
+    // Validate if the active department is accessible under the current activeRole
+    const isValidDepartment = visibleDepartments.some(d => d.id === activeDepartmentId)
+    
+    // Fallback: If no valid active department is set, use the first one from visibleDepartments
+    if ((!activeDepartmentId || !isValidDepartment) && visibleDepartments.length > 0) {
+        activeDepartmentId = visibleDepartments[0].id
+    }
+
     const { password, ...userWithoutPassword } = user
-    return { ...userWithoutPassword, departments: user.departments, departmentRoles: user.departmentRoles, activeDepartmentId, activeRole, roles }
+    return { 
+        ...userWithoutPassword, 
+        departments: activeRole === 'super_admin' ? visibleDepartments : user.departments, 
+        departmentRoles: user.departmentRoles, 
+        activeDepartmentId, 
+        activeRole, 
+        roles 
+    }
 }
 
 export async function setActiveProdiCookie(departmentId: string) {
@@ -183,12 +241,246 @@ export async function getTeachers() {
             select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                teacherProfile: {
+                    select: {
+                        gelarDepan: true,
+                        gelarBelakang: true,
+                        nidn: true,
+                        nip: true
+                    }
+                },
+                homebaseDepartment: {
+                    select: {
+                        id: true,
+                        name: true,
+                        faculty: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: [
+                { homebaseDepartment: { faculty: { name: 'asc' } } },
+                { homebaseDepartment: { name: 'asc' } },
+                { name: 'asc' }
+            ]
+        })
+        
+        // Format the name and group
+        const formattedTeachers = teachers.map(t => {
+            const gelarDepan = t.teacherProfile?.gelarDepan ? `${t.teacherProfile.gelarDepan} ` : ''
+            const gelarBelakang = t.teacherProfile?.gelarBelakang ? `, ${t.teacherProfile.gelarBelakang}` : ''
+            const fullName = `${gelarDepan}${t.name}${gelarBelakang}`
+            
+            return {
+                id: t.id,
+                name: fullName,
+                rawName: t.name,
+                email: t.email,
+                nidn: t.teacherProfile?.nidn,
+                nip: t.teacherProfile?.nip,
+                departmentId: t.homebaseDepartment?.id,
+                departmentName: t.homebaseDepartment?.name || 'Tanpa Departemen',
+                facultyId: t.homebaseDepartment?.faculty?.id,
+                facultyName: t.homebaseDepartment?.faculty?.name || 'Tanpa Fakultas'
             }
         })
-        return { success: true, teachers }
+        return { success: true, teachers: formattedTeachers }
     } catch (error) {
         console.error('Failed to get teachers', error)
         return { success: false, error: 'Gagal mengambil data dosen' }
+    }
+}
+
+export async function forceChangePasswordAction(email: string, newPasswordPlain: string) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        })
+
+        if (!user || !user.mustChangePassword) {
+            return { success: false, error: 'Sesi tidak valid.' }
+        }
+
+        const hashedPassword = await bcrypt.hash(newPasswordPlain, 10)
+        
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                mustChangePassword: false
+            }
+        })
+
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function forceCompleteProfileAction(email: string, role: string, data: any) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        })
+
+        if (!user) {
+            return { success: false, error: 'User tidak ditemukan.' }
+        }
+
+        if (role === 'teacher') {
+            if (data.nidn) {
+                const existingNidn = await prisma.teacherProfile.findFirst({ where: { nidn: data.nidn } })
+                if (existingNidn && existingNidn.userId !== user.id) return { success: false, error: 'NIDN tersebut sudah terdaftar pada akun lain.' }
+            }
+            if (data.nip) {
+                const existingNip = await prisma.teacherProfile.findFirst({ where: { nip: data.nip } })
+                if (existingNip && existingNip.userId !== user.id) return { success: false, error: 'NIP/NIK tersebut sudah terdaftar pada akun lain.' }
+            }
+
+            await prisma.teacherProfile.create({
+                data: {
+                    userId: user.id,
+                    nidn: data.nidn || null,
+                    nip: data.nip || null,
+                    gelarDepan: data.gelarDepan || null,
+                    gelarBelakang: data.gelarBelakang || null,
+                    isDlb: data.isDlb || false
+                }
+            })
+        } else if (role === 'student') {
+            if (data.nim) {
+                const existingNim = await prisma.studentProfile.findFirst({ where: { nim: data.nim } })
+                if (existingNim && existingNim.userId !== user.id) return { success: false, error: 'NIM tersebut sudah terdaftar pada akun lain.' }
+            }
+
+            await prisma.studentProfile.create({
+                data: {
+                    userId: user.id,
+                    nim: data.nim || null,
+                    angkatan: data.angkatan ? parseInt(data.angkatan) : null,
+                    jenisKelamin: data.jenisKelamin || null,
+                    alamat: data.alamat || null
+                }
+            })
+        } else {
+            return { success: false, error: 'Role tidak dikenali.' }
+        }
+
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function bulkEnrollStudents(courseId: string, students: { name: string, nim: string, email: string }[], departmentId: string) {
+    if (!courseId || !departmentId || !students || students.length === 0) {
+        return { success: false, error: 'Invalid data provided.' }
+    }
+    
+    let newUsersCount = 0;
+    let existingUsersEnrolledCount = 0;
+    let existingUsersAlreadyEnrolledCount = 0;
+    let errorCount = 0;
+    const errorDetails: string[] = [];
+
+    try {
+        for (const student of students) {
+            try {
+                if (!student.name || !student.nim || !student.email) {
+                    throw new Error("Missing name, nim, or email")
+                }
+                
+                const emailToUse = student.email.toLowerCase().trim()
+                const nimToUse = student.nim.trim()
+                
+                // Check if user exists by email or nim
+                let user = await prisma.user.findFirst({
+                    where: {
+                        OR: [
+                            { email: emailToUse },
+                            { studentProfile: { nim: nimToUse } }
+                        ]
+                    },
+                    include: { studentProfile: true }
+                })
+                
+                if (!user) {
+                    // Create new user Wajib ganti password, pw default sama dengan NIM
+                    const hashedPassword = await bcrypt.hash(nimToUse, 10)
+                    user = await prisma.user.create({
+                        data: {
+                            email: emailToUse,
+                            name: student.name,
+                            password: hashedPassword,
+                            role: 'student',
+                            approvalStatus: 'APPROVED',
+                            mustChangePassword: true,
+                            homebaseDepartmentId: departmentId,
+                            studentProfile: {
+                                create: {
+                                    nim: nimToUse
+                                }
+                            },
+                            departmentRoles: {
+                                create: {
+                                    departmentId: departmentId,
+                                    role: 'student'
+                                }
+                            }
+                        },
+                        include: { studentProfile: true }
+                    })
+                    newUsersCount++;
+                }
+
+                // Make sure they are enrolled in the course
+                const existingEnrollment = await prisma.enrollment.findUnique({
+                    where: {
+                        studentId_courseId: {
+                            studentId: user.id,
+                            courseId: courseId
+                        }
+                    }
+                })
+
+                if (!existingEnrollment) {
+                    await prisma.enrollment.create({
+                        data: {
+                            studentId: user.id,
+                            courseId: courseId,
+                            status: 'active'
+                        }
+                    })
+                    if (user.createdAt.getTime() < Date.now() - 10000) {
+                        // Existed before this operation
+                        existingUsersEnrolledCount++;
+                    }
+                } else {
+                    existingUsersAlreadyEnrolledCount++;
+                }
+                
+            } catch (err: any) {
+                console.error(`Error processing student ${student.email}:`, err)
+                errorCount++;
+                errorDetails.push(`Gagal memproses ${student.email}: ${err.message}`)
+            }
+        }
+        
+        return { 
+            success: true, 
+            newUsersCount, 
+            existingUsersEnrolledCount, 
+            existingUsersAlreadyEnrolledCount,
+            errorCount,
+            errorDetails
+        }
+    } catch (error: any) {
+        console.error("bulkEnrollStudents error:", error)
+        return { success: false, error: 'Terjadi kesalahan internal.' }
     }
 }

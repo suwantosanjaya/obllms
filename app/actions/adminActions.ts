@@ -2,30 +2,50 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import bcrypt from 'bcryptjs'
 
 export async function getAllUsers() {
     return await prisma.user.findMany({
+        include: { departments: true, departmentRoles: true },
         orderBy: { createdAt: 'desc' }
     })
 }
 
-export async function createUser(data: { name: string; email: string; role: string; departmentIds?: string[] }) {
+export async function createUser(data: { 
+    name: string; 
+    email: string; 
+    managedRolesData: { role: string, departmentIds: string[] }[] 
+}) {
     try {
+        const hashedPassword = await bcrypt.hash("123456", 10)
+        
+        const finalRolesArray = data.managedRolesData.map(d => d.role)
+        const roleString = finalRolesArray.join(',')
+
+        const finalDeptRoles = data.managedRolesData.flatMap(d => 
+            d.departmentIds.map(depId => ({
+                departmentId: depId,
+                role: d.role
+            }))
+        )
+
+        const distinctDeptIds = Array.from(new Set(finalDeptRoles.map(dr => dr.departmentId)))
+
         const user = await prisma.user.create({
             data: {
                 name: data.name,
                 email: data.email,
-                role: data.role.toLowerCase(),
-                departments: data.departmentIds && data.departmentIds.length > 0 ? {
-                    connect: data.departmentIds.map(id => ({ id }))
+                password: hashedPassword,
+                mustChangePassword: true,
+                role: roleString.toLowerCase(),
+                departments: distinctDeptIds.length > 0 ? {
+                    connect: distinctDeptIds.map(id => ({ id }))
                 } : undefined,
-                departmentRoles: data.departmentIds && data.departmentIds.length > 0 ? {
-                    create: data.role.split(',').flatMap(role => 
-                        data.departmentIds!.map(departmentId => ({
-                            departmentId,
-                            role: role.trim().toLowerCase()
-                        }))
-                    )
+                departmentRoles: finalDeptRoles.length > 0 ? {
+                    create: finalDeptRoles.map(dr => ({
+                        departmentId: dr.departmentId,
+                        role: dr.role.toLowerCase()
+                    }))
                 } : undefined
             }
         })
@@ -50,44 +70,7 @@ export async function deleteUser(id: string) {
     }
 }
 
-export async function getCurriculumYears() {
-    return await prisma.curriculumYear.findMany({
-        orderBy: { name: 'desc' }
-    })
-}
 
-export async function createCurriculumYear(name: string, startYear?: number, endYear?: number) {
-    try {
-        const cy = await prisma.curriculumYear.create({
-            data: { name, startYear, endYear }
-        })
-        revalidatePath('/admin/settings')
-        revalidatePath('/qa/curriculum')
-        return { success: true, curriculumYear: cy }
-    } catch (error: any) {
-        if (error.code === 'P2002') return { success: false, error: 'Tahun kurikulum sudah ada' }
-        return { success: false, error: error.message }
-    }
-}
-
-export async function setActiveCurriculumYear(id: string) {
-    try {
-        // Unset all first
-        await prisma.curriculumYear.updateMany({
-            data: { isActive: false }
-        })
-        // Set the active one
-        await prisma.curriculumYear.update({
-            where: { id },
-            data: { isActive: true }
-        })
-        revalidatePath('/admin/settings')
-        revalidatePath('/qa/curriculum')
-        return { success: true }
-    } catch (error: any) {
-        return { success: false, error: error.message }
-    }
-}
 
 import { getSessionUser } from './userActions'
 
@@ -135,48 +118,75 @@ export async function toggleUserStatus(targetUserId: string) {
     }
 }
 
-export async function updateUserRole(targetUserId: string, newRole: string) {
+export async function updateUserRole(
+    targetUserId: string, 
+    managedRolesData: { role: string, departmentIds: string[] }[]
+) {
     try {
         const caller = await getSessionUser()
         if (!caller) return { success: false, error: 'Unauthorized' }
 
         const targetUser = await prisma.user.findUnique({ 
             where: { id: targetUserId },
-            include: { departments: true }
+            include: { departments: true, departmentRoles: true }
         })
         if (!targetUser) return { success: false, error: 'User not found' }
 
         const callerRole = caller.activeRole || caller.role
-        const newRoles = newRole.split(',')
+        
+        // Define which roles the caller can manage
+        let allowedToManage: string[] = []
+        if (callerRole === 'super_admin') allowedToManage = ['admin', 'qa', 'teacher', 'student']
+        else if (callerRole === 'admin') allowedToManage = ['qa', 'teacher', 'student']
 
-        // Hierarchy rule: Caller can only update to roles they can manage
-        let canEdit = true
-        for (const nr of newRoles) {
-            if (callerRole === 'super_admin' && nr !== 'admin') {
-                canEdit = false
-            } else if (callerRole === 'admin' && !['qa', 'teacher', 'student'].includes(nr)) {
-                canEdit = false
-            } else if (callerRole === 'qa' || callerRole === 'teacher' || callerRole === 'student') {
-                canEdit = false
+        if (allowedToManage.length === 0) {
+            return { success: false, error: 'Anda tidak memiliki izin untuk mengelola peran.' }
+        }
+
+        // Separate user's existing roles into managed vs unmanaged
+        const existingRolesArray = targetUser.role.split(',').map(r => r.trim()).filter(Boolean)
+        const unmanagedRoles = existingRolesArray.filter(r => !allowedToManage.includes(r))
+        const existingUnmanagedDeptRoles = targetUser.departmentRoles.filter(dr => !allowedToManage.includes(dr.role))
+
+        // Process the new managed roles from the payload
+        const newManagedRoles = managedRolesData.map(d => d.role)
+        
+        // Check if payload contains any role the caller shouldn't manage
+        for (const nr of newManagedRoles) {
+            if (!allowedToManage.includes(nr)) {
+                return { success: false, error: `Anda tidak memiliki izin untuk menetapkan peran: ${nr}` }
             }
         }
 
-        if (!canEdit) {
-            return { success: false, error: 'Anda tidak memiliki izin untuk menetapkan peran ini.' }
-        }
+        // Final roles array: unmanaged + new managed
+        const finalRolesArray = [...new Set([...unmanagedRoles, ...newManagedRoles])]
+        const newRoleString = finalRolesArray.join(',')
+
+        // Final departmentRoles
+        const newManagedDeptRoles = managedRolesData.flatMap(d => 
+            d.departmentIds.map(depId => ({
+                departmentId: depId,
+                role: d.role
+            }))
+        )
+        const finalDeptRoles = [...existingUnmanagedDeptRoles, ...newManagedDeptRoles]
+
+        // Collect distinct department IDs
+        const distinctDeptIds = Array.from(new Set(finalDeptRoles.map(dr => dr.departmentId)))
 
         await prisma.user.update({
             where: { id: targetUserId },
             data: { 
-                role: newRole,
+                role: newRoleString,
+                departments: {
+                    set: distinctDeptIds.map(id => ({ id }))
+                },
                 departmentRoles: {
                     deleteMany: {},
-                    create: newRoles.flatMap(role => 
-                        targetUser.departments.map(d => ({
-                            departmentId: d.id,
-                            role: role.trim().toLowerCase()
-                        }))
-                    )
+                    create: finalDeptRoles.map(dr => ({
+                        departmentId: dr.departmentId,
+                        role: dr.role
+                    }))
                 }
             }
         })
@@ -205,11 +215,7 @@ export async function getDepartmentsWithHeads() {
 export async function getHeadOfDepartmentCandidates(departmentId: string) {
     return await prisma.user.findMany({
         where: {
-            departmentRoles: {
-                some: {
-                    role: 'teacher'
-                }
-            },
+            role: { contains: 'teacher' },
             headedDepartments: {
                 none: {
                     id: { not: departmentId }

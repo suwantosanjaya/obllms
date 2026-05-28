@@ -3,8 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, AlertCircle, Trash2, Calendar, Users } from 'lucide-react'
 import { CreateModuleDialog } from '@/app/components/dosen/CreateModuleDialog'
+import { EditModuleDialog } from '@/app/components/dosen/EditModuleDialog'
 import { CourseSettingsDialog } from '@/app/components/dosen/CourseSettingsDialog'
+import { DeleteModuleButton } from '@/app/components/dosen/DeleteModuleButton'
 import { Button } from '@/components/ui/button'
+import { TeacherStudentManagementDialog } from '@/app/components/teacher/TeacherStudentManagementDialog'
+import { RemoveStudentButton } from '@/app/components/teacher/RemoveStudentButton'
+import { redirect } from 'next/navigation'
 
 export default async function DosenCourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
     const params = await props.params;
@@ -21,20 +26,36 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
     }
 
     const course: any = res.course
+    const isClosed = course.config?.enrollmentDeadline && new Date() > new Date(course.config.enrollmentDeadline);
+
+    // Count only CLOs matching the course's curriculum year
+    const cloCount = course.curriculumYearId
+        ? (course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId) ?? []).length
+        : (course.subject?.subjectClos?.length ?? 0)
 
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <Badge variant="outline" className="text-sm">
                             {course.subject.code}
                         </Badge>
                         <Badge variant="secondary" className="text-sm">
                             {course.semester} {course.academicYear}
                         </Badge>
-                        <h1 className="text-3xl font-bold tracking-tight">{course.subject.title}</h1>
+                        {course.config?.isPublished ? (
+                            <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-sm">Dipublikasi</Badge>
+                        ) : (
+                            <Badge variant="secondary" className="bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm">Draft</Badge>
+                        )}
+                        {course.config?.enrollmentDeadline && (
+                            <Badge variant="outline" className={`text-sm ${isClosed ? 'border-red-200 bg-red-50 text-red-700' : 'border-orange-200 bg-orange-50 text-orange-700'}`}>
+                                {isClosed ? 'Sudah ditutup:' : 'Akan ditutup:'} {new Date(course.config.enrollmentDeadline).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </Badge>
+                        )}
                     </div>
+                    <h1 className="text-3xl font-bold tracking-tight mt-3">{course.subject.title}</h1>
                     <p className="text-muted-foreground mt-2 max-w-3xl">{course.subject.description}</p>
                 </div>
                 <div className="flex gap-2">
@@ -46,12 +67,15 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                 {/* Main Content Area */}
                 <div className="md:col-span-3 lg:col-span-4 space-y-6">
                     <Card>
-                        <CardHeader className="flex flex-row justify-between items-center bg-muted/30 border-b">
+                        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 border-b">
                             <div>
                                 <CardTitle>Materi & Aktivitas Mingguan</CardTitle>
                                 <CardDescription>Kelola struktur pembelajaran dan pemetaan CLO (Capaian Pembelajaran).</CardDescription>
                             </div>
-                            <CreateModuleDialog courseId={course.id} clos={course.subject?.subjectClos?.map((sc: any) => ({ id: sc.clo.id, code: sc.clo.code })) ?? []} />
+                            <CreateModuleDialog courseId={course.id} clos={(course.curriculumYearId
+                                ? course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId)
+                                : course.subject?.subjectClos ?? []
+                            )?.map((sc: any) => ({ id: sc.clo.id, code: sc.clo.code, description: sc.clo.description ?? '' })) ?? []} />
                         </CardHeader>
                         <CardContent className="pt-6">
                             {course.modules.length === 0 ? (
@@ -65,32 +89,48 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                             ) : (
                                 <div className="space-y-4">
                                     {course.modules.map((module: any) => (
-                                        <div key={module.id} className="group flex gap-4 p-4 border rounded-xl hover:border-primary/20 transition-all bg-card shadow-sm hover:shadow-md">
-                                            <div className="flex-none flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg min-w-[100px] border">
-                                                <Calendar className="w-5 h-5 text-muted-foreground mb-1" />
+                                        <div key={module.id} className="group flex flex-col sm:flex-row gap-4 p-4 border rounded-xl hover:border-primary/20 transition-all bg-card shadow-sm hover:shadow-md">
+                                            <div className="flex-none flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg sm:min-w-[100px] border">
+                                                <Calendar className="w-5 h-5 text-muted-foreground mb-1 hidden sm:block" />
                                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Minggu</span>
                                                 <span className="text-2xl font-bold">{module.weekNumber}</span>
                                             </div>
-                                            <div className="flex-grow flex flex-col justify-center">
-                                                <div className="flex justify-between items-start">
-                                                    <h3 className="font-bold text-lg">{module.title}</h3>
-                                                    {module.clo && (
-                                                        <Badge variant="secondary">
-                                                            {module.clo.code}
-                                                        </Badge>
-                                                    )}
+                                            <div className="flex-grow flex flex-col justify-center min-w-0">
+                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                                                    <h3 className="font-bold text-lg leading-tight break-words">{module.title}</h3>
+                                                    <div className="flex flex-wrap gap-1 justify-end">
+                                                        {module.moduleClos && module.moduleClos.length > 0
+                                                            ? module.moduleClos.map((mc: any) => (
+                                                                <Badge key={mc.id} variant="secondary">{mc.clo.code}</Badge>
+                                                            ))
+                                                            : module.clo && (
+                                                                <Badge variant="secondary">{module.clo.code}</Badge>
+                                                            )
+                                                        }
+                                                    </div>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                                    {module.content || "Tidak ada rincian materi."}
-                                                </p>
+                                                {module.content ? (
+                                                    <div className="prose prose-sm max-w-none text-muted-foreground mt-2 break-words" dangerouslySetInnerHTML={{ __html: module.content }} />
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap break-words">
+                                                        Tidak ada rincian materi.
+                                                    </p>
+                                                )}
                                             </div>
-                                            <div className="flex-none flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {/* In a real app we'd use a form/action to delete or edit */}
-                                                <form action={async () => { 'use server' }}>
-                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </form>
+                                            <div className="flex-none flex sm:flex-col items-center justify-end gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0 border-border">
+                                                <EditModuleDialog 
+                                                    courseId={course.id} 
+                                                    module={module} 
+                                                    clos={(course.curriculumYearId
+                                                        ? course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId)
+                                                        : course.subject?.subjectClos ?? []
+                                                    )?.map((sc: any) => ({ id: sc.clo.id, code: sc.clo.code, description: sc.clo.description ?? '' })) ?? []}
+                                                />
+                                                <DeleteModuleButton 
+                                                    moduleId={module.id} 
+                                                    courseId={course.id} 
+                                                    moduleTitle={module.title} 
+                                                />
                                             </div>
                                         </div>
                                     ))}
@@ -101,11 +141,12 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
 
                     {/* Daftar Mahasiswa */}
                     <Card>
-                        <CardHeader className="flex flex-row justify-between items-center bg-muted/30 border-b">
+                        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 border-b">
                             <div>
                                 <CardTitle>Daftar Mahasiswa Terdaftar</CardTitle>
                                 <CardDescription>Daftar peserta didik yang tergabung di kelas ini.</CardDescription>
                             </div>
+                            <TeacherStudentManagementDialog courseId={course.id} departmentId={course.departmentId || course.subject?.departmentId || ''} />
                         </CardHeader>
                         <CardContent className="pt-6">
                             {course.enrollments && course.enrollments.length === 0 ? (
@@ -127,11 +168,25 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                                 <div className="flex flex-col">
                                                     <span className="font-medium text-sm">{enr.student.name}</span>
                                                     <span className="text-xs text-muted-foreground">{enr.student.email}</span>
+                                                    {enr.student.studentProfile?.nim && (
+                                                        <span className="text-xs font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded mt-0.5 w-fit">
+                                                            NIM: {enr.student.studentProfile.nim}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
-                                                Aktif
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                {enr.student.isActive ? (
+                                                    <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+                                                        Aktif
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="secondary" className="bg-red-100 text-red-600 hover:bg-red-100 border-none">
+                                                        Nonaktif
+                                                    </Badge>
+                                                )}
+                                                <RemoveStudentButton studentId={enr.studentId} courseId={course.id} studentName={enr.student.name} />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -190,7 +245,7 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                 <div className="text-xs text-muted-foreground mt-1">Mahasiswa Aktif</div>
                             </div>
                             <div>
-                                <div className="text-3xl font-bold">{course.subject?.subjectClos?.length ?? 0}</div>
+                                <div className="text-3xl font-bold">{cloCount}</div>
                                 <div className="text-xs text-muted-foreground mt-1">Capaian Pembelajaran (CLO)</div>
                             </div>
                         </CardContent>

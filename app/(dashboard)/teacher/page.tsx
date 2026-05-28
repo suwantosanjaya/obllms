@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { getInstructorCourses, getInstructorDashboardMetrics } from '@/app/actions/courseActions'
 import { getSessionUser } from '@/app/actions/userActions'
-import { CreateCourseDialog } from '@/app/components/dosen/CreateCourseDialog'
+import { RequestAccessDialog } from '@/app/components/teacher/RequestAccessDialog'
+import { AccessHistoryDialog } from '@/app/components/teacher/AccessHistoryDialog'
+import { getRegistrationData } from '@/app/actions/authActions'
+import { getUserAccessRequests } from '@/app/actions/accessRequestActions'
 import { redirect } from 'next/navigation'
 
 export default async function DosenDashboard() {
@@ -23,6 +26,12 @@ export default async function DosenDashboard() {
         totalCourses: 0, totalStudents: 0, unassessedCount: 0, totalAssessments: 0, averageOBL: 0, atRiskStudents: []
     }
 
+    const regData = await getRegistrationData()
+    const universities = regData.success ? regData.universities : []
+
+    const accessHistoryRes = await getUserAccessRequests(dosenUser.id)
+    const accessHistory = (accessHistoryRes.success && accessHistoryRes.requests) ? accessHistoryRes.requests : []
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
@@ -30,7 +39,10 @@ export default async function DosenDashboard() {
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard Dosen</h1>
                     <p className="text-muted-foreground mt-1">Ringkasan kelas, pencapaian OBL, dan analisis mahasiswa.</p>
                 </div>
-                <CreateCourseDialog />
+                <div className="flex gap-2">
+                    <AccessHistoryDialog requests={accessHistory} />
+                    <RequestAccessDialog universities={universities || []} userId={dosenUser.id} />
+                </div>
             </div>
 
             {/* Dosen Quick Stats */}
@@ -100,7 +112,7 @@ export default async function DosenDashboard() {
                                                 </Badge>
                                                 <span className="font-semibold">{course.subject.title}</span>
                                             </div>
-                                            <span className="text-sm text-muted-foreground">{course.subject.code} • {course._count?.enrollments || 0} Mahasiswa</span>
+                                            <span className="text-sm text-muted-foreground">{course.subject.code} • {course.classCode || 'Kelas Reguler'} • {course._count?.enrollments || 0} Mahasiswa</span>
                                         </div>
                                         <Button variant="outline" size="sm" asChild>
                                             <Link href={`/dosen/course/${course.id}`}>Kelola</Link>
@@ -110,7 +122,7 @@ export default async function DosenDashboard() {
                             )}
                         </div>
                         <Button variant="outline" className="mt-6 w-full" asChild>
-                            <Link href="/dosen/obl">Lihat Detail Pemetaan OBL</Link>
+                            <Link href="/teacher/obl">Lihat Detail Pemetaan OBL</Link>
                         </Button>
                     </CardContent>
                 </Card>

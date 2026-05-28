@@ -36,7 +36,8 @@ export default async function ManageCoursesPage() {
                             <TableRow>
                                 <TableHead>Kode Kelas</TableHead>
                                 <TableHead>Nama Mata Kuliah</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Semester</TableHead>
+                                <TableHead>Status Pendaftaran</TableHead>
                                 <TableHead>Jadwal</TableHead>
                                 <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
@@ -49,8 +50,10 @@ export default async function ManageCoursesPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                courses.map((course: any) => (
-                                    <TableRow key={course.id}>
+                                courses.map((course: any) => {
+                                    const isClosed = course.config?.enrollmentDeadline && new Date() > new Date(course.config.enrollmentDeadline);
+                                    return (
+                                        <TableRow key={course.id}>
                                         <TableCell className="font-medium">{course.subject.code}</TableCell>
                                         <TableCell>
                                             <span className="font-semibold block">{course.subject.title}</span>
@@ -61,9 +64,23 @@ export default async function ManageCoursesPage() {
                                             {course.semester} {course.academicYear}
                                         </TableCell>
                                         <TableCell>
-                                            <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
-                                                Aktif
-                                            </span>
+                                            <div className="flex flex-col gap-2 items-start">
+                                                {course.config?.isPublished ? (
+                                                    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-600 text-white">
+                                                        Dipublikasi
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-slate-200 text-slate-700">
+                                                        Draft
+                                                    </span>
+                                                )}
+                                                {course.config?.enrollmentDeadline && (
+                                                    <span className={`text-[10px] ${isClosed ? 'text-red-700 bg-red-50 border-red-200' : 'text-orange-700 bg-orange-50 border-orange-200'} border px-2 py-0.5 rounded flex flex-col`}>
+                                                        <span className="font-semibold">{isClosed ? 'Sudah ditutup:' : 'Akan ditutup:'}</span>
+                                                        <span>{new Date(course.config.enrollmentDeadline).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </span>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             {course.schedule ? (
@@ -80,8 +97,9 @@ export default async function ManageCoursesPage() {
                                                 </Link>
                                             </Button>
                                         </TableCell>
-                                    </TableRow>
-                                ))
+                                        </TableRow>
+                                    )
+                                })
                             )}
                         </TableBody>
                     </Table>

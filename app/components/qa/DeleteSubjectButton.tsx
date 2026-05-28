@@ -71,7 +71,7 @@ export function DeleteSubjectButton({ id, title }: DeleteSubjectButtonProps) {
                             handleDelete()
                         }}
                         disabled={isLoading}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        variant="destructive"
                     >
                         {isLoading ? 'Deleting...' : 'Delete'}
                     </AlertDialogAction>

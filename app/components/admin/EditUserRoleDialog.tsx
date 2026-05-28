@@ -13,8 +13,10 @@ interface EditUserRoleDialogProps {
         id: string
         name: string
         role: string
+        departmentRoles: any[]
     }
     allowedRoles: string[]
+    departments?: { id: string, name: string }[]
 }
 
 const roleMap: Record<string, string> = {
@@ -25,9 +27,20 @@ const roleMap: Record<string, string> = {
     student: 'Mahasiswa (Student)'
 }
 
-export function EditUserRoleDialog({ user, allowedRoles }: EditUserRoleDialogProps) {
+export function EditUserRoleDialog({ user, allowedRoles, departments = [] }: EditUserRoleDialogProps) {
     const [open, setOpen] = useState(false)
-    const [selectedRoles, setSelectedRoles] = useState<string[]>(user.role.split(',').map(r => r.trim()))
+    const initialSelectedRoles = user.role.split(',').map(r => r.trim()).filter(r => allowedRoles.includes(r))
+    const [selectedRoles, setSelectedRoles] = useState<string[]>(initialSelectedRoles)
+    
+    // Initialize roleDepts from existing departmentRoles
+    const initialRoleDepts: Record<string, string[]> = {}
+    if (user.departmentRoles) {
+        user.departmentRoles.forEach((dr: any) => {
+            if (!initialRoleDepts[dr.role]) initialRoleDepts[dr.role] = []
+            initialRoleDepts[dr.role].push(dr.departmentId)
+        })
+    }
+    const [roleDepts, setRoleDepts] = useState<Record<string, string[]>>(initialRoleDepts)
     const [loading, setLoading] = useState(false)
     const { toast } = useToast()
 
@@ -43,16 +56,14 @@ export function EditUserRoleDialog({ user, allowedRoles }: EditUserRoleDialogPro
             return
         }
 
-        const newRoleString = selectedRoles.join(',')
-
-        if (newRoleString === user.role) {
-            setOpen(false)
-            return
-        }
+        const managedRolesData = selectedRoles.map(role => ({
+            role,
+            departmentIds: roleDepts[role] || []
+        }))
 
         setLoading(true)
         try {
-            const res = await updateUserRole(user.id, newRoleString)
+            const res = await updateUserRole(user.id, managedRolesData)
             if (res.success) {
                 toast({
                     title: 'Berhasil',
@@ -96,25 +107,60 @@ export function EditUserRoleDialog({ user, allowedRoles }: EditUserRoleDialogPro
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label>Peran Baru</Label>
-                            <div className="space-y-2 border p-3 rounded-md mt-2">
+                            <div className="space-y-4 border p-3 rounded-md mt-2 max-h-96 overflow-y-auto">
                                 {allowedRoles.map(r => (
-                                    <div key={r} className="flex items-center space-x-2">
-                                        <input 
-                                            type="checkbox" 
-                                            id={`edit-role-${r}`} 
-                                            checked={selectedRoles.includes(r)}
-                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedRoles([...selectedRoles, r])
-                                                } else {
-                                                    setSelectedRoles(selectedRoles.filter(role => role !== r))
-                                                }
-                                            }}
-                                        />
-                                        <Label htmlFor={`edit-role-${r}`} className="font-normal cursor-pointer">
-                                            {roleMap[r] || r}
-                                        </Label>
+                                    <div key={r} className="flex flex-col space-y-1">
+                                        <div className="flex items-center space-x-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id={`edit-role-${r}`} 
+                                                checked={selectedRoles.includes(r)}
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedRoles([...selectedRoles, r])
+                                                    } else {
+                                                        setSelectedRoles(selectedRoles.filter(role => role !== r))
+                                                    }
+                                                }}
+                                            />
+                                            <Label htmlFor={`edit-role-${r}`} className="font-normal cursor-pointer font-medium">
+                                                {roleMap[r] || r}
+                                            </Label>
+                                        </div>
+                                        
+                                        {selectedRoles.includes(r) && departments && departments.length > 0 && (
+                                            <div className="ml-6 mt-2 space-y-2 border-l-2 pl-4 border-muted py-1">
+                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Departemen:</Label>
+                                                <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                                                    {departments.map(d => (
+                                                        <div key={d.id} className="flex items-center space-x-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                id={`role-${r}-dept-${d.id}`}
+                                                                checked={roleDepts[r]?.includes(d.id) || false}
+                                                                onChange={(e) => {
+                                                                    setRoleDepts(prev => {
+                                                                        const next = { ...prev }
+                                                                        if (!next[r]) next[r] = []
+                                                                        if (e.target.checked) {
+                                                                            next[r] = [...next[r], d.id]
+                                                                        } else {
+                                                                            next[r] = next[r].filter(id => id !== d.id)
+                                                                        }
+                                                                        return next
+                                                                    })
+                                                                }}
+                                                                className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                            />
+                                                            <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer">
+                                                                {d.name}
+                                                            </Label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

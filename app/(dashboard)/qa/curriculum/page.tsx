@@ -1,330 +1,284 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-
-import { CreateVisionMissionDialog } from '@/app/components/qa/CreateVisionMissionDialog'
-import { EditVisionMissionDialog } from '@/app/components/qa/EditVisionMissionDialog'
-import { DeleteVisionMissionButton } from '@/app/components/qa/DeleteVisionMissionButton'
-
-import { CreateGraduateProfileDialog } from '@/app/components/qa/CreateGraduateProfileDialog'
-import { EditGraduateProfileDialog } from '@/app/components/qa/EditGraduateProfileDialog'
-import { DeleteGraduateProfileButton } from '@/app/components/qa/DeleteGraduateProfileButton'
-
-import { CreatePLODialog } from '@/app/components/qa/CreatePLODialog'
-import { EditPLODialog } from '@/app/components/qa/EditPLODialog'
-import { DeletePLOButton } from '@/app/components/qa/DeletePLOButton'
-
-import { CreateCLODialog } from '@/app/components/qa/CreateCLODialog'
-import { EditCLODialog } from '@/app/components/qa/EditCLODialog'
-import { DeleteCLOButton } from '@/app/components/qa/DeleteCLOButton'
-import { SubjectCLOMappingTab } from '@/app/components/qa/SubjectCLOMappingTab'
-
-import { getVisionMissions, getGraduateProfiles, getPLOs, getAllCLOs, checkCurriculumLock, getDepartmentCurriculumStatus } from '@/app/actions/obeActions'
+import { Button } from '@/components/ui/button'
 import { getSessionUser } from '@/app/actions/userActions'
+import { getCurriculumYears } from '@/app/actions/obeActions'
 import prisma from '@/lib/db'
-import { CurriculumYearSelector } from '@/app/components/qa/CurriculumYearSelector'
-import { CurriculumApprovalBanner } from '@/app/components/qa/CurriculumApprovalBanner'
-
-export default async function QaCurriculumPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ [key: string]: string | undefined }>
-}) {
+import Link from 'next/link'
+import { CreateCurriculumYearDialog } from '@/app/components/qa/CreateCurriculumYearDialog'
+import { ArrowRight, FileEdit, Eye, PlusCircle, Clock, CheckCheck } from 'lucide-react'
+import { CurriculumApprovalCardActions } from '@/app/components/qa/CurriculumApprovalCardActions'
+import { CurriculumRevisionRequestButton } from '@/app/components/qa/CurriculumRevisionRequestButton'
+export default async function QaCurriculumDashboard() {
     const user = await getSessionUser()
-    const departmentId = user?.activeDepartmentId || undefined
+    const departmentId = user?.activeDepartmentId
+    const activeRole = user?.activeRole || ''
 
-    const params = await searchParams
+    // Get all curriculum years for this department
+    const curriculumYears = departmentId ? await getCurriculumYears(departmentId) : []
     
-    // Get all curriculum years for the dropdown
-    const curriculumYears = await prisma.curriculumYear.findMany({ orderBy: { name: 'desc' } })
-    const activeYear = curriculumYears.find(cy => cy.isActive)
-    const selectedYearId = params.yearId || activeYear?.id || undefined
+    // Get statuses for this department (with full history fields)
+    const deptCurriculums = departmentId 
+        ? await prisma.departmentCurriculum.findMany({ 
+            where: { departmentId },
+          })
+        : []
 
-    // Fetch all data scoped by departmentId and selectedYearId
-    const lockStatus = await checkCurriculumLock(departmentId, selectedYearId)
-    const isLocked = lockStatus.locked
-    const currStatus = await getDepartmentCurriculumStatus(departmentId as string, selectedYearId as string)
-    const department = departmentId ? await prisma.department.findUnique({ where: { id: departmentId } }) : null
+    // Collect all unique actor userIds from history fields
+    const actorIds = [
+        ...deptCurriculums.map(d => d.submittedBy),
+        ...deptCurriculums.map(d => d.approvedBy),
+        ...deptCurriculums.map(d => d.rejectedBy),
+        ...deptCurriculums.map(d => d.revisionRequestedBy),
+        ...deptCurriculums.map(d => d.revisionResultBy),
+    ].filter((id): id is string => !!id)
+    const uniqueActorIds = [...new Set(actorIds)]
 
-    const vmRes = await getVisionMissions(departmentId)
-    const visionMissions = vmRes.success ? (vmRes.visionMissions || []) : []
+    const actorUsers = uniqueActorIds.length > 0
+        ? await prisma.user.findMany({ where: { id: { in: uniqueActorIds } }, select: { id: true, name: true } })
+        : []
+    const actorMap = Object.fromEntries(actorUsers.map(u => [u.id, u.name]))
 
-    const gpRes = await getGraduateProfiles(departmentId, selectedYearId)
-    const graduateProfiles = gpRes.success ? (gpRes.profiles || []) : []
+    // Get department's activeHeadId
+    const department = departmentId
+        ? await prisma.department.findUnique({ where: { id: departmentId }, select: { activeHeadId: true } })
+        : null
 
-    const ploRes = await getPLOs(departmentId, selectedYearId)
-    const plos = ploRes.success ? (ploRes.plos || []) : []
-
-    const cloRes = await getAllCLOs(selectedYearId, departmentId)
-    const clos = cloRes.success ? (cloRes.clos || []) : []
-
-    // Master data for dropdowns
-    const departments = await prisma.department.findMany({ orderBy: { code: 'asc' } })
-    
-    const subjectWhereClause = departmentId ? {
-        OR: [
-            { departmentId: departmentId },
-            { scope: 'universitas' }
-        ]
-    } : {}
-    const subjects = await prisma.subject.findMany({ where: subjectWhereClause, orderBy: { code: 'asc' } })
-    
-    const mappedSubjectsToDropdown = subjects.map(s => ({ id: s.id, title: `${s.code} - ${s.title}` }))
-    const mappedPlosToDropdown = plos.map((p: any) => ({ id: p.id, code: p.code }))
-    const mappedVisionMissionsToDropdown = visionMissions.map((vm: any) => ({ id: vm.id, code: vm.code }))
-    const mappedGraduateProfilesToDropdown = graduateProfiles.map((gp: any) => ({ id: gp.id, code: gp.code, title: gp.title }))
-
+    const isHod = activeRole === 'head_of_department'
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Curriculum Review (OBE)</h1>
-                <div className="flex justify-between items-start mt-1">
-                    <p className="text-muted-foreground">Manage the Outcome-Based Education cascade from Vision/Mission down to Course Learning Outcomes.</p>
-                    <CurriculumYearSelector years={curriculumYears} activeYearId={activeYear?.id || null} />
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Curriculum Dashboard</h1>
+                    <p className="text-muted-foreground mt-1">
+                        {isHod
+                            ? 'Tinjau dan setujui kurikulum yang telah diajukan oleh tim QA.'
+                            : 'Pilih tahun kurikulum untuk mulai menyusun atau meninjau kurikulum departemen Anda.'}
+                    </p>
                 </div>
+                {departmentId && !isHod && <CreateCurriculumYearDialog departmentId={departmentId} />}
             </div>
 
-            <CurriculumApprovalBanner
-                departmentId={departmentId}
-                curriculumYearId={selectedYearId}
-                status={currStatus?.status || 'DRAFT'}
-                activeRole={user?.activeRole || ''}
-                activeHeadId={department?.activeHeadId || undefined}
-                userId={user?.id}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {curriculumYears.map(year => {
+                    const statusRecord = deptCurriculums.find(dc => dc.curriculumYearId === year.id)
+                    const status = statusRecord?.status || 'BELUM DIMULAI'
+                    
+                    // Status badge — shared by both roles
+                    let statusBadge = <Badge variant="outline">Belum Dimulai</Badge>
+                    if (status === 'DRAFT')
+                        statusBadge = <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Draft</Badge>
+                    else if (status === 'REVISION')
+                        statusBadge = <Badge variant="destructive">Perlu Revisi</Badge>
+                    else if (status === 'SUBMITTED')
+                        statusBadge = <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Menunggu Persetujuan</Badge>
+                    else if (status === 'REVISION_REQUESTED')
+                        statusBadge = <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Permintaan Revisi ✎</Badge>
+                    else if (status === 'APPROVED')
+                        statusBadge = <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Disetujui ✓</Badge>
 
-            <Tabs defaultValue="vision" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="vision">1. Vision & Mission</TabsTrigger>
-                    <TabsTrigger value="gp">2. Graduate Profiles</TabsTrigger>
-                    <TabsTrigger value="plo">3. PLO (Program)</TabsTrigger>
-                    <TabsTrigger value="clo">4. CLO (Bank)</TabsTrigger>
-                    <TabsTrigger value="mapping">5. CLO-Subject Mapping</TabsTrigger>
-                </TabsList>
+                    // QA action button
+                    let qaActionIcon = <PlusCircle className="w-4 h-4 mr-2" />
+                    let qaActionText = "Mulai Buat Kurikulum"
+                    let qaButtonVariant: "default" | "outline" | "secondary" = "default"
+                    const qaIsDisabled = status === 'SUBMITTED' || status === 'REVISION_REQUESTED'
+                    if (status === 'DRAFT') {
+                        qaActionIcon = <FileEdit className="w-4 h-4 mr-2" />
+                        qaActionText = "Lanjutkan Editing"
+                        qaButtonVariant = "secondary"
+                    } else if (status === 'REVISION') {
+                        qaActionIcon = <FileEdit className="w-4 h-4 mr-2" />
+                        qaActionText = "Perbaiki Kurikulum"
+                        qaButtonVariant = "default"
+                    } else if (status === 'SUBMITTED') {
+                        qaActionIcon = <Clock className="w-4 h-4 mr-2" />
+                        qaActionText = "Menunggu Persetujuan..."
+                        qaButtonVariant = "outline"
+                    } else if (status === 'REVISION_REQUESTED') {
+                        qaActionIcon = <Clock className="w-4 h-4 mr-2" />
+                        qaActionText = "Menunggu Keputusan Ketua..."
+                        qaButtonVariant = "outline"
+                    } else if (status === 'APPROVED') {
+                        qaActionIcon = <CheckCheck className="w-4 h-4 mr-2" />
+                        qaActionText = "Lihat Kurikulum"
+                        qaButtonVariant = "outline"
+                    }
 
-                {/* 1. VISION & MISSION TAB */}
-                <TabsContent value="vision" className="pt-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Institution Vision & Mission</CardTitle>
-                                <CardDescription>
-                                    Visi dan misi departemen {department?.name || 'Anda'}.
+                    const needsHodAction = (status === 'SUBMITTED' || status === 'REVISION_REQUESTED') && isHod
+
+                    const historyEvents = []
+                    if (statusRecord?.submittedAt) {
+                        historyEvents.push({
+                            id: 'submitted',
+                            type: 'SUBMITTED',
+                            date: new Date(statusRecord.submittedAt),
+                            by: statusRecord.submittedBy,
+                        })
+                    }
+                    if (statusRecord?.rejectedAt) {
+                        historyEvents.push({
+                            id: 'rejected',
+                            type: 'REJECTED',
+                            date: new Date(statusRecord.rejectedAt),
+                            by: statusRecord.rejectedBy,
+                        })
+                    }
+                    if (statusRecord?.approvedAt) {
+                        historyEvents.push({
+                            id: 'approved',
+                            type: 'APPROVED',
+                            date: new Date(statusRecord.approvedAt),
+                            by: statusRecord.approvedBy,
+                        })
+                    }
+                    if (statusRecord?.revisionRequestedAt) {
+                        historyEvents.push({
+                            id: 'revision_requested',
+                            type: 'REVISION_REQUESTED',
+                            date: new Date(statusRecord.revisionRequestedAt),
+                            by: statusRecord.revisionRequestedBy,
+                            note: statusRecord.revisionRequestNote,
+                            result: statusRecord.revisionRequestResult,
+                            resultAt: statusRecord.revisionResultAt,
+                        })
+                    }
+                    // Sort history events by date (newest first)
+                    historyEvents.sort((a, b) => b.date.getTime() - a.date.getTime())
+
+                    return (
+                        <Card key={year.id} className={`relative overflow-hidden transition-shadow hover:shadow-md ${
+                            needsHodAction ? 'border-blue-300 shadow-blue-100 shadow-md' : ''
+                        }`}>
+                            {/* Highlight stripe for HoD when action is needed */}
+                            {needsHodAction && (
+                                <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-lg ${
+                                    status === 'REVISION_REQUESTED' ? 'bg-amber-500' : 'bg-blue-500'
+                                }`} />
+                            )}
+                            <CardHeader>
+                                <CardTitle>{year.name}</CardTitle>
+                                <CardDescription className="line-clamp-2 mt-1 min-h-10">
+                                    {year.startYear && year.endYear ? `Masa Berlaku: ${year.startYear}-${year.endYear}` : 'Periode penyusunan kurikulum'}
+                                    {year.description && <span className="block mt-1 text-xs text-muted-foreground">{year.description}</span>}
                                 </CardDescription>
-                            </div>
-                            <CreateVisionMissionDialog isLocked={isLocked} departmentId={departmentId} />
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">Code</TableHead>
-                                        <TableHead className="w-[100px]">Type</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {visionMissions.length === 0 ? (
-                                        <TableRow><TableCell colSpan={4} className="text-center py-4">No Vision/Mission data found.</TableCell></TableRow>
-                                    ) : (
-                                        visionMissions.map((vm: any) => (
-                                            <TableRow key={vm.id}>
-                                                <TableCell className="font-semibold">{vm.code}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={vm.type === 'vision' ? 'default' : 'secondary'}>{vm.type.toUpperCase()}</Badge>
-                                                </TableCell>
-                                                <TableCell>{vm.description}</TableCell>
-                                                <TableCell className="text-right flex items-center justify-end gap-2">
-                                                    <EditVisionMissionDialog vm={vm} isLocked={isLocked} departmentId={departmentId} />
-                                                    <DeleteVisionMissionButton id={vm.id} code={vm.code} disabled={isLocked} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium">Status:</span>
+                                    {statusBadge}
+                                </div>
+                                {/* History Timeline */}
+                                {historyEvents.length > 0 && (
+                                    <div className="border-t pt-3 space-y-2">
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Riwayat</p>
+                                        <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                                            {historyEvents.map((event) => (
+                                                <div key={event.id} className="flex items-start gap-2">
+                                                    {event.type === 'SUBMITTED' && <div className="mt-0.5 w-2 h-2 rounded-full bg-blue-400 shrink-0" />}
+                                                    {event.type === 'REJECTED' && <div className="mt-0.5 w-2 h-2 rounded-full bg-red-400 shrink-0" />}
+                                                    {event.type === 'APPROVED' && <div className="mt-0.5 w-2 h-2 rounded-full bg-green-500 shrink-0" />}
+                                                    {event.type === 'REVISION_REQUESTED' && <div className="mt-0.5 w-2 h-2 rounded-full bg-amber-400 shrink-0" />}
+                                                    
+                                                    <div>
+                                                        <p className={`text-xs font-medium ${
+                                                            event.type === 'SUBMITTED' ? 'text-blue-700' : 
+                                                            event.type === 'REJECTED' ? 'text-red-700' : 
+                                                            event.type === 'APPROVED' ? 'text-green-700' : 
+                                                            'text-amber-700'
+                                                        }`}>
+                                                            {event.type === 'SUBMITTED' ? 'Diajukan' : 
+                                                             event.type === 'REJECTED' ? 'Dikembalikan (Revisi)' : 
+                                                             event.type === 'APPROVED' ? 'Disetujui' : 
+                                                             'Permintaan Revisi'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">{event.date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                                                        {event.by && <p className="text-xs text-muted-foreground">oleh: <span className="font-medium text-foreground">{actorMap[event.by] || event.by}</span></p>}
+                                                        
+                                                        {event.type === 'REVISION_REQUESTED' && event.note && (
+                                                            <p className="text-xs italic text-muted-foreground mt-0.5 border-l-2 border-amber-300 pl-1.5">&ldquo;{event.note}&rdquo;</p>
+                                                        )}
+                                                        {event.type === 'REVISION_REQUESTED' && event.resultAt && (
+                                                            <p className={`text-xs font-medium mt-0.5 ${event.result === 'APPROVED' ? 'text-green-700' : 'text-red-600'}`}>
+                                                                → {event.result === 'APPROVED' ? 'Revisi Diizinkan' : 'Permintaan Ditolak'}
+                                                                {' '}({new Date(event.resultAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })})
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                            <CardFooter>
+                                {isHod ? (
+                                    /* === KETUA DEPARTEMEN: Approval/Revision Actions === */
+                                    <CurriculumApprovalCardActions
+                                        departmentId={departmentId!}
+                                        yearId={year.id}
+                                        status={status}
+                                        activeRole={activeRole}
+                                        activeHeadId={department?.activeHeadId || undefined}
+                                        userId={user?.id}
+                                    />
+                                ) : (
+                                    /* === QA: Edit/Build Actions === */
+                                    <div className="flex flex-col gap-2 w-full">
+                                        {status === 'APPROVED' && user?.id ? (
+                                            /* APPROVED: side-by-side layout */
+                                            <div className="flex gap-2 w-full">
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex-1"
+                                                    asChild
+                                                >
+                                                    <Link href={`/qa/curriculum/builder?yearId=${year.id}`}>
+                                                        <CheckCheck className="w-4 h-4 mr-2" />
+                                                        Lihat
+                                                    </Link>
+                                                </Button>
+                                                <CurriculumRevisionRequestButton
+                                                    departmentId={departmentId!}
+                                                    yearId={year.id}
+                                                    userId={user.id}
+                                                />
+                                            </div>
+                                        ) : (
+                                            /* Other statuses: full-width button */
+                                            <Button
+                                                variant={qaButtonVariant}
+                                                className="w-full"
+                                                disabled={qaIsDisabled}
+                                                asChild={!qaIsDisabled}
+                                            >
+                                                {qaIsDisabled ? (
+                                                    <span className="flex items-center justify-center w-full">
+                                                        {qaActionIcon}{qaActionText}
+                                                    </span>
+                                                ) : (
+                                                    <Link href={`/qa/curriculum/builder?yearId=${year.id}`}>
+                                                        {qaActionIcon}{qaActionText}
+                                                        <ArrowRight className="w-4 h-4 ml-auto" />
+                                                    </Link>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </CardFooter>
+                        </Card>
+                    )
+                })}
 
-                {/* 2. GRADUATE PROFILES TAB */}
-                <TabsContent value="gp" className="pt-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Program Graduate Profiles</CardTitle>
-                                <CardDescription>Expected roles and capabilities of graduates, aligned with Vision/Mission.</CardDescription>
-                            </div>
-                            {!isLocked && <CreateGraduateProfileDialog visionMissions={mappedVisionMissionsToDropdown} departments={departments} selectedYearId={selectedYearId} departmentId={departmentId} />}
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">Code</TableHead>
-                                        <TableHead>Role / Title</TableHead>
-                                        <TableHead>Program Study</TableHead>
-                                        <TableHead>Alignment (V/M)</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {graduateProfiles.length === 0 ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-4">No Graduate Profiles found.</TableCell></TableRow>
-                                    ) : (
-                                        graduateProfiles.map((gp: any) => (
-                                            <TableRow key={gp.id}>
-                                                <TableCell className="font-semibold">{gp.code}</TableCell>
-                                                <TableCell>{gp.title}</TableCell>
-                                                <TableCell>{gp.department?.name || '-'}</TableCell>
-                                                <TableCell>{gp.visionMission?.code || '-'}</TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    {!isLocked && (
-                                                        <>
-                                                            <EditGraduateProfileDialog profile={gp} visionMissions={mappedVisionMissionsToDropdown} departments={departments} departmentId={departmentId} />
-                                                            <DeleteGraduateProfileButton id={gp.id} code={gp.code} />
-                                                        </>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* 3. PLO TAB */}
-                <TabsContent value="plo" className="pt-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Program Learning Outcomes (PLO)</CardTitle>
-                                <CardDescription>Specific learning outcomes for the program, aligned to Graduate Profiles.</CardDescription>
-                            </div>
-                            {!isLocked && <CreatePLODialog graduateProfiles={mappedGraduateProfilesToDropdown} selectedYearId={selectedYearId} departmentId={departmentId} />}
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">Code</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Alignment (GP)</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {plos.length === 0 ? (
-                                        <TableRow><TableCell colSpan={4} className="text-center py-4">No PLOs found.</TableCell></TableRow>
-                                    ) : (
-                                        plos.map((plo: any) => (
-                                            <TableRow key={plo.id}>
-                                                <TableCell className="font-semibold text-primary">{plo.code}</TableCell>
-                                                <TableCell className="max-w-[400px]">{plo.description}</TableCell>
-                                                <TableCell>
-                                                    {plo.graduateProfiles && plo.graduateProfiles.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {plo.graduateProfiles.map((gp: any) => (
-                                                                <Badge key={gp.id} variant="secondary">{gp.code}</Badge>
-                                                            ))}
-                                                        </div>
-                                                    ) : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    {!isLocked && (
-                                                        <>
-                                                            <EditPLODialog plo={plo} graduateProfiles={mappedGraduateProfilesToDropdown} />
-                                                            <DeletePLOButton id={plo.id} code={plo.code} />
-                                                        </>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* 4. CLO BANK TAB */}
-                <TabsContent value="clo" className="pt-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Bank CLO (Course Learning Outcomes)</CardTitle>
-                                <CardDescription>Bank CLO Department — setiap CLO bisa dipetakan ke banyak mata kuliah dengan bobot berbeda.</CardDescription>
-                            </div>
-                            {!isLocked && <CreateCLODialog plos={mappedPlosToDropdown} departmentId={departmentId} selectedYearId={selectedYearId} />}
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">Kode</TableHead>
-                                        <TableHead>Deskripsi</TableHead>
-                                        <TableHead>Relasi PLO</TableHead>
-                                        <TableHead>Dipakai di</TableHead>
-                                        <TableHead className="text-right">Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {clos.length === 0 ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-4">Belum ada CLO. Klik "Add CLO" untuk membuat.</TableCell></TableRow>
-                                    ) : (
-                                        clos.map((clo: any) => (
-                                            <TableRow key={clo.id}>
-                                                <TableCell className="font-semibold">{clo.code}</TableCell>
-                                                <TableCell className="max-w-[300px]">{clo.description}</TableCell>
-                                                <TableCell>
-                                                    {clo.plos && clo.plos.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {clo.plos.map((plo: any) => (
-                                                                <Badge key={plo.id} className="bg-blue-100 text-blue-700">{plo.code}</Badge>
-                                                            ))}
-                                                        </div>
-                                                    ) : '-'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {clo.subjectClos && clo.subjectClos.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {clo.subjectClos.map((sc: any) => (
-                                                                <Badge key={sc.id} variant="outline">{sc.subject?.code}</Badge>
-                                                            ))}
-                                                        </div>
-                                                    ) : <span className="text-muted-foreground text-xs">Belum dipetakan</span>}
-                                                </TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    {!isLocked && (
-                                                        <>
-                                                            <EditCLODialog clo={clo} plos={mappedPlosToDropdown} />
-                                                            <DeleteCLOButton id={clo.id} code={clo.code} />
-                                                        </>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* 5. CLO-SUBJECT MAPPING TAB */}
-                <TabsContent value="mapping" className="pt-4">
-                    <SubjectCLOMappingTab
-                        subjects={subjects.map(s => ({ id: s.id, code: s.code, title: s.title }))}
-                        allCLOs={clos.map((c: any) => ({ id: c.id, code: c.code, description: c.description, plos: c.plos }))}
-                        isLocked={isLocked}
-                    />
-                </TabsContent>
-
-            </Tabs>
+                {curriculumYears.length === 0 && (
+                    <div className="col-span-3 text-center py-16 text-muted-foreground">
+                        <p className="text-lg font-medium">Belum ada Tahun Kurikulum</p>
+                        <p className="text-sm mt-1">
+                            {isHod ? 'Minta tim QA untuk membuat tahun kurikulum terlebih dahulu.' : 'Klik tombol "Tambah Tahun Kurikulum" untuk memulai.'}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

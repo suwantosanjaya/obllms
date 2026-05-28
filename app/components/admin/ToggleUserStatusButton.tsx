@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Loader2 } from 'lucide-react'
 import { toggleUserStatus } from '@/app/actions/adminActions'
 import { useToast } from '@/hooks/use-toast'
 
@@ -37,13 +39,16 @@ export function ToggleUserStatusButton({ id, isActive, userName }: { id: string,
     }
 
     return (
-        <Button 
-            variant={isActive ? 'destructive' : 'default'} 
-            size="sm" 
-            onClick={handleToggle}
-            disabled={loading}
-        >
-            {loading ? 'Proses...' : isActive ? 'Nonaktifkan' : 'Aktifkan'}
-        </Button>
+        <div className="flex items-center space-x-2">
+            <Switch 
+                id={`status-switch-${id}`} 
+                checked={isActive}
+                disabled={loading}
+                onCheckedChange={handleToggle}
+            />
+            <Label htmlFor={`status-switch-${id}`} className={`min-w-[70px] text-left cursor-pointer ${isActive ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : (isActive ? 'Aktif' : 'Nonaktif')}
+            </Label>
+        </div>
     )
 }

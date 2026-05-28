@@ -13,16 +13,33 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, Check, ChevronsUpDown } from 'lucide-react'
+import { cn } from "@/lib/utils"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
+    SelectGroup,
+    SelectLabel
 } from "@/components/ui/select"
-import { createCourse, getSubjects } from '@/app/actions/courseActions'
+import { createCourse, getSubjectsByCurriculum } from '@/app/actions/courseActions'
 import { getTeachers } from '@/app/actions/userActions'
+import { getCurriculumYears } from '@/app/actions/obeActions'
 import { useRouter } from 'next/navigation'
 
 export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseCreated?: () => void, departmentId?: string | null }) {
@@ -30,10 +47,14 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
     const [isLoading, setIsLoading] = useState(false)
     const [errorMsg, setErrorMsg] = useState("")
     const router = useRouter()
+    
+    const [teacherComboboxOpen, setTeacherComboboxOpen] = useState(false)
 
     const [subjects, setSubjects] = useState<{ id: string, code: string, title: string }[]>([])
     const [teachers, setTeachers] = useState<{ id: string, name: string }[]>([])
     
+    const [curriculumYears, setCurriculumYears] = useState<{ id: string, name: string }[]>([])
+    const [curriculumYearId, setCurriculumYearId] = useState("")
     const [subjectId, setSubjectId] = useState("")
     const [instructorId, setInstructorId] = useState("")
     const [classCode, setClassCode] = useState("Kelas Reguler")
@@ -43,9 +64,9 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
 
     useEffect(() => {
         async function fetchData() {
-            const resSub = await getSubjects(departmentId)
-            if (resSub.success && resSub.subjects) {
-                setSubjects(resSub.subjects)
+            const resYears = await getCurriculumYears(departmentId || undefined, true)
+            if (Array.isArray(resYears)) {
+                setCurriculumYears(resYears)
             }
             const resTeach = await getTeachers()
             if (resTeach.success && resTeach.teachers) {
@@ -54,6 +75,20 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
         }
         if (open) fetchData()
     }, [open])
+
+    useEffect(() => {
+        async function fetchSubjects() {
+            if (!curriculumYearId || !departmentId) {
+                setSubjects([])
+                return
+            }
+            const resSub = await getSubjectsByCurriculum(departmentId, curriculumYearId)
+            if (resSub.success && resSub.subjects) {
+                setSubjects(resSub.subjects)
+            }
+        }
+        fetchSubjects()
+    }, [curriculumYearId, departmentId])
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -74,6 +109,7 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
             classCode,
             schedule,
             departmentId: departmentId || null,
+            curriculumYearId: curriculumYearId || null,
             isSrlEnabled: true,
             isGamificationEnabled: true,
             isForumEnabled: true,
@@ -117,8 +153,27 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
                             </div>
                         )}
                         <div className="flex flex-col gap-2">
+                            <Label htmlFor="curriculum">Pilih Kurikulum</Label>
+                            <Select value={curriculumYearId} onValueChange={(val) => {
+                                setCurriculumYearId(val)
+                                setSubjectId("") // Reset subject when curriculum changes
+                            }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Tahun Kurikulum..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {curriculumYears.map(year => (
+                                        <SelectItem key={year.id} value={year.id}>
+                                            {year.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
                             <Label htmlFor="subject">Mata Kuliah</Label>
-                            <Select value={subjectId} onValueChange={setSubjectId}>
+                            <Select value={subjectId} onValueChange={setSubjectId} disabled={!curriculumYearId}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih Mata Kuliah..." />
                                 </SelectTrigger>
@@ -134,18 +189,56 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
 
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="instructor">Dosen Pengampu</Label>
-                            <Select value={instructorId} onValueChange={setInstructorId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Pilih Dosen..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teachers.map(teacher => (
-                                        <SelectItem key={teacher.id} value={teacher.id}>
-                                            {teacher.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Popover open={teacherComboboxOpen} onOpenChange={setTeacherComboboxOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={teacherComboboxOpen}
+                                        className="justify-between font-normal"
+                                    >
+                                        {instructorId
+                                            ? teachers.find((teacher) => teacher.id === instructorId)?.name
+                                            : "Cari dan Pilih Dosen..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[450px] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Cari nama dosen..." />
+                                        <CommandList>
+                                            <CommandEmpty>Dosen tidak ditemukan.</CommandEmpty>
+                                            {Object.entries(teachers.reduce((acc, t: any) => {
+                                                const group = `${t.facultyName} - ${t.departmentName}`;
+                                                if (!acc[group]) acc[group] = [];
+                                                acc[group].push(t);
+                                                return acc;
+                                            }, {} as Record<string, any[]>)).map(([group, groupTeachers]) => (
+                                                <CommandGroup key={group} heading={group}>
+                                                    {groupTeachers.map((teacher: any) => (
+                                                        <CommandItem
+                                                            key={teacher.id}
+                                                            value={teacher.name}
+                                                            onSelect={() => {
+                                                                setInstructorId(teacher.id === instructorId ? "" : teacher.id)
+                                                                setTeacherComboboxOpen(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    instructorId === teacher.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {teacher.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            ))}
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
                         <div className="flex flex-col gap-2">

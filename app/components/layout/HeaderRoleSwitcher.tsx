@@ -45,7 +45,7 @@ export function HeaderRoleSwitcher({ roles, activeRole }: HeaderRoleSwitcherProp
         const { departmentRoles, departments, setActiveDepartmentId } = useUserStore.getState()
         const visibleDeps = role === 'super_admin' ? departments : 
             (departmentRoles || [])
-                .filter(dr => dr.role === role && dr.department)
+                .filter(dr => dr.role.split(',').map(r => r.trim()).includes(role) && dr.department)
                 .map(dr => dr.department) as any[]
         
         let newDepId = null

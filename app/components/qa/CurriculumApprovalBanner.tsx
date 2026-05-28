@@ -41,7 +41,7 @@ export function CurriculumApprovalBanner({ departmentId, curriculumYearId, statu
 
     async function handleStatusChange(newStatus: string) {
         setLoading(true)
-        const res = await setDepartmentCurriculumStatus(departmentId!, curriculumYearId!, newStatus)
+        const res = await setDepartmentCurriculumStatus(departmentId!, curriculumYearId!, newStatus, userId)
         if (res.success) {
             toast({ title: "Status Berhasil Diubah", description: `Kurikulum kini berstatus ${newStatus}` })
         } else {

@@ -15,7 +15,6 @@ import { getQADashboardMetrics } from '@/app/actions/obeActions'
 import { getSessionUser } from '@/app/actions/userActions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-
 export default async function QADashboard() {
     const qaUser = await getSessionUser()
     if (!qaUser || !qaUser.roles?.includes('qa')) {

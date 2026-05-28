@@ -28,6 +28,35 @@ export async function getSubjects(departmentId?: string | null) {
     }
 }
 
+export async function getSubjectsByCurriculum(departmentId: string, curriculumYearId: string) {
+    try {
+        const subjects = await prisma.subject.findMany({
+            where: {
+                subjectClos: {
+                    some: {
+                        clo: {
+                            curriculumYearId: curriculumYearId
+                        }
+                    }
+                },
+                OR: [
+                    { departmentId: departmentId },
+                    { scope: 'universitas' }
+                ]
+            },
+            orderBy: { code: 'asc' },
+            include: {
+                department: { include: { faculty: true } },
+                faculty: true,
+            }
+        })
+        return { success: true, subjects }
+    } catch (error) {
+        console.error("FAILED TO FETCH SUBJECTS BY CURRICULUM:", error)
+        return { success: false, error: "Failed to fetch subjects by curriculum" }
+    }
+}
+
 export async function createCourse(data: {
     subjectId: string;
     semester: string;
@@ -41,6 +70,7 @@ export async function createCourse(data: {
     schedule?: string;
     classCode?: string;
     departmentId?: string | null;
+    curriculumYearId?: string | null;
 }) {
     try {
         const course = await prisma.course.create({
@@ -52,6 +82,7 @@ export async function createCourse(data: {
                 instructorId: data.instructorId,
                 schedule: data.schedule,
                 departmentId: data.departmentId,
+                curriculumYearId: data.curriculumYearId,
                 config: {
                     create: {
                         isSrlEnabled: data.isSrlEnabled ?? true,
@@ -103,6 +134,46 @@ export async function updateCourseSchedule(courseId: string, schedule: string) {
     }
 }
 
+export async function updateCourseDetails(courseId: string, data: {
+    subjectId: string;
+    semester: string;
+    academicYear: string;
+    instructorId: string;
+    classCode: string;
+    schedule: string;
+    curriculumYearId: string | null;
+}) {
+    try {
+        const course = await prisma.course.update({
+            where: { id: courseId },
+            data: {
+                subjectId: data.subjectId,
+                semester: data.semester,
+                academicYear: data.academicYear,
+                instructorId: data.instructorId,
+                classCode: data.classCode,
+                schedule: data.schedule,
+                curriculumYearId: data.curriculumYearId
+            },
+            include: {
+                subject: true,
+                instructor: true,
+                curriculumYear: true,
+                _count: {
+                    select: { enrollments: true }
+                }
+            }
+        })
+        revalidatePath('/qa/schedules')
+        revalidatePath('/qa')
+        revalidatePath('/teacher/courses')
+        return { success: true, course }
+    } catch (error: any) {
+        console.error("Failed to update course details", error)
+        return { success: false, error: error.message || "Failed to update course" }
+    }
+}
+
 export async function getInstructorCourses(instructorId: string, activeProdiId?: string | null) {
     try {
         const whereClause: any = { instructorId }
@@ -114,6 +185,7 @@ export async function getInstructorCourses(instructorId: string, activeProdiId?:
             where: whereClause,
             include: {
                 subject: true,
+                config: true,
                 _count: {
                     select: { enrollments: true }
                 }
@@ -141,6 +213,7 @@ export async function getStudentCourses(studentId: string, activeProdiId?: strin
                 course: {
                     include: {
                         subject: true,
+                        config: true,
                         instructor: { select: { id: true, name: true } },
                     }
                 }
@@ -154,6 +227,18 @@ export async function getStudentCourses(studentId: string, activeProdiId?: strin
 
 export async function enrollStudent(studentId: string, courseId: string) {
     try {
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            include: { config: true }
+        })
+        
+        if (!course) return { success: false, error: "Kelas tidak ditemukan" }
+        if (!course.config?.isPublished) return { success: false, error: "Kelas belum dipublikasi" }
+        
+        if (course.config?.enrollmentDeadline && new Date() > course.config.enrollmentDeadline) {
+            return { success: false, error: "Batas akhir pendaftaran untuk kelas ini telah berlalu." }
+        }
+
         const enrollment = await prisma.enrollment.create({
             data: {
                 studentId,
@@ -168,6 +253,52 @@ export async function enrollStudent(studentId: string, courseId: string) {
     }
 }
 
+export async function unenrollStudent(studentId: string, courseId: string) {
+    try {
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            include: { config: true }
+        })
+        
+        if (!course) return { success: false, error: "Kelas tidak ditemukan" }
+        
+        if (course.config?.enrollmentDeadline && new Date() > course.config.enrollmentDeadline) {
+            return { success: false, error: "Batas akhir pembatalan pendaftaran telah berlalu." }
+        }
+
+        await prisma.enrollment.deleteMany({
+            where: {
+                studentId,
+                courseId
+            }
+        })
+        
+        revalidatePath('/student')
+        revalidatePath('/teacher')
+        return { success: true }
+    } catch (error) {
+        return { success: false, error: "Failed to unenroll student" }
+    }
+}
+
+export async function removeStudentFromCourse(studentId: string, courseId: string) {
+    try {
+        await prisma.enrollment.deleteMany({
+            where: {
+                studentId,
+                courseId
+            }
+        })
+        
+        revalidatePath('/teacher')
+        revalidatePath(`/teacher/course/${courseId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Failed to remove student from course:", error)
+        return { success: false, error: "Gagal mengeluarkan mahasiswa dari kelas" }
+    }
+}
+
 export async function getAvailableCourses(studentId: string, activeProdiId?: string | null) {
     try {
         const whereClause: any = {
@@ -175,6 +306,9 @@ export async function getAvailableCourses(studentId: string, activeProdiId?: str
                 none: {
                     studentId: studentId
                 }
+            },
+            config: {
+                isPublished: true
             }
         }
         if (activeProdiId) {
@@ -185,12 +319,14 @@ export async function getAvailableCourses(studentId: string, activeProdiId?: str
             where: whereClause,
             include: {
                 subject: true,
+                config: true,
                 instructor: {
                     select: {
                         id: true,
                         name: true,
                     }
                 },
+                config: true,
                 _count: {
                     select: { enrollments: true }
                 }
@@ -214,11 +350,22 @@ export async function getCourseDetails(courseId: string) {
                 },
                 config: true,
                 modules: {
-                    include: { clo: true },
+                    include: {
+                        clo: true,
+                        moduleClos: { include: { clo: true } }
+                    },
                     orderBy: { weekNumber: 'asc' }
                 },
                 enrollments: {
-                    include: { student: true }
+                    include: {
+                        student: {
+                            include: {
+                                studentProfile: {
+                                    select: { nim: true }
+                                }
+                            }
+                        }
+                    }
                 },
                 _count: {
                     select: { enrollments: true, assessments: true }
@@ -237,29 +384,64 @@ export async function createCourseModule(data: {
     title: string;
     content: string;
     weekNumber: number;
-    cloId?: string;
+    cloIds?: string[]; // Multiple CLO IDs
 }) {
     try {
-        const payload: any = {
-            courseId: data.courseId,
-            title: data.title,
-            content: data.content,
-            weekNumber: data.weekNumber,
-        }
-
-        // Only link CLO if provided and not empty
-        if (data.cloId && data.cloId !== "") {
-            payload.cloId = data.cloId
+        if (!data.cloIds || data.cloIds.length === 0) {
+            return { success: false, error: "Harap pilih minimal satu CLO untuk topik ini." }
         }
 
         const module = await prisma.courseModule.create({
-            data: payload
+            data: {
+                courseId: data.courseId,
+                title: data.title,
+                content: data.content,
+                weekNumber: data.weekNumber,
+                moduleClos: {
+                    create: data.cloIds.map(cloId => ({ cloId }))
+                }
+            }
         })
         revalidatePath(`/teacher/course/${data.courseId}`)
         return { success: true, module }
     } catch (error) {
         console.error("Failed to create course module", error)
         return { success: false, error: "Failed to create course module" }
+    }
+}
+
+export async function updateCourseModule(data: {
+    moduleId: string;
+    courseId: string;
+    title: string;
+    content: string;
+    weekNumber: number;
+    cloIds: string[];
+}) {
+    try {
+        if (!data.cloIds || data.cloIds.length === 0) {
+            return { success: false, error: "Harap pilih minimal satu CLO untuk topik ini." }
+        }
+
+        // Delete existing CLO mappings then recreate
+        await prisma.courseModuleCLO.deleteMany({ where: { moduleId: data.moduleId } })
+
+        await prisma.courseModule.update({
+            where: { id: data.moduleId },
+            data: {
+                title: data.title,
+                content: data.content,
+                weekNumber: data.weekNumber,
+                moduleClos: {
+                    create: data.cloIds.map(cloId => ({ cloId }))
+                }
+            }
+        })
+        revalidatePath(`/teacher/course/${data.courseId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Failed to update course module", error)
+        return { success: false, error: "Gagal memperbarui modul" }
     }
 }
 
@@ -280,6 +462,8 @@ export async function updateCourseConfig(courseId: string, data: {
     isGamificationEnabled: boolean;
     isForumEnabled: boolean;
     isReflectionsEnabled: boolean;
+    isPublished?: boolean;
+    enrollmentDeadline?: Date | null;
 }) {
     try {
         // Upsert because it could potentially not exist for older seeded courses
@@ -290,6 +474,8 @@ export async function updateCourseConfig(courseId: string, data: {
                 isGamificationEnabled: data.isGamificationEnabled,
                 isForumEnabled: data.isForumEnabled,
                 isReflectionsEnabled: data.isReflectionsEnabled,
+                ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+                ...(data.enrollmentDeadline !== undefined && { enrollmentDeadline: data.enrollmentDeadline }),
             },
             create: {
                 courseId,
@@ -297,6 +483,8 @@ export async function updateCourseConfig(courseId: string, data: {
                 isGamificationEnabled: data.isGamificationEnabled,
                 isForumEnabled: data.isForumEnabled,
                 isReflectionsEnabled: data.isReflectionsEnabled,
+                isPublished: data.isPublished ?? false,
+                enrollmentDeadline: data.enrollmentDeadline ?? null,
                 isAnalyticsEnabled: true,
                 difficulty: 'Basic'
             }

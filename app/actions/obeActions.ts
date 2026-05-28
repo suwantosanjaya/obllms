@@ -3,6 +3,44 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
+// Curriculum Year Actions
+export async function getCurriculumYears(departmentId?: string, onlyApproved?: boolean) {
+    const where: any = {}
+    if (departmentId) where.departmentId = departmentId
+    if (onlyApproved) {
+        where.departmentCurriculums = {
+            some: {
+                status: 'APPROVED',
+                ...(departmentId ? { departmentId } : {})
+            }
+        }
+    }
+    
+    return await prisma.curriculumYear.findMany({
+        where,
+        orderBy: { name: 'desc' }
+    })
+}
+
+export async function createCurriculumYear(name: string, startYear?: number, endYear?: number, description?: string, departmentId?: string) {
+    try {
+        const cy = await prisma.curriculumYear.create({
+            data: { 
+                name, 
+                startYear, 
+                endYear, 
+                description,
+                departmentId 
+            }
+        })
+        revalidatePath('/qa/curriculum')
+        return { success: true, curriculumYear: cy }
+    } catch (error: any) {
+        if (error.code === 'P2002') return { success: false, error: 'Tahun kurikulum dengan nama ini sudah ada di departemen Anda.' }
+        return { success: false, error: error.message }
+    }
+}
+
 // PLO (Program Learning Outcome) Actions - Usually for QA/Department
 export async function createPLO(data: { code: string, description: string, graduateProfileIds?: string[], departmentId?: string, curriculumYearId?: string }) {
     try {
@@ -207,6 +245,28 @@ export async function getCLOsBySubject(subjectId: string) {
     }
 }
 
+export async function getAllSubjectCLOMappings(departmentId?: string, curriculumYearId?: string) {
+    try {
+        const mappings = await prisma.subjectCLO.findMany({
+            where: {
+                clo: {
+                    departmentId: departmentId || undefined,
+                    curriculumYearId: curriculumYearId || undefined
+                }
+            },
+            include: {
+                clo: { include: { plos: true } },
+                plo: true,
+                techniques: true
+            },
+            orderBy: [{ plo: { code: 'asc' } }, { clo: { code: 'asc' } }]
+        })
+        return { success: true, mappings }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message, mappings: [] }
+    }
+}
+
 export async function getSubjectCLOMappings(subjectId: string) {
     try {
         const mappings = await prisma.subjectCLO.findMany({
@@ -261,6 +321,60 @@ export async function deleteSubjectCLOMapping(subjectId: string, cloId: string, 
     }
 }
 
+// Assessment Techniques Actions
+export async function getSubjectCLOTechniques(subjectId: string) {
+    try {
+        const mappings = await prisma.subjectCLO.findMany({
+            where: { subjectId },
+            include: {
+                clo: { include: { plos: true } },
+                plo: true,
+                techniques: true
+            },
+            orderBy: [{ plo: { code: 'asc' } }, { clo: { code: 'asc' } }]
+        })
+        return { success: true, mappings }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message, mappings: [] }
+    }
+}
+
+export async function toggleSubjectCLOTechnique(subjectCloId: string, technique: string, active: boolean) {
+    try {
+        // We assume CurriculumLock is checked before calling or in the UI. 
+        if (active) {
+            const res = await prisma.subjectCLOTechnique.upsert({
+                where: { subjectCloId_technique: { subjectCloId, technique } },
+                update: {},
+                create: { subjectCloId, technique, weight: 0 }
+            })
+            revalidatePath('/qa/curriculum')
+            return { success: true, technique: res }
+        } else {
+            await prisma.subjectCLOTechnique.delete({
+                where: { subjectCloId_technique: { subjectCloId, technique } }
+            })
+            revalidatePath('/qa/curriculum')
+            return { success: true }
+        }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message }
+    }
+}
+
+export async function updateSubjectCLOTechniqueWeight(subjectCloId: string, technique: string, weight: number) {
+    try {
+        const res = await prisma.subjectCLOTechnique.update({
+            where: { subjectCloId_technique: { subjectCloId, technique } },
+            data: { weight }
+        })
+        revalidatePath('/qa/curriculum')
+        return { success: true, technique: res }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message }
+    }
+}
+
 export async function deleteCLO(id: string) {
     try {
         const current = await prisma.courseLearningOutcome.findUnique({ where: { id } })
@@ -300,10 +414,13 @@ export async function getAllCLOs(curriculumYearId?: string, departmentId?: strin
 }
 
 // Vision and Mission Actions
-export async function getVisionMissions(departmentId?: string) {
+export async function getVisionMissions(departmentId?: string, curriculumYearId?: string) {
     try {
         const visionMissions = await prisma.institutionVisionMission.findMany({
-            where: { departmentId: departmentId || null },
+            where: { 
+                departmentId: departmentId || null,
+                curriculumYearId: curriculumYearId || null
+            },
             include: { _count: { select: { graduateProfiles: true } } },
             orderBy: { createdAt: 'asc' }
         })
@@ -313,12 +430,13 @@ export async function getVisionMissions(departmentId?: string) {
     }
 }
 
-export async function createVisionMission(data: { code: string, description: string, type: string, departmentId?: string }) {
+export async function createVisionMission(data: { code: string, description: string, type: string, departmentId?: string, curriculumYearId?: string }) {
     try {
         const existing = await prisma.institutionVisionMission.findFirst({
             where: { 
                 code: data.code,
-                departmentId: data.departmentId || null
+                departmentId: data.departmentId || null,
+                curriculumYearId: data.curriculumYearId || null
             }
         })
         if (existing) {
@@ -328,7 +446,8 @@ export async function createVisionMission(data: { code: string, description: str
         const vm = await prisma.institutionVisionMission.create({ 
             data: {
                 ...data,
-                departmentId: data.departmentId || null
+                departmentId: data.departmentId || null,
+                curriculumYearId: data.curriculumYearId || null
             } 
         })
         revalidatePath('/qa/curriculum')
@@ -338,15 +457,17 @@ export async function createVisionMission(data: { code: string, description: str
     }
 }
 
-export async function updateVisionMission(id: string, data: { code: string, description: string, type: string, departmentId?: string }) {
+export async function updateVisionMission(id: string, data: { code: string, description: string, type: string, departmentId?: string, curriculumYearId?: string }) {
     try {
         const currentVm = await prisma.institutionVisionMission.findUnique({ where: { id } })
         const depId = data.departmentId || currentVm?.departmentId || null
+        const cyId = data.curriculumYearId || currentVm?.curriculumYearId || null
 
         const duplicate = await prisma.institutionVisionMission.findFirst({
             where: {
                 code: data.code,
                 departmentId: depId,
+                curriculumYearId: cyId,
                 id: { not: id }
             }
         })
@@ -569,7 +690,12 @@ export async function getQAActiveCourses(departmentId?: string | null) {
             where: courseWhere,
             include: {
                 subject: true,
-                instructor: true,
+                instructor: {
+                    include: {
+                        teacherProfile: true
+                    }
+                },
+                curriculumYear: true,
                 _count: { select: { enrollments: true } }
             },
             orderBy: [{ academicYear: 'desc' }, { semester: 'desc' }, { subjectId: 'asc' }]
@@ -604,12 +730,102 @@ export async function setDepartmentCurriculumStatus(departmentId: string, curric
             }
         }
 
+        const now = new Date()
+        const extraFields: Record<string, any> = {}
+
+        if (status === 'SUBMITTED') {
+            extraFields.submittedAt = now
+            extraFields.submittedBy = userId || null
+        } else if (status === 'APPROVED') {
+            extraFields.approvedAt = now
+            extraFields.approvedBy = userId || null
+            extraFields.rejectedAt = null
+            extraFields.rejectedBy = null
+            // HoD approved a revision request
+            extraFields.revisionRequestResult = 'APPROVED'
+            extraFields.revisionResultAt = now
+            extraFields.revisionResultBy = userId || null
+        } else if (status === 'REVISION') {
+            // HoD rejected initial submission → back to revision
+            extraFields.rejectedAt = now
+            extraFields.rejectedBy = userId || null
+        } else if (status === 'DRAFT') {
+            extraFields.submittedAt = null
+            extraFields.submittedBy = null
+        }
+
         const doc = await prisma.departmentCurriculum.upsert({
             where: {
                 departmentId_curriculumYearId: { departmentId, curriculumYearId }
             },
-            create: { departmentId, curriculumYearId, status, approvedBy: userId, approvedAt: status === 'APPROVED' ? new Date() : null },
-            update: { status, approvedBy: userId, approvedAt: status === 'APPROVED' ? new Date() : null }
+            create: { departmentId, curriculumYearId, status, ...extraFields },
+            update: { status, ...extraFields }
+        })
+        revalidatePath('/qa/curriculum')
+        return { success: true, data: doc }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+// QA requests revision of an already-approved curriculum
+export async function requestCurriculumRevision(departmentId: string, curriculumYearId: string, userId: string, note: string) {
+    try {
+        const existing = await prisma.departmentCurriculum.findUnique({
+            where: { departmentId_curriculumYearId: { departmentId, curriculumYearId } }
+        })
+        if (!existing || existing.status !== 'APPROVED') {
+            return { success: false, error: 'Permintaan revisi hanya dapat diajukan pada kurikulum yang sudah berstatus APPROVED.' }
+        }
+
+        const doc = await prisma.departmentCurriculum.update({
+            where: { departmentId_curriculumYearId: { departmentId, curriculumYearId } },
+            data: {
+                status: 'REVISION_REQUESTED',
+                revisionRequestedAt: new Date(),
+                revisionRequestedBy: userId,
+                revisionRequestNote: note || null,
+                revisionRequestResult: null,
+                revisionResultAt: null,
+                revisionResultBy: null,
+            }
+        })
+        revalidatePath('/qa/curriculum')
+        return { success: true, data: doc }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+// HoD approves or rejects a revision request
+export async function respondCurriculumRevisionRequest(departmentId: string, curriculumYearId: string, userId: string, approve: boolean) {
+    try {
+        const dept = await prisma.department.findUnique({ where: { id: departmentId } })
+        if (!dept?.activeHeadId) {
+            return { success: false, error: 'Admin belum menetapkan Ketua Departemen yang aktif.' }
+        }
+        if (dept.activeHeadId !== userId) {
+            return { success: false, error: 'Anda bukan Ketua Departemen yang sedang menjabat.' }
+        }
+
+        const existing = await prisma.departmentCurriculum.findUnique({
+            where: { departmentId_curriculumYearId: { departmentId, curriculumYearId } }
+        })
+        if (!existing || existing.status !== 'REVISION_REQUESTED') {
+            return { success: false, error: 'Tidak ada permintaan revisi aktif untuk kurikulum ini.' }
+        }
+
+        const now = new Date()
+        const doc = await prisma.departmentCurriculum.update({
+            where: { departmentId_curriculumYearId: { departmentId, curriculumYearId } },
+            data: {
+                status: approve ? 'REVISION' : 'APPROVED',
+                revisionRequestResult: approve ? 'APPROVED' : 'REJECTED',
+                revisionResultAt: now,
+                revisionResultBy: userId,
+                // If approved, clear the approval lock so QA can edit
+                ...(approve ? { approvedAt: null, approvedBy: null } : {}),
+            }
         })
         revalidatePath('/qa/curriculum')
         return { success: true, data: doc }
@@ -622,7 +838,10 @@ export async function checkCurriculumLock(departmentId?: string | null, curricul
     if (!departmentId || !curriculumYearId) return { locked: false }
     const status = await getDepartmentCurriculumStatus(departmentId, curriculumYearId)
     if (status?.status === 'APPROVED') {
-        return { locked: true, error: 'Kurikulum ini sudah disetujui (APPROVED) dan tidak dapat diubah lagi. Hubungi Ketua Departemen untuk membuka mode revisi.' }
+        return { locked: true, error: 'Kurikulum ini sudah disetujui (APPROVED) dan tidak dapat diubah. Ajukan permintaan revisi kepada Ketua Departemen.' }
+    }
+    if (status?.status === 'REVISION_REQUESTED') {
+        return { locked: true, error: 'Permintaan revisi sedang menunggu keputusan Ketua Departemen.' }
     }
     if (status?.status === 'SUBMITTED') {
         return { locked: true, error: 'Kurikulum sedang diajukan (SUBMITTED) dan tidak dapat diubah sampai ditolak (Revisi) oleh Ketua Departemen.' }

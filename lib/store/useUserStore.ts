@@ -23,6 +23,8 @@ interface UserState {
     logout: () => void
     _hasHydrated: boolean
     setHasHydrated: (state: boolean) => void
+    isSidebarCollapsed: boolean
+    toggleSidebar: () => void
 }
 
 export const useUserStore = create<UserState>()(
@@ -47,6 +49,8 @@ export const useUserStore = create<UserState>()(
             logout: () => set({ role: null, activeRole: null, roles: [], userName: 'Guest', userId: null, departments: [], departmentRoles: [], activeDepartmentId: null }),
             _hasHydrated: false,
             setHasHydrated: (state) => set({ _hasHydrated: state }),
+            isSidebarCollapsed: false,
+            toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
         }),
         {
             name: 'user-storage', // name of the item in the storage (must be unique)

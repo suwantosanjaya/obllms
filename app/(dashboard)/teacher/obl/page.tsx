@@ -4,38 +4,57 @@ import { Badge } from '@/components/ui/badge'
 import { getInstructorCourses } from '@/app/actions/courseActions'
 import { getPLOs } from '@/app/actions/obeActions'
 import prisma from '@/lib/db'
-// CLO is read-only for Dosen now.
-// import { CreateCLODialog } from '@/app/components/dosen/CreateCLODialog'
-// import { DeleteCLOButton } from '@/app/components/dosen/DeleteCLOButton'
+import { getSessionUser } from '@/app/actions/userActions'
+import { redirect } from 'next/navigation'
 import React from 'react'
 
-export default async function DosenOBLPage() {
-    // Get current simulated dosen
-    const dosenUser = await prisma.user.findFirst({ where: { role: 'dosen' } })
-
-    if (!dosenUser) {
-        return <div className="p-8 text-center text-muted-foreground">User dosen tidak ditemukan di database. Pastikan seed database sudah berjalan.</div>
+export default async function TeacherOBLPage() {
+    const dosenUser = await getSessionUser()
+    if (!dosenUser || !dosenUser.roles?.includes('teacher')) {
+        redirect('/')
     }
 
-    const coursesRes = await getInstructorCourses(dosenUser.id)
+    const coursesRes = await getInstructorCourses(dosenUser.id, dosenUser.activeDepartmentId)
     const activeCourses = coursesRes.success ? (coursesRes.courses || []) : []
-    const mappedCoursesToDropdown = activeCourses.map((c: any) => ({ id: c.id, title: `${c.subject.code} - ${c.subject.title}` }))
 
-    const plosRes = await getPLOs()
+    const plosRes = await getPLOs(dosenUser.activeDepartmentId)
     const activePlos = plosRes.success ? (plosRes.plos || []) : []
-    const mappedPlosToDropdown = activePlos.map((p: { id: string, code: string }) => ({ id: p.id, code: p.code }))
 
     // Fetch all CLOs mapped to the subjects of the instructor's courses
-    const subjectIds = Array.from(new Set(activeCourses.map((c: { subjectId: string }) => c.subjectId)))
-    const subjectCloMappings = await prisma.subjectCLO.findMany({
-        where: { subjectId: { in: subjectIds as string[] } },
-        include: {
-            subject: true,
-            clo: true,
-            plo: true
-        },
-        orderBy: [{ subjectId: 'asc' }, { plo: { code: 'asc' } }, { clo: { code: 'asc' } }]
+    // A teacher might teach Subject A in Curriculum 2020 and Subject B in Curriculum 2024.
+    // We only want to show the CLOs for the specific Subject + Curriculum combinations they are teaching.
+    const courseConditions = activeCourses
+        .filter((c: any) => c.curriculumYearId)
+        .map((c: any) => ({
+            subjectId: c.subjectId,
+            clo: { curriculumYearId: c.curriculumYearId }
+        }))
+
+    let subjectCloMappings: any[] = []
+    if (courseConditions.length > 0) {
+        subjectCloMappings = await prisma.subjectCLO.findMany({
+            where: { OR: courseConditions },
+            include: {
+                subject: true,
+                clo: {
+                    include: { curriculumYear: true }
+                },
+                plo: true,
+                techniques: true
+            },
+            orderBy: [{ subjectId: 'asc' }, { clo: { curriculumYear: { name: 'asc' } } }, { plo: { code: 'asc' } }, { clo: { code: 'asc' } }]
+        })
+    }
+
+    // Pre-calculate rowspan for Mata Kuliah
+    const subjectRowSpans: Record<string, number> = {}
+    subjectCloMappings.forEach((mapping: any) => {
+        const key = `${mapping.subjectId}-${mapping.clo.curriculumYearId}`
+        subjectRowSpans[key] = (subjectRowSpans[key] || 0) + 1
     })
+
+    const renderedSubjectKeys = new Set<string>()
+    let currentSubjectIndex = -1
 
     return (
         <div className="flex flex-col gap-6">
@@ -44,7 +63,6 @@ export default async function DosenOBLPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Outcome Based Learning (OBL)</h1>
                     <p className="text-muted-foreground mt-1">Kelola CPMK kelas Anda dan selaraskan dengan CPL program studi.</p>
                 </div>
-                {/* CreateCLODialog removed as Dosen only views CLOs defined by Admin Departemen */}
             </div>
 
             <Card>
@@ -62,40 +80,72 @@ export default async function DosenOBLPage() {
                                 <TableHead className="w-[100px]">Kode</TableHead>
                                 <TableHead>Deskripsi CPMK</TableHead>
                                 <TableHead className="w-[150px]">Pemetaan CPL</TableHead>
+                                <TableHead className="w-[180px]">Teknik & Bobot Asesmen</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <tbody className="[&_tr:last-child]:border-0">
                             {subjectCloMappings.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                         Belum ada CPMK yang dipetakan ke mata kuliah Anda.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                subjectCloMappings.map((mapping: any) => (
-                                    <TableRow key={mapping.id}>
-                                        <TableCell>
-                                            <Badge variant="outline" className="font-medium">{mapping.subject?.code}</Badge>
-                                        </TableCell>
-                                        <TableCell className="font-semibold text-slate-700">{mapping.clo.code}</TableCell>
-                                        <TableCell className="max-w-[300px]">
-                                            {mapping.clo.description}
-                                        </TableCell>
-                                        <TableCell>
-                                            {mapping.plo ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none" title={mapping.plo.description}>
-                                                        {mapping.plo.code}
-                                                    </Badge>
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs text-orange-500 font-medium bg-orange-50 px-2 py-1 rounded">Tanpa Peta</span>
+                                subjectCloMappings.map((mapping: any) => {
+                                    const subjectKey = `${mapping.subjectId}-${mapping.clo.curriculumYearId}`
+                                    const isFirstSubjectRow = !renderedSubjectKeys.has(subjectKey)
+                                    if (isFirstSubjectRow) {
+                                        renderedSubjectKeys.add(subjectKey)
+                                        currentSubjectIndex++
+                                    }
+                                    
+                                    const rowBg = currentSubjectIndex % 2 === 0 ? "!bg-background hover:!bg-muted/10" : "!bg-muted/50 hover:!bg-muted/70"
+
+                                    return (
+                                        <TableRow key={mapping.id} className={rowBg}>
+                                            {isFirstSubjectRow && (
+                                                <TableCell rowSpan={subjectRowSpans[subjectKey]} className="align-top border-r">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Badge variant="outline" className="font-medium w-fit bg-background">{mapping.subject?.code}</Badge>
+                                                        <span className="font-semibold text-sm">{mapping.subject?.title}</span>
+                                                        <span className="text-xs text-muted-foreground">{mapping.clo.curriculumYear?.name}</span>
+                                                    </div>
+                                                </TableCell>
                                             )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                            <TableCell className="font-semibold align-top border-r">{mapping.clo.code}</TableCell>
+                                            <TableCell className="max-w-[300px] align-top border-r">
+                                                {mapping.clo.description}
+                                            </TableCell>
+                                            <TableCell className="align-top border-r">
+                                                {mapping.plo ? (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        <Badge variant="outline" className="font-medium" title={mapping.plo.description}>
+                                                            {mapping.plo.code}
+                                                        </Badge>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-orange-500 font-medium bg-orange-50 px-2 py-1 rounded">Tanpa Peta</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="align-top">
+                                                {mapping.techniques && mapping.techniques.length > 0 ? (
+                                                    <div className="flex flex-col gap-1.5">
+                                                        {mapping.techniques.map((t: any) => (
+                                                            <div key={t.id} className="flex justify-between items-center text-xs">
+                                                                <span className="text-muted-foreground">{t.technique}</span>
+                                                                <span className="font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded">{t.weight}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground italic">Belum diatur QA</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
                             )}
-                        </TableBody>
+                        </tbody>
                     </Table>
                 </CardContent>
             </Card>

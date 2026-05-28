@@ -1,83 +1,112 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { getAllUsers } from '@/app/actions/adminActions'
 import prisma from '@/lib/db'
 import { CreateUserDialog } from '@/app/components/admin/CreateUserDialog'
-import { DeleteUserButton } from '@/app/components/admin/DeleteUserButton'
-import { ToggleUserStatusButton } from '@/app/components/admin/ToggleUserStatusButton'
-import { EditUserRoleDialog } from '@/app/components/admin/EditUserRoleDialog'
+import { UserTableClient } from '@/app/components/admin/UserTableClient'
+import { getSessionUser } from '@/app/actions/userActions'
+import { redirect } from 'next/navigation'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ApprovalTableClient from '@/app/components/admin/ApprovalTableClient'
+import AccessRequestTable from '@/app/components/admin/AccessRequestTable'
+import { getPendingApprovals } from '@/app/actions/authActions'
+import { getPendingAccessRequests } from '@/app/actions/accessRequestActions'
+import { Badge } from '@/components/ui/badge'
+
 export default async function AdminUsersPage() {
+    const sessionUser = await getSessionUser()
+    if (!sessionUser || !['admin', 'qa'].includes(sessionUser.activeRole)) {
+        redirect('/')
+    }
+    const { activeRole, activeDepartmentId } = sessionUser
+
     const allUsers = await getAllUsers()
+    
+    // Filter users list based on role
     const users = allUsers.filter((u: any) => {
-        const roles = u.role.split(',')
+        const roles = u.role.split(',').map((r: string) => r.trim())
+        
+        if (activeRole === 'qa') {
+            // QA can only see teacher and student.
+            // QAs cannot see other QA accounts.
+            if (roles.includes('qa') || roles.includes('admin') || roles.includes('super_admin')) return false
+            
+            const hasAllowedRole = roles.some((r: string) => ['student', 'teacher'].includes(r))
+            const inDept = u.homebaseDepartmentId === activeDepartmentId || 
+                           u.departmentRoles?.some((dr: any) => dr.departmentId === activeDepartmentId)
+            return hasAllowedRole && inDept
+        }
+
+        // Admin can see student, teacher, and qa
         return roles.some((r: string) => ['student', 'teacher', 'qa'].includes(r))
     })
+
     const departments = await prisma.department.findMany({ include: { faculty: true }, orderBy: { code: 'asc' } })
 
+    // Fetch Approval Data
+    const res = await getPendingApprovals(activeRole, activeDepartmentId)
+    const pendingUsers = res.success ? (res.pendingUsers || []) : []
+
+    let pendingAccessRequests: any[] = []
+    if (activeRole === 'qa' && activeDepartmentId) {
+        const reqRes = await getPendingAccessRequests(activeDepartmentId)
+        if (reqRes.success) pendingAccessRequests = reqRes.requests || []
+    }
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-6 w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Manajemen Pengguna</h1>
-                    <p className="text-muted-foreground mt-1">Kelola data pengguna, role, dan hak akses sistem.</p>
+                    <p className="text-muted-foreground mt-1">Kelola data pengguna, persetujuan akun, dan hak akses sistem.</p>
                 </div>
-                <CreateUserDialog departments={departments} allowedRoles={['student', 'teacher', 'qa']} />
+                {activeRole === 'admin' && (
+                    <CreateUserDialog departments={departments} allowedRoles={['student', 'teacher', 'qa']} />
+                )}
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daftar Pengguna Sistem</CardTitle>
-                    <CardDescription>Menampilkan daftar Student, Teacher, dan QA/Department.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nama</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Peran</TableHead>
-                                <TableHead>Dibuat Pada</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {users.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                        Belum ada pengguna terdaftar di sistem.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                users.map((user: { id: string, name: string, email: string, role: string, createdAt: Date, isActive: boolean }) => (
-                                    <TableRow key={user.id} className={!user.isActive ? 'opacity-50 grayscale' : ''}>
-                                        <TableCell className="font-medium">
-                                            {user.name}
-                                            {!user.isActive && <span className="ml-2 text-xs text-destructive">(Nonaktif)</span>}
-                                        </TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {user.role.split(',').map(r => (
-                                                    <Badge key={r} variant="outline" className="capitalize">
-                                                        {r}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{new Date(user.createdAt).toLocaleDateString('id-ID')}</TableCell>
-                                        <TableCell className="text-right flex items-center justify-end gap-2">
-                                            <EditUserRoleDialog user={user} allowedRoles={['student', 'teacher', 'qa']} />
-                                            <ToggleUserStatusButton id={user.id} isActive={user.isActive} userName={user.name} />
-                                            <DeleteUserButton id={user.id} userName={user.name} />
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+            <Tabs defaultValue="users" className="w-full">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="users">Semua Pengguna</TabsTrigger>
+                    <TabsTrigger value="approvals" className="flex items-center gap-2">
+                        Persetujuan Registrasi
+                        {pendingUsers.length > 0 && (
+                            <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
+                                {pendingUsers.length}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
+                    {activeRole === 'qa' && (
+                        <TabsTrigger value="access" className="flex items-center gap-2">
+                            Permintaan Akses
+                            {pendingAccessRequests.length > 0 && (
+                                <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
+                                    {pendingAccessRequests.length}
+                                </Badge>
                             )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                        </TabsTrigger>
+                    )}
+                </TabsList>
+
+                <TabsContent value="users" className="mt-0">
+                    <UserTableClient 
+                        users={users} 
+                        departments={departments} 
+                        allowedRoles={['student', 'teacher', 'qa']}
+                        title="Daftar Pengguna Sistem"
+                        description={activeRole === 'qa' ? "Menampilkan daftar pengguna di departemen Anda." : "Menampilkan daftar Student, Teacher, dan QA/Department."}
+                        hideEditRole={activeRole === 'qa'}
+                    />
+                </TabsContent>
+
+                <TabsContent value="approvals" className="mt-0">
+                    <ApprovalTableClient initialUsers={pendingUsers} currentUserId={sessionUser.id} activeRole={activeRole} />
+                </TabsContent>
+
+                {activeRole === 'qa' && (
+                    <TabsContent value="access" className="mt-0">
+                        <AccessRequestTable initialRequests={pendingAccessRequests} />
+                    </TabsContent>
+                )}
+            </Tabs>
         </div>
     )
 }

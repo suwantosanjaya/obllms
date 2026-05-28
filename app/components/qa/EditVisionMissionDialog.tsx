@@ -11,7 +11,7 @@ import { Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { updateVisionMission } from '@/app/actions/obeActions'
 
-export function EditVisionMissionDialog({ vm, isLocked, departmentId }: { vm: { id: string, code: string, description: string, type: string }, isLocked?: boolean, departmentId?: string }) {
+export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculumYearId }: { vm: { id: string, code: string, description: string, type: string }, isLocked?: boolean, departmentId?: string, curriculumYearId?: string }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { toast } = useToast()
@@ -26,7 +26,7 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId }: { vm: { 
         e.preventDefault()
         setLoading(true)
 
-        const result = await updateVisionMission(vm.id, { ...formData, departmentId })
+        const result = await updateVisionMission(vm.id, { ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
             toast({ title: 'Success', description: 'Departemen Vision/Mission updated successfully.' })

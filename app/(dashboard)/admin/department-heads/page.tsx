@@ -9,8 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { History, UserCheck } from 'lucide-react'
+import { History, UserCheck, Search } from 'lucide-react'
 import { getDepartmentsWithHeads, getHeadOfDepartmentCandidates, assignDepartmentHead, getDepartmentHeadHistory } from '@/app/actions/adminActions'
+import { useClientTable } from '@/app/hooks/useClientTable'
+import { DataTablePagination } from '@/app/components/ui/data-table-pagination'
+import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 
 type UserInfo = { id: string, name: string, email: string }
 type DepartmentInfo = { id: string, code: string, name: string, activeHeadId: string | null, activeHead: UserInfo | null }
@@ -39,6 +42,12 @@ export default function DepartmentHeadsPage() {
     const historyPageSize = 5
     const totalHistoryPages = Math.ceil(histories.length / historyPageSize)
     const paginatedHistories = histories.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize)
+
+    const {
+        searchQuery, setSearchQuery, pageIndex, setPageIndex,
+        pageSize, setPageSize, paginatedData, totalItems,
+        sortConfig, handleSort
+    } = useClientTable(departments, (d: any) => `${d.code} ${d.name} ${d.activeHead?.name || ''}`)
 
     useEffect(() => {
         fetchData()
@@ -130,24 +139,42 @@ export default function DepartmentHeadsPage() {
                     <CardTitle>Daftar Departemen & Ketua Aktif</CardTitle>
                     <CardDescription>Ketua yang ditetapkan di sini memiliki hak eksklusif untuk menyetujui (Approve) draf kurikulum di departemennya.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                     {loading ? (
                         <p className="text-sm text-muted-foreground">Memuat data...</p>
                     ) : departments.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Belum ada departemen yang terdaftar.</p>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Kode</TableHead>
-                                    <TableHead>Nama Departemen</TableHead>
-                                    <TableHead>Ketua Aktif Saat Ini</TableHead>
-                                    <TableHead>Ubah Penetapan</TableHead>
-                                    <TableHead className="text-right">Riwayat</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {departments.map(dep => (
+                        <>
+                            <div className="flex items-center space-x-2">
+                                <Search className="w-4 h-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Cari departemen atau ketua..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="max-w-sm h-8"
+                                />
+                            </div>
+                            <div className="border rounded-md overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
+                                            <SortableTableHead label="Nama Departemen" sortKey="name" currentSort={sortConfig} onSort={handleSort} />
+                                            <SortableTableHead label="Ketua Aktif Saat Ini" sortKey="activeHead.name" currentSort={sortConfig} onSort={handleSort} />
+                                            <TableHead>Ubah Penetapan</TableHead>
+                                            <TableHead className="text-right">Riwayat</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedData.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                                    Data tidak ditemukan.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                        paginatedData.map((dep: any) => (
                                     <TableRow key={dep.id}>
                                         <TableCell className="font-medium">{dep.code}</TableCell>
                                         <TableCell>{dep.name}</TableCell>
@@ -189,10 +216,16 @@ export default function DepartmentHeadsPage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )))}
                             </TableBody>
                         </Table>
-                    )}
+                    </div>
+                    <DataTablePagination 
+                        pageIndex={pageIndex} pageSize={pageSize} totalItems={totalItems}
+                        onPageChange={setPageIndex} onPageSizeChange={setPageSize}
+                    />
+                    </>
+                )}
                 </CardContent>
             </Card>
 
