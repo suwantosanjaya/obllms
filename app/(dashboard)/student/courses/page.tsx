@@ -89,6 +89,13 @@ export default async function MahasiswaCoursesPage() {
                                                 {isClosed ? 'Sudah ditutup:' : 'Akan ditutup:'} {deadline.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         )}
+                                        {enrollment.course.config?.isGamificationEnabled && (
+                                            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded-md w-fit flex items-center gap-1 border border-amber-200">
+                                                <span className="font-bold">Lv.{enrollment.gameProfile?.level || 1}</span>
+                                                <span className="mx-1">•</span>
+                                                <span>{enrollment.gameProfile?.points || 0} Pts</span>
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Footer: actions */}

@@ -6,6 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BookOpen, Calendar, ChevronRight, Link2, Users } from 'lucide-react'
 import Link from 'next/link'
 import prisma from '@/lib/db'
+import { TabsContent } from "@/components/ui/tabs"
+import { ForumTab } from '@/app/components/course/ForumTab'
+import { LeaderboardTab } from '@/app/components/course/LeaderboardTab'
+import { ReflectionFormTab } from '@/app/components/student/ReflectionFormTab'
+import { CourseTabsWrapper } from '@/app/components/course/CourseTabsWrapper'
+import { StudentAssessmentsTab } from '@/app/components/student/StudentAssessmentsTab'
+import { StudentGradebookTab } from '@/app/components/student/StudentGradebookTab'
 
 export default async function StudentCourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
     const params = await props.params
@@ -69,7 +76,13 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Main Content: Weekly Modules */}
                 <div className="lg:col-span-2 space-y-4">
-                    <Card>
+                    <CourseTabsWrapper 
+                        isForumEnabled={course.config?.isForumEnabled}
+                        isReflectionsEnabled={course.config?.isReflectionsEnabled}
+                        isGamificationEnabled={course.config?.isGamificationEnabled}
+                    >
+                        <TabsContent value="materi" className="mt-0">
+                            <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BookOpen className="w-5 h-5" />
@@ -148,8 +161,35 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                             )}
                         </CardContent>
                     </Card>
-                </div>
+                </TabsContent>
 
+                <TabsContent value="tugas" className="mt-0">
+                    <StudentAssessmentsTab courseId={course.id} studentId={user.id} />
+                </TabsContent>
+
+                <TabsContent value="rekap" className="mt-0">
+                    <StudentGradebookTab courseId={course.id} studentId={user.id} />
+                </TabsContent>
+
+                {course.config?.isForumEnabled && (
+                    <TabsContent value="forum" className="mt-0">
+                        <ForumTab courseId={course.id} isStudent={true} />
+                    </TabsContent>
+                )}
+
+                {course.config?.isReflectionsEnabled && (
+                    <TabsContent value="refleksi" className="mt-0">
+                        <ReflectionFormTab courseId={course.id} />
+                    </TabsContent>
+                )}
+
+                {course.config?.isGamificationEnabled && (
+                    <TabsContent value="leaderboard" className="mt-0">
+                        <LeaderboardTab courseId={course.id} />
+                    </TabsContent>
+                )}
+            </CourseTabsWrapper>
+        </div>
                 {/* Sidebar: Course Info */}
                 <div className="space-y-4">
                     <Card>

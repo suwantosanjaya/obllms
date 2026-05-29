@@ -48,9 +48,9 @@ export function DeletePLOButton({ id, code }: { id: string, code: string }) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} variant="destructive">
-                        {loading ? 'Deleting...' : 'Delete'}
+                        {loading ? 'Menghapus...' : 'Hapus'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

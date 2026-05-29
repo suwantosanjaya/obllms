@@ -15,8 +15,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { submitAssessment } from '@/app/actions/assessmentActions'
+import { useRouter } from 'next/navigation'
 
-export function SubmitAssessmentDialog({ assessmentId, studentId, isSubmitted, title }: { assessmentId: string, studentId: string, isSubmitted: boolean, title: string }) {
+export function SubmitAssessmentDialog({ assessmentId, courseId, studentId, isSubmitted, title, format = 'upload' }: { assessmentId: string, courseId: string, studentId: string, isSubmitted: boolean, title: string, format?: string }) {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -39,10 +41,18 @@ export function SubmitAssessmentDialog({ assessmentId, studentId, isSubmitted, t
         setLoading(false)
     }
 
+    if (format === 'quiz') {
+        return (
+            <Button variant={isSubmitted ? "outline" : "default"} size="sm" onClick={() => router.push(`/student/course/${courseId}/assessment/${assessmentId}/take`)}>
+                {isSubmitted ? 'Lihat Hasil Kuis' : 'Kerjakan Kuis Sekarang'}
+            </Button>
+        )
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant={isSubmitted ? "outline" : "default"} size="sm">
+                <Button variant={isSubmitted ? "outline" : "default"} size="sm" className="w-full sm:w-auto">
                     <Upload className="mr-2 h-4 w-4" />
                     {isSubmitted ? 'Edit Pengumpulan' : 'Kumpul Tugas'}
                 </Button>

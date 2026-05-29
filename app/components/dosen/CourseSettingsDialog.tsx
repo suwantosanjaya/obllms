@@ -142,14 +142,6 @@ export function CourseSettingsDialog({
                         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Fitur Pembelajaran</h4>
                         <div className="flex items-center justify-between space-x-2">
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="srl" className="font-semibold text-base">SRL Modul</Label>
-                                <span className="text-sm text-muted-foreground">Instruksi Self-Regulated Learning.</span>
-                            </div>
-                            <Switch id="srl" checked={srl} onCheckedChange={setSrl} />
-                        </div>
-
-                        <div className="flex items-center justify-between space-x-2">
-                            <div className="flex flex-col gap-1">
                                 <Label htmlFor="gamification" className="font-semibold text-base">Gamifikasi</Label>
                                 <span className="text-sm text-muted-foreground">Poin, lencana, dan level.</span>
                             </div>
@@ -166,8 +158,8 @@ export function CourseSettingsDialog({
 
                         <div className="flex items-center justify-between space-x-2">
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="reflections" className="font-semibold text-base">Jurnal Refleksi</Label>
-                                <span className="text-sm text-muted-foreground">Evaluasi refleksi mahasiswa.</span>
+                                <Label htmlFor="reflections" className="font-semibold text-base">Jurnal SRL & Refleksi</Label>
+                                <span className="text-sm text-muted-foreground">Evaluasi mandiri (SRL) dan refleksi mahasiswa.</span>
                             </div>
                             <Switch id="reflections" checked={reflections} onCheckedChange={setReflections} />
                         </div>

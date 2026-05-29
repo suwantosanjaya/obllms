@@ -64,7 +64,7 @@ export function DeleteSubjectButton({ id, title }: DeleteSubjectButtonProps) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={(e) => {
                             e.preventDefault()
@@ -73,7 +73,7 @@ export function DeleteSubjectButton({ id, title }: DeleteSubjectButtonProps) {
                         disabled={isLoading}
                         variant="destructive"
                     >
-                        {isLoading ? 'Deleting...' : 'Delete'}
+                        {isLoading ? 'Menghapus...' : 'Hapus'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

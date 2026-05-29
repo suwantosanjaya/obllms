@@ -45,9 +45,11 @@ export function getSidebarLinks(activeRole: string | null) {
                 { href: '/qa/subjects', label: 'Subject Catalog', icon: BookOpen },
                 { href: '/qa/curriculum', label: 'Curriculum Review', icon: BookOpen },
                 { href: '/qa/schedules', label: 'Schedule Management', icon: CalendarDays },
+                { href: '/qa/analytics', label: 'Analisis Capaian CLO', icon: BarChart },
                 { href: '/qa/metrics', label: 'QA Metrics', icon: BarChart },
                 { href: '/qa/feedback', label: 'Student Feedback', icon: MessageSquare },
                 { href: '/admin/users', label: 'Manajemen Pengguna', icon: Users },
+                { href: '/admin/settings/grades', label: 'Rentang Nilai', icon: Settings },
             ]
         case 'super_admin':
             return [

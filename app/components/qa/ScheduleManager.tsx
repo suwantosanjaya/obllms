@@ -14,11 +14,22 @@ import { EditClassDialog } from './EditClassDialog'
 import { useClientTable } from '@/app/hooks/useClientTable'
 import { DataTablePagination } from '../ui/data-table-pagination'
 import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export function ScheduleManager({ courses, departmentId }: { courses: any[], departmentId?: string | null }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [selectedCourse, setSelectedCourse] = useState<any>(null)
     const [localCourses, setLocalCourses] = useState(courses)
+    const [deleteId, setDeleteId] = useState<string | null>(null)
 
     const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>('all')
     const [selectedSemesterTA, setSelectedSemesterTA] = useState<string>('all')
@@ -88,12 +99,17 @@ export function ScheduleManager({ courses, departmentId }: { courses: any[], dep
         setLocalCourses(prev => prev.map(c => c.id === updatedCourse.id ? { ...c, ...updatedCourse } : c))
     }
 
-    const handleDelete = async (courseId: string) => {
-        if (!confirm("Apakah Anda yakin ingin menghapus kelas ini? Tindakan ini tidak dapat dibatalkan.")) return
+    const confirmDelete = (courseId: string) => {
+        setDeleteId(courseId)
+    }
+
+    const handleDelete = async () => {
+        if (!deleteId) return
         
-        const res = await deleteCourse(courseId)
+        const res = await deleteCourse(deleteId)
         if (res.success) {
-            setLocalCourses(prev => prev.filter(c => c.id !== courseId))
+            setLocalCourses(prev => prev.filter(c => c.id !== deleteId))
+            setDeleteId(null)
         } else {
             alert(res.error)
         }
@@ -211,7 +227,7 @@ export function ScheduleManager({ courses, departmentId }: { courses: any[], dep
                                                         <Button variant="ghost" size="icon" onClick={() => handleEditClick(course)}>
                                                             <Pencil className="w-4 h-4 text-blue-600" />
                                                         </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(course.id)}>
+                                                        <Button variant="ghost" size="icon" onClick={() => confirmDelete(course.id)}>
                                                             <Trash2 className="w-4 h-4 text-red-600" />
                                                         </Button>
                                                     </>
@@ -244,6 +260,23 @@ export function ScheduleManager({ courses, departmentId }: { courses: any[], dep
                 onCourseUpdated={handleCourseUpdated}
                 departmentId={departmentId}
             />
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Kelas?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus kelas ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data penugasan mahasiswa di kelas ini.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Ya, Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     )
 }

@@ -235,7 +235,8 @@ export async function getCLOsBySubject(subjectId: string) {
                 clo: {
                     include: { plos: true }
                 },
-                plo: true
+                plo: true,
+                techniques: true
             },
             orderBy: [{ plo: { code: 'asc' } }, { clo: { code: 'asc' } }]
         })

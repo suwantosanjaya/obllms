@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,23 +18,53 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { createAssessment } from '@/app/actions/assessmentActions'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useToast } from '@/hooks/use-toast'
+import { createAssessment, duplicateAssessment, getAssessmentsBySubject } from '@/app/actions/assessmentActions'
 import { getCLOsBySubject } from '@/app/actions/obeActions'
 
 type CLO = { id: string; code: string; description: string }
 type SelectedCLO = { cloId: string; weight: number }
 
-export function CreateAssessmentDialog({ courses }: { courses: { id: string, subjectId: string, title: string }[] }) {
+export function CreateAssessmentDialog({ courses }: { courses: { id: string, subjectId: string, title: string, curriculumYearId?: string | null }[] }) {
+    const router = useRouter()
+
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
     const [selectedCourseId, setSelectedCourseId] = useState('')
+    const [allMappings, setAllMappings] = useState<any[]>([])
     const [availableClos, setAvailableClos] = useState<CLO[]>([])
     const [selectedClos, setSelectedClos] = useState<SelectedCLO[]>([])
+    const [availableTechniques, setAvailableTechniques] = useState<string[]>([])
+    const [selectedTechnique, setSelectedTechnique] = useState('')
+    const [format, setFormat] = useState('upload') // 'upload' or 'quiz'
+    const [allowReview, setAllowReview] = useState(false)
+    const [timeLimit, setTimeLimit] = useState<number | ''>('')
     const [cloLoading, setCloLoading] = useState(false)
+    const { toast } = useToast()
+
+    // Duplication state
+    const [duplicationAssessments, setDuplicationAssessments] = useState<any[]>([])
+    const [selectedDuplicateId, setSelectedDuplicateId] = useState('')
+    const [dupLoading, setDupLoading] = useState(false)
+
+    // Setup default due date: 7 days from now at 23:59
+    const defaultDueDate = new Date()
+    defaultDueDate.setDate(defaultDueDate.getDate() + 7)
+    defaultDueDate.setHours(23, 59, 0, 0)
+    const tzOffset = defaultDueDate.getTimezoneOffset() * 60000
+    const defaultDueDateStr = (new Date(defaultDueDate.getTime() - tzOffset)).toISOString().slice(0, 16)
 
     const totalWeight = selectedClos.reduce((s, c) => s + (c.weight || 0), 0)
+
+    useEffect(() => {
+        if (courses.length === 1 && !selectedCourseId) {
+            setSelectedCourseId(courses[0].id)
+        }
+    }, [courses])
 
     useEffect(() => {
         if (!selectedCourseId) {
@@ -50,19 +81,73 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
 
         setCloLoading(true)
         getCLOsBySubject(selectedCourse.subjectId).then(res => {
-            const uniqueClosMap = new Map()
             if (res.success) {
+                setAllMappings(res.mappings)
+                const uniqueTechniques = new Set<string>()
                 res.mappings.forEach((m: any) => {
-                    if (!uniqueClosMap.has(m.clo.id)) {
-                        uniqueClosMap.set(m.clo.id, m.clo)
+                    const isMatchingYear = selectedCourse.curriculumYearId
+                        ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
+                        : true;
+                    if (isMatchingYear && m.techniques) {
+                        m.techniques.forEach((t: any) => uniqueTechniques.add(t.technique))
                     }
                 })
+                
+                const techArray = Array.from(uniqueTechniques)
+                if (techArray.length > 0) {
+                    setAvailableTechniques(techArray)
+                    setSelectedTechnique(techArray[0])
+                } else {
+                    const fallback = ['Tugas', 'Kuis', 'Ujian Tulis']
+                    setAvailableTechniques(fallback)
+                    setSelectedTechnique(fallback[0])
+                }
+            } else {
+                setAllMappings([])
+                setAvailableTechniques(['Tugas', 'Kuis', 'Ujian Tulis'])
+                setSelectedTechnique('Tugas')
             }
-            setAvailableClos(Array.from(uniqueClosMap.values()))
             setSelectedClos([])
             setCloLoading(false)
         })
+        
+        // Fetch assessments for duplication
+        getAssessmentsBySubject(selectedCourse.subjectId, selectedCourse.id).then(res => {
+            if (res.success && res.assessments) {
+                setDuplicationAssessments(res.assessments)
+            } else {
+                setDuplicationAssessments([])
+            }
+        })
     }, [selectedCourseId, courses])
+
+    useEffect(() => {
+        if (!selectedCourseId || allMappings.length === 0) {
+            setAvailableClos([])
+            return
+        }
+        const selectedCourse = courses.find(c => c.id === selectedCourseId)
+        if (!selectedCourse) return
+
+        const uniqueClosMap = new Map()
+        allMappings.forEach((m: any) => {
+            const isMatchingYear = selectedCourse.curriculumYearId
+                ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
+                : true;
+            
+            // Check if this mapping supports the selected technique
+            const hasTechnique = m.techniques && m.techniques.length > 0
+                ? m.techniques.some((t: any) => t.technique === selectedTechnique)
+                : true; // fallback if no techniques defined in mapping
+
+            if (isMatchingYear && hasTechnique && !uniqueClosMap.has(m.clo.id)) {
+                uniqueClosMap.set(m.clo.id, m.clo)
+            }
+        })
+        setAvailableClos(Array.from(uniqueClosMap.values()))
+        // Clear selected CLOs if they are no longer available in this technique
+        setSelectedClos(prev => prev.filter(c => uniqueClosMap.has(c.cloId)))
+    }, [selectedCourseId, allMappings, selectedTechnique, courses])
 
     function addClo(cloId: string) {
         if (selectedClos.find(c => c.cloId === cloId)) return
@@ -82,11 +167,11 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
         setError('')
 
         if (selectedClos.length === 0) {
-            setError('Pilih minimal 1 CPMK untuk tugas ini.')
+            setError('Pilih minimal 1 CLO untuk tugas ini.')
             return
         }
         if (Math.abs(totalWeight - 100) > 0.01) {
-            setError(`Total bobot CPMK harus 100%. Saat ini: ${totalWeight}%`)
+            setError(`Total bobot CLO harus 100%. Saat ini: ${totalWeight}%`)
             return
         }
 
@@ -100,19 +185,46 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
         const res = await createAssessment({
             title,
             description,
+            type: selectedTechnique,
             dueDate: new Date(dueDateStr),
             courseId,
             clos: selectedClos,
+            format,
+            allowReview,
+            timeLimit: timeLimit === '' ? null : Number(timeLimit)
         })
 
         if (res.success) {
             setOpen(false)
             setSelectedCourseId('')
             setSelectedClos([])
+            if (format === 'quiz' && res.assessmentId) {
+                router.push(`/teacher/course/${courseId}/assessment/${res.assessmentId}/builder`)
+            }
         } else {
             setError(res.error || 'Gagal membuat tugas')
         }
         setLoading(false)
+    }
+
+    async function handleDuplicate(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        setError('')
+        if (!selectedDuplicateId) {
+            setError('Pilih tugas/kuis yang ingin diduplikat.')
+            return
+        }
+
+        setDupLoading(true)
+        const res = await duplicateAssessment(selectedDuplicateId, selectedCourseId)
+        if (res.success) {
+            setOpen(false)
+            toast({ title: 'Berhasil', description: 'Tugas/Kuis berhasil diduplikat!' })
+            router.refresh()
+        } else {
+            setError(res.error || 'Gagal menduplikat tugas')
+        }
+        setDupLoading(false)
     }
 
     if (courses.length === 0) {
@@ -132,25 +244,96 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                     Tambah Tugas Baru
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
-                <form onSubmit={handleSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>Buat Tugas Baru</DialogTitle>
-                        <DialogDescription>
-                            Isi detail tugas dan pilih CPMK beserta bobotnya (total harus 100%).
-                        </DialogDescription>
-                    </DialogHeader>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Buat atau Salin Tugas</DialogTitle>
+                    <DialogDescription>
+                        Pilih untuk membuat tugas baru dari awal, atau menyalin tugas yang sudah ada dari kelas lain.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {error && <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">{error}</div>}
+
+                <Tabs defaultValue="new" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="new">Tugas Baru</TabsTrigger>
+                        <TabsTrigger value="duplicate">Salin dari Kelas Lain</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="new">
+                        <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         {/* Title */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="title" className="text-right">Judul</Label>
-                            <Input id="title" name="title" placeholder="Tugas 1: ERD" className="col-span-3" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="title">Judul</Label>
+                            <Input id="title" name="title" placeholder="Tugas 1: ERD" required />
                         </div>
 
+                        {/* Type / Technique picker */}
+                        <div className="grid gap-2">
+                            <Label>Teknik Penilaian</Label>
+                            <Select value={selectedTechnique} onValueChange={setSelectedTechnique} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Teknik Penilaian" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableTechniques.map(t => (
+                                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Format picker */}
+                        <div className="grid gap-2">
+                            <Label>Format Tugas</Label>
+                            <Select value={format} onValueChange={setFormat} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="upload">Unggah File / Teks Biasa</SelectItem>
+                                    <SelectItem value="quiz">Kuis Interaktif (CBT)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Allow Review switch (only for quiz) */}
+                        {format === 'quiz' && (
+                            <div className="grid gap-4">
+                                <div className="grid gap-2 p-3 bg-muted/10 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="allowReview">Akses Kunci Jawaban</Label>
+                                        <Switch
+                                            id="allowReview"
+                                            checked={allowReview}
+                                            onCheckedChange={setAllowReview}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {allowReview ? 'Mahasiswa dapat melihat review (kunci jawaban) setelah selesai mengerjakan.' : 'Mahasiswa hanya melihat skor akhir (default).'}
+                                    </p>
+                                </div>
+                                
+                                <div className="grid gap-2">
+                                    <Label htmlFor="timeLimit">Batas Waktu (Menit)</Label>
+                                    <Input 
+                                        id="timeLimit" 
+                                        type="number" 
+                                        min="1" 
+                                        placeholder="Kosongkan jika tidak ada batas waktu" 
+                                        value={timeLimit}
+                                        onChange={e => setTimeLimit(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Durasi maksimal pengerjaan kuis.</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Course picker */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Kelas</Label>
-                            <div className="col-span-3">
+                        {courses.length > 1 && (
+                            <div className="grid gap-2">
+                                <Label>Kelas</Label>
                                 <Select value={selectedCourseId} onValueChange={setSelectedCourseId} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Kelas" />
@@ -162,22 +345,26 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
+                        )}
 
                         {/* CLO multi-select */}
                         {selectedCourseId && (
-                            <div className="col-span-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                            <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3 mt-2">
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-semibold">CPMK yang Diukur</Label>
+                                    <Label className="text-sm font-semibold">CLO yang Diukur</Label>
                                     <span className={`text-xs font-medium ${Math.abs(totalWeight - 100) < 0.01 ? 'text-green-500' : 'text-orange-500'}`}>
                                         Total bobot: {totalWeight}%
                                     </span>
                                 </div>
 
-                                {cloLoading && <p className="text-xs text-muted-foreground">Memuat CPMK...</p>}
+                                {cloLoading && <p className="text-xs text-muted-foreground">Memuat CLO...</p>}
 
                                 {!cloLoading && availableClos.length === 0 && (
-                                    <p className="text-xs text-muted-foreground">Belum ada CPMK untuk kelas ini. Buat CPMK di halaman OBL Alignment dulu.</p>
+                                    <div className="text-xs text-muted-foreground bg-orange-50 text-orange-800 p-2 rounded border border-orange-200">
+                                        <span className="font-semibold block mb-1">Perhatian!</span>
+                                        Tidak ada CLO yang terhubung dengan teknik penilaian <b>{selectedTechnique}</b> pada kurikulum mata kuliah ini. 
+                                        <br/>Silakan pilih teknik penilaian lain, atau hubungi QA untuk memperbarui pemetaan OBL.
+                                    </div>
                                 )}
 
                                 {/* Available CLOs to add */}
@@ -229,15 +416,15 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         )}
 
                         {/* Description */}
-                        <div className="grid grid-cols-4 items-start gap-4">
-                            <Label htmlFor="description" className="text-right mt-2">Deskripsi</Label>
-                            <Textarea id="description" name="description" placeholder="Instruksi pengerjaan tugas..." className="col-span-3 min-h-[80px]" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Deskripsi</Label>
+                            <Textarea id="description" name="description" placeholder="Instruksi pengerjaan tugas..." className="min-h-[80px]" required />
                         </div>
 
                         {/* Due date */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="dueDate" className="text-right">Tenggat</Label>
-                            <Input id="dueDate" name="dueDate" type="datetime-local" className="col-span-3" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="dueDate">Tenggat Waktu (Due Date)</Label>
+                            <Input id="dueDate" name="dueDate" type="datetime-local" defaultValue={defaultDueDateStr} required />
                         </div>
 
                         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -247,7 +434,53 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan Tugas'}</Button>
                     </DialogFooter>
                 </form>
-            </DialogContent>
+            </TabsContent>
+
+            <TabsContent value="duplicate">
+                <form onSubmit={handleDuplicate}>
+                    <div className="grid gap-4 py-4">
+                        {duplicationAssessments.length === 0 ? (
+                            <div className="text-center p-8 border border-dashed rounded-lg text-muted-foreground">
+                                Tidak ada tugas/kuis lain yang tersedia untuk diduplikat dari mata kuliah ini.
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <Label>Pilih Tugas/Kuis yang akan diduplikat:</Label>
+                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                                    {duplicationAssessments.map(ass => (
+                                        <div 
+                                            key={ass.id} 
+                                            className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedDuplicateId === ass.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:border-primary/50'}`}
+                                            onClick={() => setSelectedDuplicateId(ass.id)}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-semibold">{ass.title}</h4>
+                                                    <p className="text-xs text-muted-foreground mt-1">Kelas Asal: {ass.course?.classCode || 'Unknown Class'}</p>
+                                                    <p className="text-xs text-muted-foreground">Tipe: {ass.type} • Format: {ass.format === 'quiz' ? 'CBT / Kuis Interaktif' : 'Unggah File'}</p>
+                                                </div>
+                                                <Badge variant="secondary">{ass.questions?.length || 0} Soal</Badge>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground bg-blue-50 text-blue-800 p-2 rounded">
+                                    Info: Menduplikat tugas ini akan menyalin seluruh pengaturan, pemetaan CLO, bobot, beserta semua butir soal dan kunci jawabannya ke kelas ini.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
+                        <Button type="submit" disabled={dupLoading || duplicationAssessments.length === 0}>
+                            {dupLoading ? 'Menyalin...' : 'Duplikat Tugas'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </TabsContent>
+            
+            </Tabs>
+        </DialogContent>
         </Dialog>
     )
 }

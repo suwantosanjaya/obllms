@@ -36,6 +36,8 @@ model User {
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
   accessRequests DepartmentAccessRequest[]
+  forumThreads   ForumThread[]
+  forumReplies   ForumReply[]
 }
 
 // Profile specifically for Students (Mahasiswa)
@@ -289,6 +291,7 @@ model CourseLearningOutcome {
   modules          CourseModule[]       // Which materials teach this CLO (legacy single)
   moduleClos       CourseModuleCLO[]    // Multi-CLO module mappings
   threads          ForumThread[]        // Questions asked about this CLO
+  assessmentQuestions AssessmentQuestion[] // Questions mapping to this CLO
 }
 
 // Junction table for Subject <-> CLO Many-to-Many mapping with weight
@@ -326,13 +329,18 @@ model Assessment {
   courseId    String
   title       String
   description String?
-  type        String // 'quiz', 'assignment', 'project'
+  type        String // e.g. 'Tugas Mandiri', 'Kuis' (Mapped to Technique)
+  format      String    @default("upload") // 'upload' | 'cbt'
+  isPublished Boolean   @default(false)
   dueDate     DateTime?
   maxScore    Int       @default(100)
+  allowReview Boolean   @default(false)
+  timeLimit   Int?      // Optional time limit for CBT quizzes in minutes
 
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions    Submission[]
   assessmentClos AssessmentCLO[] // CLOs measured by this assessment with weights
+  questions      AssessmentQuestion[] // Interactive questions for quizzes
 }
 
 // Join table: Assessment <-> CLO with percentage weight
@@ -361,6 +369,7 @@ model Submission {
   student    User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
   assessment Assessment          @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   cloScores  SubmissionCLOScore[] // Per-CLO breakdown scores
+  answers    StudentAnswer[]     // Individual answers to quiz questions
 
   @@unique([studentId, assessmentId]) // One submission per student per assessment
 }
@@ -376,6 +385,56 @@ model SubmissionCLOScore {
   clo        CourseLearningOutcome @relation(fields: [cloId], references: [id], onDelete: Cascade)
 
   @@unique([submissionId, cloId])
+}
+
+// ----------------------------------------------------
+// QUIZ ENGINE MODELS
+// ----------------------------------------------------
+
+model AssessmentQuestion {
+  id           String @id @default(cuid())
+  assessmentId String
+  text         String // The question content
+  type         String // 'MULTIPLE_CHOICE', 'ESSAY'
+  points       Float  @default(1) // Weight/Points for this specific question
+  
+  // Mapping a specific question to a CLO
+  cloId        String?
+  
+  options      AssessmentQuestionOption[]
+  answers      StudentAnswer[]
+
+  assessment   Assessment             @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  clo          CourseLearningOutcome? @relation(fields: [cloId], references: [id])
+}
+
+model AssessmentQuestionOption {
+  id         String @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean @default(false)
+  
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model StudentAnswer {
+  id               String @id @default(cuid())
+  submissionId     String
+  questionId       String
+  
+  // For multiple choice
+  selectedOptionId String?
+  
+  // For essay
+  textResponse     String?
+  
+  // Graded points for this specific answer
+  points           Float?
+
+  submission Submission         @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@unique([submissionId, questionId])
 }
 
 // Model for Quality Assurance & Community Feedback
@@ -463,6 +522,7 @@ model ForumThread {
 
   course  Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
   clo     CourseLearningOutcome? @relation(fields: [cloId], references: [id])
+  author  User                   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   replies ForumReply[]
 }
 
@@ -475,6 +535,7 @@ model ForumReply {
   createdAt    DateTime @default(now())
 
   thread ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // 5. Gamification (Points & Badges)
@@ -573,4 +634,13 @@ model DepartmentHeadHistory {
 
   department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Global Grade Scale Settings
+model GradeScale {
+  id       String @id @default(cuid())
+  grade    String // A, A-, B+, etc.
+  minScore Float  // e.g., 85
+  maxScore Float  // e.g., 100
+  point    Float  // GPA point, e.g., 4.0
 }

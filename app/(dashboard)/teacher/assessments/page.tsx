@@ -21,7 +21,12 @@ export default async function DosenAssessmentsPage() {
     const assessmentsRes = await getAssessmentsByInstructor(dosenUser.id)
 
     const courses = coursesRes.success
-        ? coursesRes.courses?.map((c: any) => ({ id: c.id, subjectId: c.subjectId, title: `${c.subject.code} - ${c.subject.title} (${c.academicYear})` })) || []
+        ? coursesRes.courses?.map((c: any) => ({ 
+            id: c.id, 
+            subjectId: c.subjectId, 
+            title: `${c.subject.code} - ${c.subject.title} (${c.academicYear})`,
+            curriculumYearId: c.curriculumYearId
+        })) || []
         : []
     const assessments = assessmentsRes.success ? assessmentsRes.assessments || [] : []
 

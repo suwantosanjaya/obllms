@@ -10,6 +10,13 @@ import { Button } from '@/components/ui/button'
 import { TeacherStudentManagementDialog } from '@/app/components/teacher/TeacherStudentManagementDialog'
 import { RemoveStudentButton } from '@/app/components/teacher/RemoveStudentButton'
 import { redirect } from 'next/navigation'
+import { TabsContent } from "@/components/ui/tabs"
+import { ForumTab } from '@/app/components/course/ForumTab'
+import { LeaderboardTab } from '@/app/components/course/LeaderboardTab'
+import { ReflectionReviewTab } from '@/app/components/teacher/ReflectionReviewTab'
+import { CourseTabsWrapper } from '@/app/components/course/CourseTabsWrapper'
+import { CourseAssessmentsTab } from '@/app/components/course/CourseAssessmentsTab'
+import { CourseGradebookTab } from '@/app/components/course/CourseGradebookTab'
 
 export default async function DosenCourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
     const params = await props.params;
@@ -66,7 +73,13 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
             <div className="grid gap-6 md:grid-cols-4 lg:grid-cols-5">
                 {/* Main Content Area */}
                 <div className="md:col-span-3 lg:col-span-4 space-y-6">
-                    <Card>
+                    <CourseTabsWrapper 
+                        isForumEnabled={course.config?.isForumEnabled}
+                        isReflectionsEnabled={course.config?.isReflectionsEnabled}
+                        isGamificationEnabled={course.config?.isGamificationEnabled}
+                    >
+                        <TabsContent value="materi" className="mt-0">
+                            <Card>
                         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 border-b">
                             <div>
                                 <CardTitle>Materi & Aktivitas Mingguan</CardTitle>
@@ -193,7 +206,35 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                             )}
                         </CardContent>
                     </Card>
-                </div>
+                </TabsContent>
+
+                <TabsContent value="tugas" className="mt-0">
+                    <CourseAssessmentsTab courseId={course.id} />
+                </TabsContent>
+
+                <TabsContent value="rekap" className="mt-0">
+                    <CourseGradebookTab courseId={course.id} />
+                </TabsContent>
+
+                {course.config?.isForumEnabled && (
+                    <TabsContent value="forum" className="mt-0">
+                        <ForumTab courseId={course.id} isStudent={false} />
+                    </TabsContent>
+                )}
+
+                {course.config?.isReflectionsEnabled && (
+                    <TabsContent value="refleksi" className="mt-0">
+                        <ReflectionReviewTab courseId={course.id} />
+                    </TabsContent>
+                )}
+
+                {course.config?.isGamificationEnabled && (
+                    <TabsContent value="leaderboard" className="mt-0">
+                        <LeaderboardTab courseId={course.id} />
+                    </TabsContent>
+                )}
+            </CourseTabsWrapper>
+        </div>
 
                 {/* Sidebar Configuration Panel */}
                 <div className="md:col-span-1 lg:col-span-1 space-y-6">
@@ -204,12 +245,7 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                         <CardContent className="space-y-3">
                             {course.config ? (
                                 <>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-muted-foreground">SRL Modul</span>
-                                        <Badge variant={course.config.isSrlEnabled ? "default" : "secondary"}>
-                                            {course.config.isSrlEnabled ? "ON" : "OFF"}
-                                        </Badge>
-                                    </div>
+
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Gamifikasi</span>
                                         <Badge variant={course.config.isGamificationEnabled ? "default" : "secondary"}>
@@ -223,7 +259,7 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                         </Badge>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-muted-foreground">Jurnal Refleksi</span>
+                                        <span className="text-muted-foreground">Jurnal SRL & Refleksi</span>
                                         <Badge variant={course.config.isReflectionsEnabled ? "default" : "secondary"}>
                                             {course.config.isReflectionsEnabled ? "ON" : "OFF"}
                                         </Badge>

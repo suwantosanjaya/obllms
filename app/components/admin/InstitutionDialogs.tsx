@@ -68,7 +68,7 @@ export function CreateUniversityDialog() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -119,7 +119,7 @@ export function EditUniversityDialog({ university }: { university: { id: string,
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -184,7 +184,7 @@ export function CreateFacultyDialog({ universities }: { universities: { id: stri
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -247,7 +247,7 @@ export function EditFacultyDialog({ faculty, universities }: { faculty: any, uni
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -312,7 +312,7 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -375,7 +375,7 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -415,8 +415,8 @@ export function DeleteUniversityDialog({ id, name }: { id: string, name: string 
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
-                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Deleting...' : 'Delete'}</Button>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button>
+                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Menghapus...' : 'Hapus'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -456,8 +456,8 @@ export function DeleteFacultyDialog({ id, name }: { id: string, name: string }) 
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
-                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Deleting...' : 'Delete'}</Button>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button>
+                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Menghapus...' : 'Hapus'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -497,8 +497,8 @@ export function DeleteDepartmentDialog({ id, name }: { id: string, name: string 
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
-                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Deleting...' : 'Delete'}</Button>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button>
+                        <Button type="submit" variant="destructive" disabled={loading}>{loading ? 'Menghapus...' : 'Hapus'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

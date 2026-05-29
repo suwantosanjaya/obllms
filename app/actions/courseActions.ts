@@ -210,6 +210,7 @@ export async function getStudentCourses(studentId: string, activeProdiId?: strin
         const enrollments = await prisma.enrollment.findMany({
             where: whereClause,
             include: {
+                gameProfile: true,
                 course: {
                     include: {
                         subject: true,

@@ -125,9 +125,9 @@ export function EditGraduateProfileDialog({
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Saving...' : 'Save Changes'}
+                            {loading ? 'Menyimpan...' : 'Save Changes'}
                         </Button>
                     </DialogFooter>
                 </form>
