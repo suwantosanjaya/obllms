@@ -11,7 +11,17 @@ import { TogglePublishAssessmentButton } from '@/app/components/dosen/TogglePubl
 import { DeleteAssessmentButton } from '@/app/components/dosen/DeleteAssessmentButton'
 import { BookOpen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import prisma from '@/lib/db'
+
+const isValidUrl = (string: string) => {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
 
 export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
     // We need subject details to pass to CreateAssessmentDialog
@@ -68,9 +78,17 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                 <React.Fragment key={assessment.id}>
                                     <TableRow className="bg-background hover:bg-muted/20">
                                         <TableCell className="font-medium pl-6">
-                                            {assessment.title}
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span>{assessment.title}</span>
+                                                <Badge variant="secondary" className="text-[10px] font-normal h-5">{assessment.type}</Badge>
+                                                {assessment.format === 'quiz' ? (
+                                                    <Badge variant="outline" className="text-[10px] font-normal h-5 bg-blue-50 text-blue-700 border-blue-200">Kuis Interaktif</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[10px] font-normal h-5">Unggah File</Badge>
+                                                )}
+                                            </div>
                                             {assessment.description && (
-                                                <p className="text-xs text-muted-foreground max-w-[250px] truncate mt-1">
+                                                <p className="text-xs text-muted-foreground max-w-[250px] truncate">
                                                     {assessment.description}
                                                 </p>
                                             )}
@@ -137,9 +155,57 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                             <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-background p-3 rounded-lg border shadow-sm text-sm gap-4">
                                                                 <div className="flex flex-col gap-1 min-w-[200px]">
                                                                     <span className="font-semibold text-primary">{sub.student.name}</span>
-                                                                    <a href={sub.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1">
-                                                                        Lihat Lampiran Jawaban ↗
-                                                                    </a>
+                                                                    {assessment.format === 'quiz' ? (
+                                                                            <GradeSubmissionDialog
+                                                                                submissionId={sub.id}
+                                                                                studentName={sub.student.name}
+                                                                                currentScore={sub.score}
+                                                                                currentFeedback={sub.feedback}
+                                                                                assessmentClos={assessment.assessmentClos}
+                                                                                existingCloScores={sub.cloScores}
+                                                                                format={assessment.format}
+                                                                                answers={sub.answers}
+                                                                                questions={assessment.questions}
+                                                                                triggerButton={
+                                                                                    <button type="button" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1 text-left cursor-pointer">
+                                                                                        Lihat Hasil Jawaban CBT ↗
+                                                                                    </button>
+                                                                                }
+                                                                            />
+                                                                    ) : sub.content === 'Otomatis dikonversi dari Poin Papan Peringkat Gamifikasi' ? (
+                                                                        <span className="text-purple-600 text-xs italic flex items-center gap-1">
+                                                                            ★ Dikonversi dari Papan Peringkat
+                                                                        </span>
+                                                                    ) : sub.content ? (
+                                                                        isValidUrl(sub.content) ? (
+                                                                            <a href={sub.content} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1">
+                                                                                Lihat Lampiran Jawaban ↗
+                                                                            </a>
+                                                                        ) : (
+                                                                            <Dialog>
+                                                                                <DialogTrigger asChild>
+                                                                                    <button type="button" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1 text-left cursor-pointer">
+                                                                                        Lihat Teks Jawaban ↗
+                                                                                    </button>
+                                                                                </DialogTrigger>
+                                                                                <DialogContent className="sm:max-w-md">
+                                                                                    <DialogHeader>
+                                                                                        <DialogTitle>Teks Jawaban Mahasiswa</DialogTitle>
+                                                                                        <DialogDescription>
+                                                                                            {sub.student.name}
+                                                                                        </DialogDescription>
+                                                                                    </DialogHeader>
+                                                                                    <div className="bg-muted/30 p-4 rounded-md border text-sm whitespace-pre-wrap mt-2 max-h-[60vh] overflow-y-auto">
+                                                                                        {sub.content}
+                                                                                    </div>
+                                                                                </DialogContent>
+                                                                            </Dialog>
+                                                                        )
+                                                                    ) : (
+                                                                        <span className="text-muted-foreground text-xs italic flex items-center gap-1">
+                                                                            Tidak ada lampiran file/link
+                                                                        </span>
+                                                                    )}
                                                                 </div>
 
                                                                 {/* Per-CLO score breakdown */}
@@ -169,16 +235,18 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                                             Perlu Dinilai
                                                                         </Badge>
                                                                     )}
-                                                                    <GradeSubmissionDialog
-                                                                        submissionId={sub.id}
-                                                                        studentName={sub.student.name}
-                                                                        currentScore={sub.score}
-                                                                        currentFeedback={sub.feedback}
-                                                                        assessmentClos={assessment.assessmentClos}
-                                                                        existingCloScores={sub.cloScores}
-                                                                        format={assessment.format}
-                                                                        answers={sub.answers}
-                                                                    />
+                                                                    {assessment.format !== 'quiz' && (
+                                                                        <GradeSubmissionDialog
+                                                                            submissionId={sub.id}
+                                                                            studentName={sub.student.name}
+                                                                            currentScore={sub.score}
+                                                                            currentFeedback={sub.feedback}
+                                                                            assessmentClos={assessment.assessmentClos}
+                                                                            existingCloScores={sub.cloScores}
+                                                                            format={assessment.format}
+                                                                            answers={sub.answers}
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))}

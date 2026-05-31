@@ -13,6 +13,7 @@ export async function createAssessment(data: {
     clos: { cloId: string; weight: number }[]; // Multi-CLO with weights (must sum to 100)
     format?: string; // 'upload' or 'quiz'
     allowReview?: boolean;
+    shuffleQuestions?: boolean;
     timeLimit?: number | null;
 }) {
     try {
@@ -23,6 +24,7 @@ export async function createAssessment(data: {
                 type: data.type,
                 format: data.format || 'upload',
                 allowReview: data.allowReview ?? false,
+                shuffleQuestions: data.shuffleQuestions ?? false,
                 timeLimit: data.timeLimit || null,
                 dueDate: data.dueDate,
                 courseId: data.courseId,
@@ -50,6 +52,7 @@ export async function updateAssessment(data: {
     courseId: string;
     clos?: { cloId: string; weight: number }[]; // Optional if not allowed to change
     allowReview?: boolean;
+    shuffleQuestions?: boolean;
     timeLimit?: number | null;
 }) {
     try {
@@ -76,6 +79,7 @@ export async function updateAssessment(data: {
                     description: data.description,
                     dueDate: data.dueDate,
                     allowReview: data.allowReview ?? false,
+                    ...(data.shuffleQuestions !== undefined ? { shuffleQuestions: data.shuffleQuestions } : {}),
                     ...(data.timeLimit !== undefined ? { timeLimit: data.timeLimit } : {}),
                     // Only update type if not graded
                     ...(hasGradedSubmissions ? {} : { type: data.type })
@@ -148,6 +152,9 @@ export async function getAssessmentsForCourse(courseId: string) {
                 },
                 assessmentClos: {
                     include: { clo: true }
+                },
+                questions: {
+                    include: { options: true }
                 },
                 _count: { select: { submissions: true } },
                 submissions: {
@@ -467,12 +474,12 @@ export async function updateQuizQuestion(data: {
                 }
             })
 
-            await tx.assessmentOption.deleteMany({
+            await tx.assessmentQuestionOption.deleteMany({
                 where: { questionId: data.id }
             })
 
             if (data.type === 'MULTIPLE_CHOICE' && data.options.length > 0) {
-                await tx.assessmentOption.createMany({
+                await tx.assessmentQuestionOption.createMany({
                     data: data.options.map(opt => ({
                         questionId: data.id,
                         text: opt.text,
@@ -538,8 +545,48 @@ export async function submitQuizAnswers(data: {
         })
 
         let finalScore = null
+        let cloScoresData = null
+        
         if (!hasEssays && totalPossibleScore > 0) {
             finalScore = (totalScoreEarned / totalPossibleScore) * 100
+            
+            // Automatically calculate per-CLO scores
+            if (assessment.assessmentClos.length > 0) {
+                const cloScores = []
+                for (const ac of assessment.assessmentClos) {
+                    const cloAnswers = answerRecords.filter(ans => {
+                        const q = assessment.questions.find(q => q.id === ans.questionId)
+                        return q?.cloId === ac.cloId
+                    })
+                    let earned = 0
+                    let possible = 0
+                    for (const ans of cloAnswers) {
+                        if (ans.points !== null) earned += ans.points
+                        const q = assessment.questions.find(q => q.id === ans.questionId)
+                        if (q) possible += q.points
+                    }
+                    
+                    const generalAnswers = answerRecords.filter(ans => {
+                        const q = assessment.questions.find(q => q.id === ans.questionId)
+                        return q?.cloId === null
+                    })
+                    let genEarned = 0
+                    let genPossible = 0
+                    for (const ans of generalAnswers) {
+                        if (ans.points !== null) genEarned += ans.points
+                        const q = assessment.questions.find(q => q.id === ans.questionId)
+                        if (q) genPossible += q.points
+                    }
+                    
+                    let totalEarned = earned + (genEarned * (ac.weight / 100))
+                    let totalPossible = possible + (genPossible * (ac.weight / 100))
+                    let finalCloScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0
+                    
+                    cloScores.push({ cloId: ac.cloId, score: finalCloScore })
+                }
+                
+                cloScoresData = cloScores
+            }
         }
 
         const submission = await prisma.submission.upsert({
@@ -555,7 +602,11 @@ export async function submitQuizAnswers(data: {
                 answers: {
                     deleteMany: {},
                     create: answerRecords
-                }
+                },
+                cloScores: cloScoresData ? {
+                    deleteMany: {},
+                    create: cloScoresData
+                } : undefined
             },
             create: {
                 assessmentId: data.assessmentId,
@@ -563,7 +614,10 @@ export async function submitQuizAnswers(data: {
                 score: finalScore,
                 answers: {
                     create: answerRecords
-                }
+                },
+                cloScores: cloScoresData ? {
+                    create: cloScoresData
+                } : undefined
             }
         })
 
@@ -587,18 +641,17 @@ export async function togglePublishAssessment(assessmentId: string, isPublished:
             })
             
             if (submissions.length > 0) {
-                // If any submission is already graded, totally reject unpublish
-                const hasGraded = submissions.some(s => s.score !== null)
-                if (hasGraded) {
-                    return { success: false, error: 'Tidak dapat meng-unpublish tugas karena sudah ada mahasiswa yang dinilai.' }
-                }
-
-                // If not graded but submitted, require force flag
+                // If not graded but submitted, or even graded, require force flag
                 if (!force) {
+                    const hasGraded = submissions.some(s => s.score !== null)
+                    let warningText = 'Sudah ada mahasiswa yang mengumpulkan tugas. Jika Anda meng-unpublish, tugas akan tersembunyi dari mereka. Lanjutkan?'
+                    if (hasGraded) {
+                        warningText = 'PERINGATAN: Sudah ada mahasiswa yang mengumpulkan DAN memiliki nilai pada tugas ini. Jika Anda meng-unpublish (kembali ke draft), tugas beserta nilainya akan tersembunyi dari mereka dan ini berpotensi membingungkan mahasiswa. Lanjutkan?'
+                    }
                     return { 
                         success: false, 
                         warning: true,
-                        error: 'Sudah ada mahasiswa yang mengumpulkan tugas. Jika Anda meng-unpublish, tugas akan tersembunyi dari mereka. Lanjutkan?' 
+                        error: warningText 
                     }
                 }
             }
@@ -646,7 +699,7 @@ export async function deleteAssessment(assessmentId: string) {
     }
 }
 
-export async function resetSubmissionGrade(submissionId: string) {
+export async function resetSubmissionGrade(submissionId: string, rejectReason?: string) {
     try {
         // Find submission first to get assessment and student info for revalidation
         const submission = await prisma.submission.findUnique({
@@ -665,14 +718,25 @@ export async function resetSubmissionGrade(submissionId: string) {
                 where: { submissionId }
             })
 
-            // Update submission score and feedback to null
-            await tx.submission.update({
-                where: { id: submissionId },
-                data: {
-                    score: null,
-                    feedback: null
-                }
-            })
+            if (submission.assessment.format === 'quiz' && !rejectReason) {
+                // For CBT without reason, completely delete the submission to allow retaking
+                await tx.studentAnswer.deleteMany({
+                    where: { submissionId }
+                })
+                await tx.submission.delete({
+                    where: { id: submissionId }
+                })
+            } else {
+                // For assignments (or CBT with explicit reject reason), we update instead
+                await tx.submission.update({
+                    where: { id: submissionId },
+                    data: {
+                        score: null,
+                        content: 'DITOLAK',
+                        feedback: rejectReason || 'Tugas dikembalikan oleh dosen. Silakan kumpulkan ulang.'
+                    }
+                })
+            }
         })
 
         const { revalidatePath } = require('next/cache')
@@ -770,7 +834,7 @@ export async function duplicateAssessment(assessmentId: string, targetCourseId: 
                 })
 
                 if (q.options.length > 0) {
-                    await tx.assessmentOption.createMany({
+                    await tx.assessmentQuestionOption.createMany({
                         data: q.options.map((opt: any) => ({
                             questionId: newQ.id,
                             text: opt.text,
@@ -861,7 +925,7 @@ export async function copyQuestionsToAssessment(questionIds: string[], targetAss
                 })
 
                 if (q.options.length > 0) {
-                    await tx.assessmentOption.createMany({
+                    await tx.assessmentQuestionOption.createMany({
                         data: q.options.map((opt: any) => ({
                             questionId: newQ.id,
                             text: opt.text,

@@ -1,4 +1,5 @@
 import { getStudentCloAnalytics } from '@/app/actions/qaAnalyticsActions'
+import { getSystemSetting } from '@/app/actions/systemSettingActions'
 import { PrintTranscriptClient } from './PrintTranscriptClient'
 
 // Set dynamic to avoid static generation caching issues since data changes
@@ -25,11 +26,16 @@ export default async function TranscriptPrintPage({
 
     const { student, clos, plos } = analyticsResult
 
+    const passThreshold = parseFloat(await getSystemSetting('PASS_THRESHOLD', '70')) || 70
+    const moderateThreshold = parseFloat(await getSystemSetting('MODERATE_THRESHOLD', '50')) || 50
+
     return (
         <PrintTranscriptClient 
             student={student} 
             plos={plos || []} 
             clos={clos || []} 
+            passThreshold={passThreshold}
+            moderateThreshold={moderateThreshold}
         />
     )
 }

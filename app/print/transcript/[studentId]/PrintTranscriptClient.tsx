@@ -2,7 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 
-export function PrintTranscriptClient({ student, plos, clos }: { student: any, plos: any[], clos: any[] }) {
+export function PrintTranscriptClient({ 
+    student, plos, clos, passThreshold, moderateThreshold 
+}: { 
+    student: any, plos: any[], clos: any[], passThreshold: number, moderateThreshold: number 
+}) {
     const [isClient, setIsClient] = useState(false)
 
     useEffect(() => {
@@ -18,8 +22,8 @@ export function PrintTranscriptClient({ student, plos, clos }: { student: any, p
 
     const getStatusText = (average: number | null) => {
         if (average === null) return '-'
-        if (average < 50) return 'Kurang'
-        if (average >= 70) return 'Tercapai'
+        if (average < moderateThreshold) return 'Kurang'
+        if (average >= passThreshold) return 'Tercapai'
         return 'Sedang'
     }
 
@@ -38,7 +42,7 @@ export function PrintTranscriptClient({ student, plos, clos }: { student: any, p
             {/* Header / Kop Surat */}
             <div className="border-b-2 border-black pb-2 mb-4 flex items-center justify-between">
                 <div>
-                    <h1 className="text-lg font-bold uppercase tracking-wider">{institutionName}</h1>
+                    <h1 className="font-bold">{institutionName}</h1>
                     <p className="text-xs">{facultyName}</p>
                     <p className="text-xs">Departemen {departmentName}</p>
                 </div>
@@ -147,17 +151,17 @@ export function PrintTranscriptClient({ student, plos, clos }: { student: any, p
                         <tr>
                             <td className="w-24 font-semibold">Tercapai</td>
                             <td className="w-4">:</td>
-                            <td>Nilai rata-rata &ge; 70.00</td>
+                            <td>Nilai rata-rata &ge; {passThreshold.toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td className="font-semibold">Sedang</td>
                             <td>:</td>
-                            <td>50.00 &le; Nilai rata-rata &lt; 70.00</td>
+                            <td>{moderateThreshold.toFixed(2)} &le; Nilai rata-rata &lt; {passThreshold.toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td className="font-semibold">Kurang</td>
                             <td>:</td>
-                            <td>Nilai rata-rata &lt; 50.00</td>
+                            <td>Nilai rata-rata &lt; {moderateThreshold.toFixed(2)}</td>
                         </tr>
                     </tbody>
                 </table>

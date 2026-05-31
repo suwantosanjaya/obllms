@@ -48,6 +48,8 @@ export function GradeSubmissionDialog({
     existingCloScores,
     format,
     answers,
+    questions,
+    triggerButton,
 }: {
     submissionId: string
     studentName: string
@@ -57,6 +59,8 @@ export function GradeSubmissionDialog({
     existingCloScores?: ExistingScore[]
     format?: string
     answers?: any[]
+    questions?: any[]
+    triggerButton?: React.ReactNode
 }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -88,6 +92,8 @@ export function GradeSubmissionDialog({
     })
     
     const [feedback, setFeedback] = useState(currentFeedback ?? '')
+    
+    const hasEssay = questions?.some((q: any) => q.type === 'ESSAY') ?? false;
 
     // Compute weighted average preview
     const weightedAvg = assessmentClos.reduce((sum, ac) => {
@@ -127,7 +133,7 @@ export function GradeSubmissionDialog({
 
     const handleReset = async () => {
         setResetting(true)
-        const res = await resetSubmissionGrade(submissionId)
+        const res = await resetSubmissionGrade(submissionId, feedback.trim() !== '' ? feedback : undefined)
         if (res.success) {
             // Clear local state
             const emptyScores = {} as Record<string, string>
@@ -147,10 +153,12 @@ export function GradeSubmissionDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant={currentScore !== null && currentScore !== undefined ? 'outline' : 'default'} size="sm">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    {currentScore !== null && currentScore !== undefined ? 'Edit Nilai' : 'Beri Nilai'}
-                </Button>
+                {triggerButton ? triggerButton : (
+                    <Button variant={currentScore !== null && currentScore !== undefined ? 'outline' : 'default'} size="sm">
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        {currentScore !== null && currentScore !== undefined ? 'Edit Nilai' : 'Beri Nilai'}
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[520px]">
                 <form onSubmit={handleSubmit}>
@@ -163,54 +171,62 @@ export function GradeSubmissionDialog({
 
                     <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                         {/* Student Answers for Quiz */}
-                        {format === 'quiz' && answers && answers.length > 0 && (
+                        {format === 'quiz' && questions && questions.length > 0 && (
                             <div className="mb-4 space-y-3">
                                 <h4 className="font-semibold text-sm">Jawaban Mahasiswa:</h4>
-                                {answers.map((ans: any, idx: number) => (
-                                    <div key={ans.id} className="bg-muted/30 p-3 rounded-lg border text-sm">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className="font-medium text-primary">Soal {idx + 1}</span>
-                                            {ans.question?.type === 'MULTIPLE_CHOICE' ? (
-                                                <Badge variant="outline" className={ans.points > 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
-                                                    {ans.points > 0 ? 'Benar' : 'Salah'} ({ans.points} Poin)
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="bg-purple-50 text-purple-700">Esai</Badge>
-                                            )}
+                                {questions.map((q: any, idx: number) => {
+                                    const ans = answers?.find((a: any) => a.questionId === q.id)
+                                    const isAnswered = !!ans
+                                    return (
+                                        <div key={q.id} className="bg-muted/30 p-3 rounded-lg border text-sm">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="font-medium text-primary">Soal {idx + 1}</span>
+                                                {q.type === 'MULTIPLE_CHOICE' ? (
+                                                    <Badge variant="outline" className={!isAnswered ? "bg-gray-50 text-gray-700" : (ans.points > 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700")}>
+                                                        {!isAnswered ? 'Tidak Dijawab' : (ans.points > 0 ? 'Benar' : 'Salah')} {isAnswered ? `(${ans.points} Poin)` : '(0 Poin)'}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="bg-purple-50 text-purple-700">Esai</Badge>
+                                                )}
+                                            </div>
+                                            <div className="mb-2 text-muted-foreground prose max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: q.text }} />
+                                            <div className="bg-background p-2 rounded border">
+                                                {q.type === 'MULTIPLE_CHOICE' ? (
+                                                    <div className={`flex items-start gap-1 ${!isAnswered ? "text-gray-500 italic" : (ans.points > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium")}`}>
+                                                        <span>Opsi terpilih: </span>
+                                                        {isAnswered ? (
+                                                            <span dangerouslySetInnerHTML={{ __html: q.options?.find((o: any) => o.id === ans.selectedOptionId)?.text || ans.selectedOptionId }} className="prose max-w-none prose-sm inline-block" />
+                                                        ) : (
+                                                            <span>-</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {isAnswered && ans.textResponse ? (
+                                                            <div className="prose max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: ans.textResponse }} />
+                                                        ) : (
+                                                            <em className="text-muted-foreground">Tidak dijawab</em>
+                                                        )}
+                                                        {format === 'quiz' && isAnswered && (
+                                                            <div className="flex items-center gap-2 border-t pt-2 mt-2">
+                                                                <Label className="text-xs">Nilai Esai (Max {q.points}):</Label>
+                                                                <Input 
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max={q.points}
+                                                                    step="0.1"
+                                                                    value={essayScores[ans.id] || ''}
+                                                                    onChange={e => setEssayScores(prev => ({ ...prev, [ans.id]: e.target.value }))}
+                                                                    className="h-7 w-20 text-xs"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="mb-2 text-muted-foreground prose max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: ans.question?.text }} />
-                                        <div className="bg-background p-2 rounded border">
-                                            {ans.question?.type === 'MULTIPLE_CHOICE' ? (
-                                                <div className={`flex items-start gap-1 ${ans.points > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}`}>
-                                                    <span>Opsi terpilih: </span>
-                                                    <span dangerouslySetInnerHTML={{ __html: ans.question?.options?.find((o: any) => o.id === ans.selectedOptionId)?.text || ans.selectedOptionId }} className="prose max-w-none prose-sm inline-block" />
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {ans.textResponse ? (
-                                                        <div className="prose max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: ans.textResponse }} />
-                                                    ) : (
-                                                        <em className="text-muted-foreground">Tidak dijawab</em>
-                                                    )}
-                                                    {format === 'quiz' && (
-                                                        <div className="flex items-center gap-2 border-t pt-2 mt-2">
-                                                            <Label className="text-xs">Nilai Esai (Max {ans.question?.points}):</Label>
-                                                            <Input 
-                                                                type="number"
-                                                                min="0"
-                                                                max={ans.question?.points}
-                                                                step="0.1"
-                                                                value={essayScores[ans.id] || ''}
-                                                                onChange={e => setEssayScores(prev => ({ ...prev, [ans.id]: e.target.value }))}
-                                                                className="h-7 w-20 text-xs"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
 
@@ -253,41 +269,41 @@ export function GradeSubmissionDialog({
                         )}
 
                         {/* General feedback */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="feedback">Umpan Balik Umum</Label>
-                            <Textarea
-                                id="feedback"
-                                placeholder="Kerja bagus, namun perhatikan..."
-                                value={feedback}
-                                onChange={e => setFeedback(e.target.value)}
-                                className="min-h-[80px]"
-                            />
-                        </div>
+                        {!(format === 'quiz' && !hasEssay) && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="feedback">Umpan Balik Umum</Label>
+                                <Textarea
+                                    id="feedback"
+                                    placeholder="Kerja bagus, namun perhatikan..."
+                                    value={feedback}
+                                    onChange={e => setFeedback(e.target.value)}
+                                    className="min-h-[80px]"
+                                />
+                            </div>
+                        )}
 
                         {error && <p className="text-red-500 text-sm">{error}</p>}
                     </div>
 
                     <DialogFooter className="flex items-center justify-between sm:justify-between w-full">
                         <div className="flex justify-start">
-                            {currentScore !== null || currentFeedback !== null ? (
-                                <Button 
-                                    type="button" 
-                                    variant="destructive" 
-                                    onClick={() => setResetDialogOpen(true)}
-                                >
-                                    Batalkan Nilai
-                                </Button>
-                            ) : (
-                                <div></div>
-                            )}
+                            <Button 
+                                type="button" 
+                                variant="destructive" 
+                                onClick={() => setResetDialogOpen(true)}
+                            >
+                                Tolak & Kembalikan Jawaban
+                            </Button>
                         </div>
                         <div className="flex gap-2">
                             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                                Batal
+                                {format === 'quiz' && !hasEssay ? 'Tutup' : 'Batal'}
                             </Button>
-                            <Button type="submit" disabled={loading}>
-                                {loading ? 'Menyimpan...' : 'Simpan Nilai'}
-                            </Button>
+                            {!(format === 'quiz' && !hasEssay) && (
+                                <Button type="submit" disabled={loading}>
+                                    {loading ? 'Menyimpan...' : 'Simpan Nilai'}
+                                </Button>
+                            )}
                         </div>
                     </DialogFooter>
                 </form>
@@ -296,9 +312,10 @@ export function GradeSubmissionDialog({
             <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Batalkan Nilai?</AlertDialogTitle>
+                        <AlertDialogTitle>Tolak & Kembalikan Jawaban?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tindakan ini akan mereset skor dan umpan balik menjadi kosong (Belum dinilai). Mahasiswa tidak akan dapat lagi melihat nilai ini.
+                            Tindakan ini akan mengembalikan status tugas mahasiswa menjadi DITOLAK. Mahasiswa harus mengirimkan ulang jawaban/file dari awal. <br/><br/>
+                            <span className="font-semibold text-orange-600 dark:text-orange-400">Penting:</span> Tulisan yang ada di kolom "Umpan Balik Umum" akan dikirimkan sebagai alasan penolakan. Lanjutkan?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -311,7 +328,7 @@ export function GradeSubmissionDialog({
                             }}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            {resetting ? 'Membatalkan...' : 'Ya, Batalkan Nilai'}
+                            {resetting ? 'Memproses...' : 'Ya, Hapus & Kembalikan'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -45,6 +45,37 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
         }
     }, [assessment, existingSubmission, timeLeft])
 
+    const [displayQuestions, setDisplayQuestions] = useState<any[]>([])
+
+    useEffect(() => {
+        if (!assessment) return
+        
+        let questionsToDisplay = [...(assessment.questions || [])]
+        
+        if (assessment.shuffleQuestions && !existingSubmission) {
+            // Shuffle questions
+            for (let i = questionsToDisplay.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questionsToDisplay[i], questionsToDisplay[j]] = [questionsToDisplay[j], questionsToDisplay[i]];
+            }
+            
+            // Shuffle options
+            questionsToDisplay = questionsToDisplay.map(q => {
+                if (q.type === 'MULTIPLE_CHOICE' && q.options) {
+                    const shuffledOptions = [...q.options]
+                    for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+                    }
+                    return { ...q, options: shuffledOptions }
+                }
+                return q
+            })
+        }
+        
+        setDisplayQuestions(questionsToDisplay)
+    }, [assessment, existingSubmission])
+
     useEffect(() => {
         if (timeLeft === null || isConfirmOpen || isSubmittingRef.current || existingSubmission) return
 
@@ -241,12 +272,12 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
             </div>
 
             <div className="space-y-6">
-                {assessment.questions.length === 0 ? (
+                {displayQuestions.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
                         Kuis ini belum memiliki soal.
                     </div>
                 ) : (
-                    assessment.questions.map((q: any, index: number) => (
+                    displayQuestions.map((q: any, index: number) => (
                         <Card key={q.id} className="border-primary/20 shadow-sm bg-card text-card-foreground">
                             <div className="p-5">
                                 <div className="flex gap-3 mb-4">
@@ -292,7 +323,7 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
                 )}
             </div>
 
-            {assessment.questions.length > 0 && (
+            {displayQuestions.length > 0 && (
                 <div className="flex justify-end pt-4 border-t">
                     <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
                         <AlertDialogTrigger asChild>

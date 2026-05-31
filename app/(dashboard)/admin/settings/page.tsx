@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGradeScales } from '@/app/actions/gradeScaleActions'
+import { getSystemSetting } from '@/app/actions/systemSettingActions'
 import { GradeScaleClient } from '@/app/components/admin/GradeScaleClient'
+import { AchievementThresholdClient } from '@/app/components/admin/SystemSettingClient'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -8,6 +10,9 @@ import { Label } from '@/components/ui/label'
 export default async function AdminSettingsPage() {
     const res = await getGradeScales()
     const scales = res.success ? (res.data ?? []) : []
+
+    const passThreshold = await getSystemSetting('PASS_THRESHOLD', '70')
+    const moderateThreshold = await getSystemSetting('MODERATE_THRESHOLD', '50')
 
     return (
         <div className="flex flex-col gap-6">
@@ -25,6 +30,10 @@ export default async function AdminSettingsPage() {
                 </TabsList>
                 
                 <TabsContent value="grades" className="space-y-4">
+                    <AchievementThresholdClient 
+                        initialPass={passThreshold} 
+                        initialModerate={moderateThreshold} 
+                    />
                     <Card>
                         <CardHeader>
                             <CardTitle>Rentang Nilai Global (Grade Scale)</CardTitle>

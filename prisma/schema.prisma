@@ -95,6 +95,12 @@ model University {
   faculties Faculty[]
 }
 
+// Global System Settings (Key-Value)
+model SystemSetting {
+  key   String @id
+  value String
+}
+
 // Model for Faculty
 model Faculty {
   id        String    @id @default(cuid())
@@ -336,8 +342,9 @@ model Assessment {
   isPublished Boolean   @default(false)
   dueDate     DateTime?
   maxScore    Int       @default(100)
-  allowReview Boolean   @default(false)
-  timeLimit   Int?      // Optional time limit for CBT quizzes in minutes
+  allowReview      Boolean   @default(false)
+  shuffleQuestions Boolean   @default(false)
+  timeLimit        Int?      // Optional time limit for CBT quizzes in minutes
 
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions    Submission[]

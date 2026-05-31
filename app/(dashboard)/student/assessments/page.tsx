@@ -140,18 +140,32 @@ export default async function StudentAssessmentsPage() {
                                                         <span className="text-[10px] text-muted-foreground uppercase font-semibold">Nilai</span>
                                                         <span className="font-black text-xl text-green-600 dark:text-green-400 leading-none">{Number(submission.score.toFixed(1))}</span>
                                                     </div>
+                                                ) : submission.content === 'DITOLAK' ? (
+                                                    <Badge variant="destructive" className="bg-red-100 text-red-800 border-none dark:bg-red-900/40 dark:text-red-400 shrink-0">Ditolak / Dikembalikan</Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 shrink-0">Menunggu Nilai</Badge>
                                                 )}
                                             </div>
+                                            {submission.feedback && (
+                                                <div className={`${submission.content === 'DITOLAK' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/50' : 'bg-blue-50 text-blue-900 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900/50'} p-3 rounded text-sm border`}>
+                                                    <span className="font-semibold block mb-1">
+                                                        {submission.content === 'DITOLAK' ? 'Alasan Penolakan:' : 'Feedback Dosen:'}
+                                                    </span>
+                                                    {submission.feedback}
+                                                </div>
+                                            )}
                                             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="text-xs text-muted-foreground">
                                                         Dikumpulkan: {new Date(submission.submittedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </span>
-                                                    <a href={submission.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium">
-                                                        Lihat File ↗
-                                                    </a>
+                                                    {submission.content === 'DITOLAK' ? (
+                                                        <span className="text-xs text-red-600 font-semibold italic">Silakan kerjakan/kumpulkan ulang</span>
+                                                    ) : (
+                                                        <a href={submission.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium">
+                                                            Lihat File ↗
+                                                        </a>
+                                                    )}
                                                 </div>
                                                 <div className="w-full sm:w-auto">
                                                     <SubmitAssessmentDialog

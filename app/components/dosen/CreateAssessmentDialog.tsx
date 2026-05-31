@@ -42,6 +42,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
     const [selectedTechnique, setSelectedTechnique] = useState('')
     const [format, setFormat] = useState('upload') // 'upload' or 'quiz'
     const [allowReview, setAllowReview] = useState(false)
+    const [shuffleQuestions, setShuffleQuestions] = useState(false)
     const [timeLimit, setTimeLimit] = useState<number | ''>('')
     const [cloLoading, setCloLoading] = useState(false)
     const { toast } = useToast()
@@ -191,6 +192,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
             clos: selectedClos,
             format,
             allowReview,
+            shuffleQuestions,
             timeLimit: timeLimit === '' ? null : Number(timeLimit)
         })
 
@@ -328,6 +330,19 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         {allowReview ? 'Mahasiswa dapat melihat review (kunci jawaban) setelah selesai mengerjakan.' : 'Mahasiswa hanya melihat skor akhir (default).'}
+                                    </p>
+                                </div>
+                                <div className="grid gap-2 p-3 bg-muted/10 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="shuffleQuestions">Acak Urutan Soal</Label>
+                                        <Switch
+                                            id="shuffleQuestions"
+                                            checked={shuffleQuestions}
+                                            onCheckedChange={setShuffleQuestions}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {shuffleQuestions ? 'Urutan soal akan diacak untuk setiap mahasiswa.' : 'Urutan soal akan sama persis seperti yang Anda buat.'}
                                     </p>
                                 </div>
                                 

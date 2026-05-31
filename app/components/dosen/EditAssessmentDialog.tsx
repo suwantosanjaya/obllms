@@ -40,10 +40,11 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
     const [allMappings, setAllMappings] = useState<any[]>([])
     const [availableClos, setAvailableClos] = useState<CLO[]>([])
     const [selectedClos, setSelectedClos] = useState<SelectedCLO[]>(assessment.assessmentClos.map((ac: any) => ({ cloId: ac.cloId, weight: ac.weight })))
-    const [availableTechniques, setAvailableTechniques] = useState<string[]>([])
+    const [availableTechniques, setAvailableTechniques] = useState<string[]>([assessment.type])
     const [selectedTechnique, setSelectedTechnique] = useState(assessment.type)
     const [format, setFormat] = useState(assessment.format || 'upload') // 'upload' or 'quiz'
     const [allowReview, setAllowReview] = useState(assessment.allowReview ?? false)
+    const [shuffleQuestions, setShuffleQuestions] = useState(assessment.shuffleQuestions ?? false)
     const [cloLoading, setCloLoading] = useState(false)
 
     // Setup default due date: existing
@@ -85,18 +86,21 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                 })
                 
                 const techArray = Array.from(uniqueTechniques)
+                if (!techArray.includes(assessment.type)) techArray.push(assessment.type)
+
                 if (techArray.length > 0) {
                     setAvailableTechniques(techArray)
                     if (!techArray.includes(selectedTechnique)) setSelectedTechnique(techArray[0])
                 } else {
                     const fallback = ['Tugas', 'Kuis', 'Ujian Tulis']
+                    if (!fallback.includes(assessment.type)) fallback.push(assessment.type)
                     setAvailableTechniques(fallback)
                     if (!fallback.includes(selectedTechnique)) setSelectedTechnique(fallback[0])
                 }
             } else {
                 setAllMappings([])
-                setAvailableTechniques(['Tugas', 'Kuis', 'Ujian Tulis'])
-                setSelectedTechnique('Tugas')
+                setAvailableTechniques([assessment.type, 'Tugas', 'Kuis', 'Ujian Tulis'].filter((v, i, a) => a.indexOf(v) === i))
+                setSelectedTechnique(assessment.type)
             }
             setCloLoading(false)
         })
@@ -111,6 +115,16 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
         if (!selectedCourse) return
 
         const uniqueClosMap = new Map()
+        
+        // Ensure originally mapped CLOs are always available for re-adding
+        if (assessment.assessmentClos) {
+            assessment.assessmentClos.forEach((ac: any) => {
+                if (ac.clo && !uniqueClosMap.has(ac.cloId)) {
+                    uniqueClosMap.set(ac.cloId, ac.clo)
+                }
+            })
+        }
+
         allMappings.forEach((m: any) => {
             const isMatchingYear = selectedCourse.curriculumYearId
                 ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
@@ -170,6 +184,7 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
             courseId: selectedCourseId,
             clos: selectedClos,
             allowReview,
+            shuffleQuestions,
         })
 
         if (res.success) {
@@ -205,83 +220,92 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         {/* Title */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="title" className="text-right">Judul</Label>
-                            <Input id="title" name="title" defaultValue={assessment.title} placeholder="Tugas 1: ERD" className="col-span-3" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="title">Judul</Label>
+                            <Input id="title" name="title" defaultValue={assessment.title} placeholder="Tugas 1: ERD" required />
                         </div>
 
                         {/* Type / Technique picker */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Teknik Penilaian</Label>
-                            <div className="col-span-3">
-                                <Select value={selectedTechnique} onValueChange={setSelectedTechnique} required disabled={hasGradedSubmissions}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Teknik Penilaian" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableTechniques.map(t => (
-                                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label>Teknik Penilaian</Label>
+                            <Select value={selectedTechnique} onValueChange={setSelectedTechnique} required disabled={hasGradedSubmissions}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Teknik Penilaian" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableTechniques.map(t => (
+                                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         {/* Format picker */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Format Tugas</Label>
-                            <div className="col-span-3">
-                                <Select value={format} onValueChange={setFormat} required disabled>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Format" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="upload">Unggah File / Teks Biasa</SelectItem>
-                                        <SelectItem value="quiz">Kuis Interaktif (CBT)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="grid gap-2">
+                            <Label>Format Tugas</Label>
+                            <Select value={format} onValueChange={setFormat} required disabled>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="upload">Unggah File / Teks Biasa</SelectItem>
+                                    <SelectItem value="quiz">Kuis Interaktif (CBT)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
-                        {/* Allow Review switch (only for quiz) */}
+                        {/* Allow Review & Shuffle switches (only for quiz) */}
                         {format === 'quiz' && (
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="editAllowReview" className="text-right">Akses Jawaban</Label>
-                                <div className="col-span-3 flex items-center space-x-2">
-                                    <Switch
-                                        id="editAllowReview"
-                                        checked={allowReview}
-                                        onCheckedChange={setAllowReview}
-                                    />
-                                    <Label htmlFor="editAllowReview" className="text-sm font-normal text-muted-foreground">
-                                        {allowReview ? 'Mahasiswa dapat melihat review (kunci jawaban) setelah selesai.' : 'Mahasiswa hanya melihat skor akhir (default).'}
-                                    </Label>
+                            <div className="space-y-3">
+                                <div className="grid gap-2 p-3 bg-muted/10 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="editAllowReview">Akses Kunci Jawaban</Label>
+                                        <Switch
+                                            id="editAllowReview"
+                                            checked={allowReview}
+                                            onCheckedChange={setAllowReview}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {allowReview ? 'Mahasiswa dapat melihat review (kunci jawaban) setelah selesai mengerjakan.' : 'Mahasiswa hanya melihat skor akhir (default).'}
+                                    </p>
+                                </div>
+                                <div className="grid gap-2 p-3 bg-muted/10 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="editShuffleQuestions">Acak Urutan Soal</Label>
+                                        <Switch
+                                            id="editShuffleQuestions"
+                                            checked={shuffleQuestions}
+                                            onCheckedChange={setShuffleQuestions}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {shuffleQuestions ? 'Urutan soal akan diacak untuk setiap mahasiswa.' : 'Urutan soal akan sama persis seperti yang Anda buat.'}
+                                    </p>
                                 </div>
                             </div>
                         )}
 
                         {/* Course picker */}
                         {courses.length > 1 && (
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Kelas</Label>
-                                <div className="col-span-3">
-                                    <Select value={selectedCourseId} onValueChange={setSelectedCourseId} required disabled>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Pilih Kelas" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {courses.map(course => (
-                                                <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                            <div className="grid gap-2">
+                                <Label>Kelas</Label>
+                                <Select value={selectedCourseId} onValueChange={setSelectedCourseId} required disabled>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Kelas" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {courses.map(course => (
+                                            <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         )}
 
                         {/* CLO multi-select */}
                         {selectedCourseId && (
-                            <div className="col-span-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                            <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3 mt-2">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-semibold">CLO yang Diukur</Label>
                                     <span className={`text-xs font-medium ${Math.abs(totalWeight - 100) < 0.01 ? 'text-green-500' : 'text-orange-500'}`}>
@@ -291,7 +315,7 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
 
                                 {cloLoading && <p className="text-xs text-muted-foreground">Memuat CLO...</p>}
 
-                                {!cloLoading && availableClos.length === 0 && !hasGradedSubmissions && (
+                                {!cloLoading && availableClos.length === 0 && selectedClos.length === 0 && !hasGradedSubmissions && (
                                     <div className="text-xs text-muted-foreground bg-orange-50 text-orange-800 p-2 rounded border border-orange-200">
                                         <span className="font-semibold block mb-1">Perhatian!</span>
                                         Tidak ada CLO yang terhubung dengan teknik penilaian <b>{selectedTechnique}</b> pada kurikulum mata kuliah ini. 
@@ -320,7 +344,7 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
 
                                 {/* Selected CLOs with weight inputs */}
                                 {selectedClos.map(sc => {
-                                    const clo = availableClos.find(c => c.id === sc.cloId)
+                                    const clo = availableClos.find(c => c.id === sc.cloId) || assessment.assessmentClos.find((ac: any) => ac.cloId === sc.cloId)?.clo
                                     if (!clo) return null
                                     return (
                                         <div key={sc.cloId} className="flex items-center gap-3 bg-card rounded border border-border p-2">
@@ -340,11 +364,10 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                                                 />
                                                 <span className="text-xs text-muted-foreground">%</span>
                                             </div>
-                                            {!hasGradedSubmissions && (
-                                                <button type="button" onClick={() => removeClo(sc.cloId)} className="text-muted-foreground hover:text-destructive">
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </button>
-                                            )}
+                                            {/* Opsi hapus CLO dinonaktifkan saat edit */}
+                                            <button type="button" disabled className="text-muted-foreground/30 cursor-not-allowed" title="Penghapusan CLO tidak diizinkan saat mengedit">
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
                                         </div>
                                     )
                                 })}
@@ -352,15 +375,15 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                         )}
 
                         {/* Description */}
-                        <div className="grid grid-cols-4 items-start gap-4">
-                            <Label htmlFor="description" className="text-right mt-2">Deskripsi</Label>
-                            <Textarea id="description" name="description" defaultValue={assessment.description} placeholder="Instruksi pengerjaan tugas..." className="col-span-3 min-h-[80px]" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Deskripsi</Label>
+                            <Textarea id="description" name="description" defaultValue={assessment.description} placeholder="Instruksi pengerjaan tugas..." className="min-h-[80px]" required />
                         </div>
 
                         {/* Due date */}
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="dueDate" className="text-right">Tenggat</Label>
-                            <Input id="dueDate" name="dueDate" type="datetime-local" defaultValue={defaultDueDateStr} className="col-span-3" required />
+                        <div className="grid gap-2">
+                            <Label htmlFor="dueDate">Tenggat Waktu (Due Date)</Label>
+                            <Input id="dueDate" name="dueDate" type="datetime-local" defaultValue={defaultDueDateStr} required />
                         </div>
 
                         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

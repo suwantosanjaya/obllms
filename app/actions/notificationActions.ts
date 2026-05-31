@@ -51,16 +51,27 @@ export async function getStudentNotifications(studentId: string, departmentId: s
                     isNew
                 })
             } else {
-                // 3. At-Risk Scores (< 60)
                 const sub = a.submissions[0]
-                if (sub.score !== null && sub.score < 60) {
+                // 3a. Rejected Submissions
+                if (sub.content === 'DITOLAK') {
+                    notifications.push({
+                        id: `rej-${sub.id}`,
+                        type: 'risk',
+                        title: 'Tugas Ditolak / Dikembalikan',
+                        message: `${a.title} dikembalikan. Alasan: ${sub.feedback}`,
+                        date: sub.submittedAt,
+                        href: `/student/course/${a.courseId}?tab=tugas`,
+                    })
+                }
+                // 3b. At-Risk Scores (< 60)
+                else if (sub.score !== null && sub.score < 60) {
                     notifications.push({
                         id: `risk-${a.id}`,
                         type: 'risk',
                         title: 'Nilai Berisiko',
                         message: `Anda mendapat nilai ${sub.score} pada ${a.title} (${a.course.subject.title})`,
                         date: sub.submittedAt,
-                        href: `/student/course/${a.courseId}`,
+                        href: `/student/course/${a.courseId}?tab=tugas`,
                     })
                 }
             }

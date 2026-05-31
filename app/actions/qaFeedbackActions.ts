@@ -192,8 +192,7 @@ export async function getDetailedFeedbackList(departmentId: string, curriculumYe
             // E.g. "Budi Santoso" -> "B*** S******"
             // For simplicity, just "Mahasiswa [Angkatan]" if preferred, but user said "anonim atau di blur"
             const name = f.user.name || 'Anonim'
-            const words = name.split(' ')
-            const blurredName = words.map(w => w.charAt(0) + '*'.repeat(Math.max(0, w.length - 1))).join(' ')
+            const blurredName = name.charAt(0) + '*****'
 
             return {
                 id: f.id,

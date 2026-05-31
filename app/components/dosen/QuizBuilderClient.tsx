@@ -70,7 +70,9 @@ export function QuizBuilderClient({ assessment, courseId }: { assessment: any, c
             setNewOptions([{ text: '', isCorrect: true }, { text: '', isCorrect: false }])
         }
         setIsAdding(true)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => {
+            document.getElementById('quiz-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
     }
 
     async function handleSaveQuestion() {
@@ -217,7 +219,7 @@ export function QuizBuilderClient({ assessment, courseId }: { assessment: any, c
             </div>
 
             {isAdding && (
-                <Card className="border-primary shadow-sm bg-primary/5">
+                <Card id="quiz-form-card" className="border-primary shadow-sm bg-primary/5 scroll-mt-6">
                     <CardHeader>
                         <CardTitle className="text-primary text-lg">Soal Baru</CardTitle>
                     </CardHeader>

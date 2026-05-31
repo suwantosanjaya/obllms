@@ -7,6 +7,7 @@ export default async function QuizBuilderPage({ params }: { params: Promise<{ co
     const assessment = await prisma.assessment.findUnique({
         where: { id: resolvedParams.assessmentId },
         include: {
+            course: true,
             assessmentClos: {
                 include: { clo: true }
             },
