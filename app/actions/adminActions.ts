@@ -11,18 +11,18 @@ export async function getAllUsers() {
     })
 }
 
-export async function createUser(data: { 
-    name: string; 
-    email: string; 
-    managedRolesData: { role: string, departmentIds: string[] }[] 
+export async function createUser(data: {
+    name: string;
+    email: string;
+    managedRolesData: { role: string, departmentIds: string[] }[]
 }) {
     try {
         const hashedPassword = await bcrypt.hash("123456", 10)
-        
+
         const finalRolesArray = data.managedRolesData.map(d => d.role)
         const roleString = finalRolesArray.join(',')
 
-        const finalDeptRoles = data.managedRolesData.flatMap(d => 
+        const finalDeptRoles = data.managedRolesData.flatMap(d =>
             d.departmentIds.map(depId => ({
                 departmentId: depId,
                 role: d.role
@@ -59,14 +59,38 @@ export async function createUser(data: {
 
 export async function deleteUser(id: string) {
     try {
-        await prisma.user.delete({
-            where: { id }
+        // Pre-check: jika user masih mengampu kelas, tolak dengan pesan jelas
+        const activeCourses = await prisma.course.count({ where: { instructorId: id } })
+        if (activeCourses > 0) {
+            return {
+                success: false,
+                error: `Tidak dapat menghapus pengguna ini karena masih mengampu ${activeCourses} kelas. Pindahkan instruktur kelas tersebut terlebih dahulu.`
+            }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Lepas jabatan ketua departemen jika aktif
+            await tx.department.updateMany({
+                where: { activeHeadId: id },
+                data: { activeHeadId: null }
+            })
+            // Hapus riwayat kepala departemen
+            await tx.departmentHeadHistory.deleteMany({ where: { userId: id } })
+            // Hapus feedback
+            await tx.feedback.deleteMany({ where: { userId: id } })
+            // Hapus activity log
+            await tx.activityLog.deleteMany({ where: { userId: id } })
+            // Hapus user (relasi Cascade: profile, departmentRoles, enrollments, submissions, dll.)
+            await tx.user.delete({ where: { id } })
         })
+
         revalidatePath('/admin/users')
         revalidatePath('/super_admin/users')
+        revalidatePath('/qa/teachers')
         return { success: true }
     } catch (error: unknown) {
-        return { success: false, error: (error as Error).message }
+        console.error('[deleteUser error]', (error as Error).message)
+        return { success: false, error: 'Gagal menghapus pengguna. Pastikan semua data terkait sudah dibersihkan terlebih dahulu.' }
     }
 }
 
@@ -119,21 +143,21 @@ export async function toggleUserStatus(targetUserId: string) {
 }
 
 export async function updateUserRole(
-    targetUserId: string, 
+    targetUserId: string,
     managedRolesData: { role: string, departmentIds: string[] }[]
 ) {
     try {
         const caller = await getSessionUser()
         if (!caller) return { success: false, error: 'Unauthorized' }
 
-        const targetUser = await prisma.user.findUnique({ 
+        const targetUser = await prisma.user.findUnique({
             where: { id: targetUserId },
             include: { departments: true, departmentRoles: true }
         })
         if (!targetUser) return { success: false, error: 'User not found' }
 
         const callerRole = caller.activeRole || caller.role
-        
+
         // Define which roles the caller can manage
         let allowedToManage: string[] = []
         if (callerRole === 'super_admin') allowedToManage = ['admin', 'qa', 'teacher', 'student']
@@ -150,7 +174,7 @@ export async function updateUserRole(
 
         // Process the new managed roles from the payload
         const newManagedRoles = managedRolesData.map(d => d.role)
-        
+
         // Check if payload contains any role the caller shouldn't manage
         for (const nr of newManagedRoles) {
             if (!allowedToManage.includes(nr)) {
@@ -163,7 +187,7 @@ export async function updateUserRole(
         const newRoleString = finalRolesArray.join(',')
 
         // Final departmentRoles
-        const newManagedDeptRoles = managedRolesData.flatMap(d => 
+        const newManagedDeptRoles = managedRolesData.flatMap(d =>
             d.departmentIds.map(depId => ({
                 departmentId: depId,
                 role: d.role
@@ -176,7 +200,7 @@ export async function updateUserRole(
 
         await prisma.user.update({
             where: { id: targetUserId },
-            data: { 
+            data: {
                 role: newRoleString,
                 departments: {
                     set: distinctDeptIds.map(id => ({ id }))
@@ -250,7 +274,7 @@ export async function assignDepartmentHead(departmentId: string, userId: string 
                     data: { role: `${user.role},head_of_department` }
                 })
             }
-            
+
             // Ensure they have the department role
             const existingRole = await prisma.userDepartmentRole.findUnique({
                 where: { userId_departmentId_role: { userId, departmentId, role: 'head_of_department' } }

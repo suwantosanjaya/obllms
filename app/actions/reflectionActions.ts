@@ -87,3 +87,44 @@ export async function getCourseReflections(courseId: string) {
         return { success: false, error: "Gagal memuat data refleksi kelas." };
     }
 }
+
+export async function getStudentAllReflections() {
+    try {
+        const user = await getSessionUser();
+        if (!user) return { success: false, error: "Belum login." };
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: { studentId: user.id },
+            include: {
+                course: {
+                    include: {
+                        subject: { select: { code: true, title: true } }
+                    }
+                },
+                reflections: {
+                    orderBy: { weekNumber: 'asc' }
+                },
+                gameProfile: {
+                    select: { points: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const totalReflections = enrollments.reduce((sum, e) => sum + e.reflections.length, 0);
+        // 10 points per reflection (from awardPoints in submitReflection)
+        const totalPointsFromReflection = totalReflections * 10;
+        const totalTargetMet = enrollments.reduce(
+            (sum, e) => sum + e.reflections.filter(r => r.targetMet).length, 0
+        );
+
+        return {
+            success: true,
+            enrollments,
+            stats: { totalReflections, totalPointsFromReflection, totalTargetMet }
+        };
+    } catch (error: any) {
+        console.error("Error fetching all reflections:", error);
+        return { success: false, error: "Gagal memuat data refleksi." };
+    }
+}

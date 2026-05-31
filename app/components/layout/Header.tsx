@@ -52,7 +52,7 @@ export function Header() {
                         onClick={toggleSidebar}
                     >
                         {isSidebarCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-                        <span className="sr-only">Toggle Sidebar</span>
+                        <span className="sr-only">Buka Sidebar</span>
                     </Button>
                     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                         <SheetTrigger asChild>
@@ -62,7 +62,7 @@ export function Header() {
                                 className="shrink-0 md:hidden"
                             >
                                 <Menu className="h-5 w-5" />
-                                <span className="sr-only">Toggle navigation menu</span>
+                                <span className="sr-only">Buka menu navigasi</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col">
@@ -90,7 +90,7 @@ export function Header() {
                             <Button variant="outline" className="flex gap-2">
                                 <GraduationCap className="h-4 w-4" />
                                 <span className="hidden md:inline">
-                                    {visibleDepartments.find(p => p.id === activeDepartmentId)?.code || 'Pilih Department'}
+                                    {visibleDepartments.find(p => p.id === activeDepartmentId)?.code || 'Pilih Departemen'}
                                 </span>
                             </Button>
                         </DropdownMenuTrigger>
@@ -118,7 +118,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                     <Button variant="secondary" size="icon" className="rounded-full">
                         <CircleUser className="h-5 w-5" />
-                        <span className="sr-only">Toggle user menu</span>
+                        <span className="sr-only">Buka menu pengguna</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -126,11 +126,11 @@ export function Header() {
                         <>
                             <DropdownMenuLabel>{userName} ({activeRole || role})</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 font-medium">Logout</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/profile')}>Profil</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 font-medium">Keluar</DropdownMenuItem>
                         </>
                     ) : (
-                        <DropdownMenuLabel>Not Logged In</DropdownMenuLabel>
+                        <DropdownMenuLabel>Belum Masuk</DropdownMenuLabel>
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>

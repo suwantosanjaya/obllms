@@ -29,7 +29,7 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
         const result = await updateVisionMission(vm.id, { ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Departemen Vision/Mission updated successfully.' })
+            toast({ title: 'Sukses', description: 'Visi/Misi Departemen berhasil diperbarui.' })
             setOpen(false)
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
@@ -45,14 +45,14 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Vision/Mission</DialogTitle>
+                        <DialogTitle>Edit Visi/Misi</DialogTitle>
                         <DialogDescription>
-                            Update the departemen vision or mission statement.
+                            Perbarui pernyataan visi atau misi departemen.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
                                 value={formData.code}
@@ -61,19 +61,19 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="type">Type</Label>
+                            <Label htmlFor="type">Tipe</Label>
                             <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
+                                    <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="vision">Vision</SelectItem>
-                                    <SelectItem value="mission">Mission</SelectItem>
+                                    <SelectItem value="vision">Visi</SelectItem>
+                                    <SelectItem value="mission">Misi</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
                                 value={formData.description}
@@ -85,7 +85,7 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Menyimpan...' : 'Save Changes'}
+                            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>
                     </DialogFooter>
                 </form>

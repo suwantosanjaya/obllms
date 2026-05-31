@@ -74,8 +74,8 @@ export function GradeScaleClient({ initialScales }: { initialScales: any[] }) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Huruf (Grade)</TableHead>
-                            <TableHead>Batas Bawah (>=)</TableHead>
-                            <TableHead>Batas Atas (<)</TableHead>
+                            <TableHead>Batas Bawah (&gt;=)</TableHead>
+                            <TableHead>Batas Atas (&lt;)</TableHead>
                             <TableHead>Point (GPA)</TableHead>
                             <TableHead className="w-[120px]">Aksi</TableHead>
                         </TableRow>

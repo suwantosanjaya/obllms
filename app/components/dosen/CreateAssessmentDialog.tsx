@@ -263,6 +263,22 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                     <TabsContent value="new">
                         <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
+                        {/* Course picker - MOVED TO TOP */}
+                        <div className="grid gap-2">
+                            <Label>Kelas</Label>
+                            <Select value={selectedCourseId} onValueChange={setSelectedCourseId} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Kelas Terlebih Dahulu" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {courses.map(course => (
+                                        <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Pilih kelas untuk memuat Teknik Penilaian dan CLO yang tersedia.</p>
+                        </div>
+
                         {/* Title */}
                         <div className="grid gap-2">
                             <Label htmlFor="title">Judul</Label>
@@ -272,9 +288,9 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         {/* Type / Technique picker */}
                         <div className="grid gap-2">
                             <Label>Teknik Penilaian</Label>
-                            <Select value={selectedTechnique} onValueChange={setSelectedTechnique} required>
+                            <Select value={selectedTechnique} onValueChange={setSelectedTechnique} required disabled={!selectedCourseId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Pilih Teknik Penilaian" />
+                                    <SelectValue placeholder={selectedCourseId ? "Pilih Teknik Penilaian" : "Pilih kelas dulu"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableTechniques.map(t => (
@@ -330,22 +346,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                             </div>
                         )}
 
-                        {/* Course picker */}
-                        {courses.length > 1 && (
-                            <div className="grid gap-2">
-                                <Label>Kelas</Label>
-                                <Select value={selectedCourseId} onValueChange={setSelectedCourseId} required>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Kelas" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {courses.map(course => (
-                                            <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        {/* Course picker was moved to the top */}
 
                         {/* CLO multi-select */}
                         {selectedCourseId && (

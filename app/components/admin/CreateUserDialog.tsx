@@ -17,12 +17,18 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createUser } from '@/app/actions/adminActions'
 
-export function CreateUserDialog({ departments = [], allowedRoles = ['student', 'teacher', 'qa'] }: { departments?: { id: string, name: string, faculty?: { id: string, name: string } | null }[], allowedRoles?: string[] }) {
+export function CreateUserDialog({ departments = [], allowedRoles = ['student', 'teacher', 'qa'], qaMode = false, fixedDepartmentId }: { 
+    departments?: { id: string, name: string, faculty?: { id: string, name: string } | null }[], 
+    allowedRoles?: string[],
+    qaMode?: boolean,
+    fixedDepartmentId?: string,
+}) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [selectedRoles, setSelectedRoles] = useState<string[]>([])
-    const [roleDepts, setRoleDepts] = useState<Record<string, string[]>>({})
+    // In qaMode, pre-select teacher role and the fixed department
+    const [selectedRoles, setSelectedRoles] = useState<string[]>(qaMode ? ['teacher'] : [])
+    const [roleDepts, setRoleDepts] = useState<Record<string, string[]>>(qaMode && fixedDepartmentId ? { teacher: [fixedDepartmentId] } : {})
     const [selectedFacultyId, setSelectedFacultyId] = useState<string>('all')
 
     // Get unique faculty from departments
@@ -64,15 +70,18 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Tambah Pengguna
+                    {qaMode ? 'Tambah Dosen' : 'Tambah Pengguna'}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+                        <DialogTitle>{qaMode ? 'Tambah Dosen Baru' : 'Tambah Pengguna Baru'}</DialogTitle>
                         <DialogDescription>
-                            Masukkan detail pengguna dan pilih peran mereka.
+                            {qaMode 
+                                ? 'Tambahkan akun dosen baru untuk departemen Anda. Password awal akan digenerate otomatis dan dosen wajib menggantinya saat login pertama.'
+                                : 'Masukkan detail pengguna dan pilih peran mereka.'
+                            }
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -106,7 +115,23 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                 Peran
                             </Label>
                             <div className="col-span-3 space-y-4 border p-3 rounded-md max-h-96 overflow-y-auto">
-                                {uniqueFaculty.length > 0 && (
+                                {/* QA Mode: simplified - role is locked to teacher, dept is fixed */}
+                                {qaMode ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                                            <span className="text-sm font-medium">Peran:</span>
+                                            <span className="text-sm text-primary font-semibold">Dosen (Teacher)</span>
+                                        </div>
+                                        {departments.length > 0 && (
+                                            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                                                <span className="text-sm font-medium">Departemen:</span>
+                                                <span className="text-sm text-primary font-semibold">{departments[0]?.name}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <>
+                                        {uniqueFaculty.length > 0 && (
                                     <Select value={selectedFacultyId} onValueChange={setSelectedFacultyId}>
                                         <SelectTrigger className="mb-2 h-8 text-xs">
                                             <SelectValue placeholder="Filter by Faculty" />
@@ -177,6 +202,8 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                         )}
                                     </div>
                                 ))}
+                                    </>
+                                )}
                             </div>
                         </div>
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

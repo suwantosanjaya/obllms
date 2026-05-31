@@ -29,7 +29,7 @@ export function CreateVisionMissionDialog({ isLocked, departmentId, curriculumYe
         const result = await createVisionMission({ ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Departemen Vision/Mission created successfully.' })
+            toast({ title: 'Sukses', description: 'Visi/Misi Departemen berhasil dibuat.' })
             setOpen(false)
             setFormData({ code: '', description: '', type: 'vision' })
         } else {
@@ -41,44 +41,44 @@ export function CreateVisionMissionDialog({ isLocked, departmentId, curriculumYe
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button disabled={isLocked}><Plus className="w-4 h-4 mr-2" /> Add Vision/Mission</Button>
+                <Button disabled={isLocked}><Plus className="w-4 h-4 mr-2" /> Tambah Visi/Misi</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Vision/Mission</DialogTitle>
+                        <DialogTitle>Tambah Visi/Misi</DialogTitle>
                         <DialogDescription>
-                            Create a new departemen vision or mission statement.
+                            Buat pernyataan visi atau misi departemen baru.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
-                                placeholder="e.g., VM-1"
+                                placeholder="misal: VM-1"
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="type">Type</Label>
+                            <Label htmlFor="type">Tipe</Label>
                             <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
+                                    <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="vision">Vision</SelectItem>
-                                    <SelectItem value="mission">Mission</SelectItem>
+                                    <SelectItem value="vision">Visi</SelectItem>
+                                    <SelectItem value="mission">Misi</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Describe the vision or mission..."
+                                placeholder="Deskripsikan visi atau misi..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 required

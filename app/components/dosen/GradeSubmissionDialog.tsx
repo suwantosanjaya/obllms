@@ -157,7 +157,7 @@ export function GradeSubmissionDialog({
                     <DialogHeader>
                         <DialogTitle>Penilaian: {studentName}</DialogTitle>
                         <DialogDescription>
-                            Berikan nilai {format === 'quiz' ? 'untuk setiap soal Esai' : '(0–100) untuk setiap CPMK'}, atau cukup berikan Umpan Balik (Feedback).
+                            Berikan nilai {format === 'quiz' ? 'untuk setiap soal Esai' : '(0–100) untuk setiap CLO'}, atau cukup berikan Umpan Balik (Feedback).
                         </DialogDescription>
                     </DialogHeader>
 

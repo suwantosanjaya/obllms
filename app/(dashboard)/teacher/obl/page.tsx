@@ -60,16 +60,16 @@ export default async function TeacherOBLPage() {
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Outcome Based Learning (OBL)</h1>
-                    <p className="text-muted-foreground mt-1">Kelola CPMK kelas Anda dan selaraskan dengan CPL program studi.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Pemetaan OBL</h1>
+                    <p className="text-muted-foreground mt-1">Kelola capaian pembelajaran dan bobot penilaian dari kelas yang Anda ajar.</p>
                 </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Daftar CPMK (Course Learning Outcomes)</CardTitle>
+                    <CardTitle>Daftar CLO & Asesmen (Course Learning Outcomes)</CardTitle>
                     <CardDescription>
-                        Capaian pembelajaran spesifik untuk setiap mata kuliah yang Anda ajarkan.
+                        Capaian pembelajaran spesifik dan teknik penilaian untuk setiap mata kuliah yang Anda ajarkan.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -78,7 +78,7 @@ export default async function TeacherOBLPage() {
                             <TableRow>
                                 <TableHead className="w-[120px]">Mata Kuliah</TableHead>
                                 <TableHead className="w-[100px]">Kode</TableHead>
-                                <TableHead>Deskripsi CPMK</TableHead>
+                                <TableHead>Deskripsi CLO</TableHead>
                                 <TableHead className="w-[150px]">Pemetaan CPL</TableHead>
                                 <TableHead className="w-[180px]">Teknik & Bobot Asesmen</TableHead>
                             </TableRow>
@@ -87,7 +87,7 @@ export default async function TeacherOBLPage() {
                             {subjectCloMappings.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                        Belum ada CPMK yang dipetakan ke mata kuliah Anda.
+                                        Belum ada CLO yang dipetakan ke mata kuliah Anda.
                                     </TableCell>
                                 </TableRow>
                             ) : (

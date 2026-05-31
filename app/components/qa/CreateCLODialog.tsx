@@ -51,7 +51,7 @@ export function CreateCLODialog({
         const result = await createCLO(payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Course Learning Outcome (CLO) created successfully.' })
+            toast({ title: 'Success', description: 'Course Learning Outcome (CLO) berhasil dibuat.' })
             setOpen(false)
             setFormData({ code: '', description: '' })
             setSelectedPLOs([])
@@ -64,32 +64,32 @@ export function CreateCLODialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" /> Add CLO</Button>
+                <Button><Plus className="w-4 h-4 mr-2" /> Tambah CLO</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Course Learning Outcome</DialogTitle>
+                        <DialogTitle>Tambah Course Learning Outcome</DialogTitle>
                         <DialogDescription>
-                            Create a new CLO for a course, set its percentage weight, and map it to PLOs.
+                            Buat CLO baru dan petakan ke PLO.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
-                                placeholder="e.g., CLO-1"
+                                placeholder="misal: CLO-1"
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label>Alignment (PLOs)</Label>
+                            <Label>Penyelarasan (PLO)</Label>
                             <div className="flex flex-col gap-2 border rounded-md p-3 max-h-32 overflow-y-auto">
                                 {plos.length === 0 && (
-                                    <span className="text-sm text-muted-foreground">No PLOs available.</span>
+                                    <span className="text-sm text-muted-foreground">Data PLO tidak tersedia.</span>
                                 )}
                                 {plos.map(plo => (
                                     <div key={plo.id} className="flex flex-row items-start space-x-2">
@@ -111,10 +111,10 @@ export function CreateCLODialog({
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Description of the CLO..."
+                                placeholder="Deskripsi CLO..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 required

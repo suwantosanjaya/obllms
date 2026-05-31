@@ -13,6 +13,8 @@ import { ReflectionFormTab } from '@/app/components/student/ReflectionFormTab'
 import { CourseTabsWrapper } from '@/app/components/course/CourseTabsWrapper'
 import { StudentAssessmentsTab } from '@/app/components/student/StudentAssessmentsTab'
 import { StudentGradebookTab } from '@/app/components/student/StudentGradebookTab'
+import { CourseFeedbackTab } from '@/app/components/student/CourseFeedbackTab'
+import { getMyCourseFeedback } from '@/app/actions/qaFeedbackActions'
 
 export default async function StudentCourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
     const params = await props.params
@@ -52,6 +54,10 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
     })
     const sortedWeeks = Object.keys(modulesByWeek).map(Number).sort((a, b) => a - b)
 
+    // Fetch existing student feedback for this course
+    const feedbackRes = await getMyCourseFeedback(user.id, params.courseId)
+    const existingFeedback = feedbackRes.feedback as { rating: number | null; content: string; createdAt: Date } | null
+
     return (
         <div className="flex flex-col gap-6">
             {/* Header */}
@@ -80,6 +86,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                         isForumEnabled={course.config?.isForumEnabled}
                         isReflectionsEnabled={course.config?.isReflectionsEnabled}
                         isGamificationEnabled={course.config?.isGamificationEnabled}
+                        showFeedback={true}
                     >
                         <TabsContent value="materi" className="mt-0">
                             <Card>
@@ -188,6 +195,15 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                         <LeaderboardTab courseId={course.id} />
                     </TabsContent>
                 )}
+
+                <TabsContent value="feedback" className="mt-0">
+                    <CourseFeedbackTab
+                        courseId={course.id}
+                        userId={user.id}
+                        subjectTitle={course.subject?.title || ''}
+                        existingFeedback={existingFeedback}
+                    />
+                </TabsContent>
             </CourseTabsWrapper>
         </div>
                 {/* Sidebar: Course Info */}

@@ -124,7 +124,7 @@ export async function getPendingApprovals(activeRole: string, activeDepartmentId
         // Super Admin sees pending Admins
         if (activeRole === 'super_admin') {
             const pendingAdmins = await prisma.user.findMany({
-                where: { role: 'admin' },
+                where: { role: 'admin', approvalStatus: 'PENDING' },
                 include: { homebaseDepartment: true, teacherProfile: true, studentProfile: true }
             })
             return { success: true, pendingUsers: pendingAdmins }
@@ -133,7 +133,7 @@ export async function getPendingApprovals(activeRole: string, activeDepartmentId
         // Admin sees pending QAs (and maybe others, but plan says QAs)
         if (activeRole === 'admin') {
             const pendingQas = await prisma.user.findMany({
-                where: { role: 'qa' },
+                where: { role: 'qa', approvalStatus: 'PENDING' },
                 include: { homebaseDepartment: true, teacherProfile: true, studentProfile: true }
             })
             return { success: true, pendingUsers: pendingQas }
@@ -143,6 +143,7 @@ export async function getPendingApprovals(activeRole: string, activeDepartmentId
         if (activeRole === 'qa' && activeDepartmentId) {
             const pendingStaff = await prisma.user.findMany({
                 where: {
+                    approvalStatus: 'PENDING',
                     role: { in: ['teacher', 'student'] },
                     OR: [
                         { homebaseDepartmentId: activeDepartmentId },

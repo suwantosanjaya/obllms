@@ -47,7 +47,7 @@ export function EditGraduateProfileDialog({
         const result = await updateGraduateProfile(profile.id, payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Graduate Profile updated successfully.' })
+            toast({ title: 'Sukses', description: 'Profil Lulusan berhasil diperbarui.' })
             setOpen(false)
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
@@ -63,14 +63,14 @@ export function EditGraduateProfileDialog({
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Graduate Profile</DialogTitle>
+                        <DialogTitle>Edit Profil Lulusan</DialogTitle>
                         <DialogDescription>
-                            Update graduate profile information.
+                            Perbarui informasi profil lulusan.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
                                 value={formData.code}
@@ -79,7 +79,7 @@ export function EditGraduateProfileDialog({
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Title / Role</Label>
+                            <Label htmlFor="title">Judul / Peran</Label>
                             <Input
                                 id="title"
                                 value={formData.title}
@@ -89,7 +89,7 @@ export function EditGraduateProfileDialog({
                         </div>
                         {!departmentId && (
                             <div className="grid gap-2">
-                                <Label htmlFor="departmentId">Program Study (Departemen)</Label>
+                                <Label htmlFor="departmentId">Departemen</Label>
                                 <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Departemen" />
@@ -103,10 +103,10 @@ export function EditGraduateProfileDialog({
                             </div>
                         )}
                         <div className="grid gap-2">
-                            <Label htmlFor="visionMissionId">Alignment (Vision/Mission)</Label>
+                            <Label htmlFor="visionMissionId">Penyelarasan (Visi/Misi)</Label>
                             <Select value={formData.visionMissionId} onValueChange={(value) => setFormData({ ...formData, visionMissionId: value })}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select Alignment" />
+                                    <SelectValue placeholder="Pilih Penyelarasan" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {visionMissions.map(vm => (
@@ -116,7 +116,7 @@ export function EditGraduateProfileDialog({
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
                                 value={formData.description}
@@ -127,7 +127,7 @@ export function EditGraduateProfileDialog({
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Menyimpan...' : 'Save Changes'}
+                            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>
                     </DialogFooter>
                 </form>

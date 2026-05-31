@@ -49,7 +49,7 @@ export function EditPLODialog({
         const result = await updatePLO(plo.id, payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Program Learning Outcome (PLO) updated successfully.' })
+            toast({ title: 'Success', description: 'Program Learning Outcome (PLO) berhasil diperbarui.' })
             setOpen(false)
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
@@ -67,12 +67,12 @@ export function EditPLODialog({
                     <DialogHeader>
                         <DialogTitle>Edit Program Learning Outcome</DialogTitle>
                         <DialogDescription>
-                            Update the PLO information and its alignment to Graduate Profiles.
+                            Perbarui informasi PLO dan penyelarasan ke Profil Lulusan.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
                                 value={formData.code}
@@ -81,10 +81,10 @@ export function EditPLODialog({
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label>Alignment (Graduate Profiles)</Label>
+                            <Label>Penyelarasan (Profil Lulusan)</Label>
                             <div className="flex flex-col gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
                                 {graduateProfiles.length === 0 && (
-                                    <span className="text-sm text-muted-foreground">No graduate profiles available.</span>
+                                    <span className="text-sm text-muted-foreground">Data profil lulusan tidak tersedia.</span>
                                 )}
                                 {graduateProfiles.map(gp => (
                                     <div key={gp.id} className="flex flex-row items-start space-x-2">
@@ -106,7 +106,7 @@ export function EditPLODialog({
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
                                 value={formData.description}
@@ -118,7 +118,7 @@ export function EditPLODialog({
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Menyimpan...' : 'Save Changes'}
+                            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>
                     </DialogFooter>
                 </form>

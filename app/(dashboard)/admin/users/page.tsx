@@ -41,6 +41,8 @@ export default async function AdminUsersPage() {
 
     const departments = await prisma.department.findMany({ include: { faculty: true }, orderBy: { code: 'asc' } })
 
+    const inactiveUsersCount = users.filter((u: any) => !u.isActive).length
+
     // Fetch Approval Data
     const res = await getPendingApprovals(activeRole, activeDepartmentId)
     const pendingUsers = res.success ? (res.pendingUsers || []) : []
@@ -65,11 +67,18 @@ export default async function AdminUsersPage() {
 
             <Tabs defaultValue="users" className="w-full">
                 <TabsList className="mb-4">
-                    <TabsTrigger value="users">Semua Pengguna</TabsTrigger>
+                    <TabsTrigger value="users" className="flex items-center gap-2">
+                        Semua Pengguna
+                        {inactiveUsersCount > 0 && (
+                            <Badge variant="secondary" className="h-5 min-w-5 px-1 flex items-center justify-center rounded-full text-xs">
+                                {inactiveUsersCount}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
                     <TabsTrigger value="approvals" className="flex items-center gap-2">
                         Persetujuan Registrasi
                         {pendingUsers.length > 0 && (
-                            <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
+                            <Badge variant="destructive" className="h-5 min-w-5 px-1 flex items-center justify-center rounded-full text-xs">
                                 {pendingUsers.length}
                             </Badge>
                         )}
@@ -78,7 +87,7 @@ export default async function AdminUsersPage() {
                         <TabsTrigger value="access" className="flex items-center gap-2">
                             Permintaan Akses
                             {pendingAccessRequests.length > 0 && (
-                                <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
+                                <Badge variant="destructive" className="h-5 min-w-5 px-1 flex items-center justify-center rounded-full text-xs">
                                     {pendingAccessRequests.length}
                                 </Badge>
                             )}

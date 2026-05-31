@@ -24,9 +24,8 @@ export function DeleteGraduateProfileButton({ id, code }: { id: string, code: st
     const handleDelete = async () => {
         setLoading(true)
         const result = await deleteGraduateProfile(id)
-        
         if (result.success) {
-            toast({ title: 'Success', description: `${code} deleted successfully.` })
+            toast({ title: 'Sukses', description: `${code} berhasil dihapus.` })
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
         }
@@ -42,9 +41,9 @@ export function DeleteGraduateProfileButton({ id, code }: { id: string, code: st
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete Graduate Profile <strong>{code}</strong>.
+                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus Profil Lulusan <strong>{code}</strong> secara permanen.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

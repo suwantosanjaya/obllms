@@ -24,9 +24,8 @@ export function DeleteVisionMissionButton({ id, code, disabled }: { id: string, 
     const handleDelete = async () => {
         setLoading(true)
         const result = await deleteVisionMission(id)
-        
         if (result.success) {
-            toast({ title: 'Success', description: `${code} deleted successfully.` })
+            toast({ title: 'Sukses', description: `${code} berhasil dihapus.` })
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
         }
@@ -42,9 +41,9 @@ export function DeleteVisionMissionButton({ id, code, disabled }: { id: string, 
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete <strong>{code}</strong>.
+                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus <strong>{code}</strong> secara permanen.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -1,26 +1,38 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { getDepartmentCloAnalytics } from '@/app/actions/qaAnalyticsActions'
+import { getDepartmentCloAnalytics, getAvailableAngkatan } from '@/app/actions/qaAnalyticsActions'
 import prisma from '@/lib/db'
-import { BarChart, Users, TrendingUp } from 'lucide-react'
+import { BarChart, Users, TrendingUp, TrendingDown, Download } from 'lucide-react'
+
+import { getSessionUser } from '@/app/actions/userActions'
+import { getCurriculumYears } from '@/app/actions/obeActions'
+import { QAAnalyticsFilter } from '@/app/components/qa/QAAnalyticsFilter'
+import { AngkatanProfileClient } from '@/app/components/qa/AngkatanProfileClient'
 
 export default async function QaAnalyticsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ angkatan?: string }>
+    searchParams: Promise<{ angkatan?: string, curriculumId?: string }>
 }) {
     const params = await searchParams
-    const angkatanFilter = params.angkatan ? parseInt(params.angkatan) : undefined
-
-    // For now, get the first department (in a real app, this would be the QA's active department)
-    const qaUser = await prisma.user.findFirst({ where: { role: 'qa' }, include: { departments: true } })
-    const departmentId = qaUser?.departments[0]?.id
+    const sessionUser = await getSessionUser()
+    const departmentId = sessionUser?.activeDepartmentId
 
     if (!departmentId) {
-        return <div className="p-8 text-center text-muted-foreground">Departemen tidak ditemukan.</div>
+        return <div className="p-8 text-center text-muted-foreground">Pilih Departemen terlebih dahulu.</div>
     }
 
-    const { success, clos, angkatanAverages, studentCount } = await getDepartmentCloAnalytics(departmentId, angkatanFilter)
+    const angkatanRes = await getAvailableAngkatan(departmentId)
+    const angkatanList = angkatanRes.success ? (angkatanRes.angkatan || []) : []
+    const angkatanFilter = params.angkatan ? parseInt(params.angkatan) : (angkatanList.length > 0 ? angkatanList[0] : undefined)
+
+    const curriculumYears = await getCurriculumYears(departmentId) || []
+    
+    // Default to active curriculum, or most recent if none active
+    const activeCurriculum = curriculumYears.find((c: any) => c.isActive) || curriculumYears[0]
+    const activeCurriculumId = params.curriculumId || (activeCurriculum ? activeCurriculum.id : undefined)
+
+    const { success, clos, angkatanProfiles, studentCount } = await getDepartmentCloAnalytics(departmentId, angkatanFilter, activeCurriculumId)
 
     if (!success) {
         return <div className="p-8 text-center text-red-500">Gagal memuat analitik.</div>
@@ -29,39 +41,52 @@ export default async function QaAnalyticsPage({
     // Sort CLOs by code for display
     const sortedClos = (clos || []).sort((a: any, b: any) => a.code.localeCompare(b.code))
 
-    // Calculate department overall average
-    let totalAvg = 0
-    let validCount = 0
+    // Find the most critical CLO (lowest average)
+    let criticalClo: any = null
     sortedClos.forEach((c: any) => {
         if (c.average !== null) {
-            totalAvg += c.average
-            validCount++
+            if (!criticalClo || c.average < criticalClo.average) {
+                criticalClo = c
+            }
         }
     })
-    const deptAverage = validCount > 0 ? (totalAvg / validCount).toFixed(1) : '-'
 
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Analitik Capaian Pembelajaran (OBE)</h1>
-                <p className="text-muted-foreground mt-1">Pantau performa penguasaan CLO mahasiswa di seluruh program studi.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Analitik Capaian Pembelajaran</h1>
+                    <p className="text-muted-foreground mt-1">Pantau performa penguasaan CLO mahasiswa di seluruh program studi.</p>
+                </div>
+                <QAAnalyticsFilter curriculumYears={curriculumYears} angkatanList={angkatanList} activeCurriculumId={activeCurriculumId} activeAngkatan={angkatanFilter} />
             </div>
 
             {/* Top Metrics */}
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Rata-Rata Fakultas/Prodi</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">CLO Paling Kritis</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-primary">{deptAverage}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Dari semua CLO yang dievaluasi</p>
+                        {criticalClo ? (
+                            <>
+                                <div className="text-2xl font-bold text-orange-600">{criticalClo.code}</div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Rata-rata: {parseFloat(criticalClo.average).toFixed(1)} (Perlu Evaluasi)
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-2xl font-bold text-muted-foreground">-</div>
+                                <p className="text-xs text-muted-foreground mt-1">Belum ada data evaluasi</p>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Mahasiswa Terlibat</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Mahasiswa Diukur</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -83,95 +108,15 @@ export default async function QaAnalyticsPage({
                 </Card>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                {/* CLO Breakdown */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Performa per CLO</CardTitle>
-                        <CardDescription>Rata-rata nilai penguasaan setiap Capaian Pembelajaran secara agregat.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
-                            {sortedClos.length === 0 ? (
-                                <p className="text-muted-foreground italic text-center py-4">Belum ada data CLO.</p>
-                            ) : (
-                                sortedClos.map((clo: any) => {
-                                    let barColor = "bg-slate-200"
-                                    let textColor = "text-muted-foreground"
-                                    const val = clo.average !== null ? parseFloat(clo.average) : 0
-                                    
-                                    if (clo.average !== null) {
-                                        if (val >= 80) {
-                                            barColor = "bg-green-500"
-                                            textColor = "text-green-700"
-                                        } else if (val >= 60) {
-                                            barColor = "bg-orange-500"
-                                            textColor = "text-orange-700"
-                                        } else {
-                                            barColor = "bg-red-500"
-                                            textColor = "text-red-700"
-                                        }
-                                    }
-
-                                    return (
-                                        <div key={clo.id} className="flex flex-col gap-2">
-                                            <div className="flex justify-between items-end">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="font-mono bg-muted/50">{clo.code}</Badge>
-                                                    <span className="text-sm font-medium line-clamp-1 flex-1">{clo.description}</span>
-                                                </div>
-                                                <div className="flex flex-col items-end shrink-0 ml-4">
-                                                    <span className={`text-xl font-bold ${textColor}`}>
-                                                        {clo.average !== null ? parseFloat(clo.average).toFixed(1) : '-'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Progress Bar */}
-                                            <div className="w-full bg-slate-100 rounded-full h-2">
-                                                <div 
-                                                    className={`${barColor} h-2 rounded-full transition-all`} 
-                                                    style={{ width: `${val}%` }}
-                                                ></div>
-                                            </div>
-                                            <div className="flex justify-between text-[10px] text-muted-foreground">
-                                                <span>Diukur pada {clo.studentCount} mahasiswa</span>
-                                                <span>{clo.submissionCount} data nilai</span>
-                                            </div>
-                                        </div>
-                                    )
-                                })
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
+            <div className="grid gap-6">
                 {/* Angkatan Trend */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Tren Angkatan</CardTitle>
-                        <CardDescription>Perbandingan agregat nilai CLO antar angkatan.</CardDescription>
+                        <CardTitle>Rata-rata CLO per angkatan</CardTitle>
+                        <CardDescription>Perbandingan rincian nilai seluruh CLO per angkatan.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {(!angkatanAverages || angkatanAverages.length === 0) ? (
-                                <p className="text-muted-foreground italic text-center py-4 text-sm">Data angkatan belum tersedia.</p>
-                            ) : (
-                                angkatanAverages.map((a: any) => (
-                                    <div key={a.angkatan} className="flex justify-between items-center p-3 border rounded-lg bg-card hover:bg-muted/30 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-primary/10 text-primary font-bold px-2 py-1 rounded text-sm">
-                                                {a.angkatan}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs text-muted-foreground mb-0.5">Rata-Rata</span>
-                                            <span className="font-bold text-lg">{a.average.toFixed(1)}</span>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <AngkatanProfileClient angkatanProfiles={angkatanProfiles || []} />
                     </CardContent>
                 </Card>
             </div>

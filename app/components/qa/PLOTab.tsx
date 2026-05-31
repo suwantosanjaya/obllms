@@ -31,7 +31,7 @@ export function PLOTab({ plos, mappedGraduateProfilesToDropdown, departmentId, s
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle>Program Learning Outcomes (PLO)</CardTitle>
-                    <CardDescription>Specific learning outcomes for the program, aligned to Graduate Profiles.</CardDescription>
+                    <CardDescription>Capaian pembelajaran spesifik untuk program, diselaraskan dengan Profil Lulusan.</CardDescription>
                 </div>
                 {!isLocked && <CreatePLODialog graduateProfiles={mappedGraduateProfilesToDropdown} selectedYearId={selectedYearId} departmentId={departmentId} />}
             </CardHeader>
@@ -50,15 +50,15 @@ export function PLOTab({ plos, mappedGraduateProfilesToDropdown, departmentId, s
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
-                                <SortableTableHead className="w-[100px]" label="Code" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Description" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead>Alignment (GP)</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead>Penyelarasan (Profil Lulusan)</TableHead>
+                                <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedData.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center py-4">No PLOs found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center py-4">Data PLO tidak ditemukan.</TableCell></TableRow>
                             ) : (
                                 paginatedData.map((plo: any, index: number) => (
                                     <TableRow key={plo.id}>

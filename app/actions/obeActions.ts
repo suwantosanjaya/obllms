@@ -41,6 +41,27 @@ export async function createCurriculumYear(name: string, startYear?: number, end
     }
 }
 
+export async function setActiveCurriculum(id: string, departmentId: string) {
+    try {
+        await prisma.$transaction([
+            prisma.curriculumYear.updateMany({
+                where: { departmentId },
+                data: { isActive: false }
+            }),
+            prisma.curriculumYear.update({
+                where: { id },
+                data: { isActive: true }
+            })
+        ])
+        revalidatePath('/qa/curriculum')
+        revalidatePath('/qa/analytics')
+        revalidatePath('/qa')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
 // PLO (Program Learning Outcome) Actions - Usually for QA/Department
 export async function createPLO(data: { code: string, description: string, graduateProfileIds?: string[], departmentId?: string, curriculumYearId?: string }) {
     try {
@@ -607,11 +628,12 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
             where: subjectFilter,
             include: {
                 subjectClos: {
-                    include: { clo: { include: { plos: true } } }
+                    include: { clo: { include: { plos: true } }, plo: true }
                 },
                 courses: {
                     include: { instructor: true }
-                }
+                },
+                curriculumYears: true
             }
         })
 
@@ -637,6 +659,24 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
 
             // Extract instructor names from courses
             const instructors = Array.from(new Set(subject.courses.map(c => c.instructor.name)))
+            
+            const curriculumYearIds = new Set<string>()
+            const mappingDetails: any[] = []
+            
+            subject.subjectClos.forEach(sc => {
+                if (sc.clo?.curriculumYearId) curriculumYearIds.add(sc.clo.curriculumYearId)
+                
+                mappingDetails.push({
+                    cloCode: sc.clo?.code || '-',
+                    cloDescription: sc.clo?.description || '-',
+                    ploCode: sc.plo?.code || '-',
+                    ploDescription: sc.plo?.description || '-',
+                    curriculumYearId: sc.clo?.curriculumYearId || null
+                })
+            })
+            subject.courses.forEach(c => {
+                if (c.curriculumYearId) curriculumYearIds.add(c.curriculumYearId)
+            })
 
             return {
                 id: subject.id,
@@ -646,7 +686,13 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
                 alignmentPercentage,
                 cloCount,
                 mappedCloCount,
-                status
+                status,
+                curriculumYearIds: Array.from(curriculumYearIds),
+                mappingDetails,
+                curriculumSubjects: subject.curriculumYears.map(cy => ({
+                    curriculumYearId: cy.curriculumYearId,
+                    includeInAnalytics: cy.includeInAnalytics
+                }))
             }
         })
 
@@ -655,11 +701,14 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
             where: departmentId ? { departmentId } : {}
         })
         
+        const validPloIds = new Set(plos.map(p => p.id))
         // We consider a PLO measured if it is mapped to at least one active subject
         const measuredPloIds = new Set()
         subjects.forEach(subject => {
             subject.subjectClos.forEach(sc => {
-                measuredPloIds.add(sc.ploId)
+                if (validPloIds.has(sc.ploId)) {
+                    measuredPloIds.add(sc.ploId)
+                }
             })
         })
         totalPlosMeasured = measuredPloIds.size
@@ -673,7 +722,8 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
                 reviewNeededCount,
                 totalPlosMeasured,
                 totalPlos: plos.length,
-                reviewTableData
+                reviewTableData,
+                allPlos: plos.map(p => ({ id: p.id, code: p.code, curriculumYearId: p.curriculumYearId }))
             }
         }
     } catch (error: unknown) {
@@ -848,4 +898,25 @@ export async function checkCurriculumLock(departmentId?: string | null, curricul
         return { locked: true, error: 'Kurikulum sedang diajukan (SUBMITTED) dan tidak dapat diubah sampai ditolak (Revisi) oleh Ketua Departemen.' }
     }
     return { locked: false }
+}
+
+export async function toggleSubjectAnalytics(curriculumYearId: string, subjectId: string, includeInAnalytics: boolean) {
+    try {
+        await prisma.curriculumSubject.update({
+            where: {
+                curriculumYearId_subjectId: {
+                    curriculumYearId,
+                    subjectId
+                }
+            },
+            data: {
+                includeInAnalytics
+            }
+        });
+        revalidatePath('/qa')
+        revalidatePath('/qa/metrics')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
 }

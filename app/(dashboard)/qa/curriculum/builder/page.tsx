@@ -83,7 +83,7 @@ export default async function QaCurriculumPage({
     const steps = [
         {
             id: 'vision',
-            title: '1. Vision & Mission',
+            title: '1. Visi & Misi',
             content: (
                 <VisionMissionTab 
                     visionMissions={visionMissions} 
@@ -96,7 +96,7 @@ export default async function QaCurriculumPage({
         },
         {
             id: 'gp',
-            title: '2. Graduate Profiles',
+            title: '2. Profil Lulusan',
             content: (
                 <GraduateProfileTab
                     graduateProfiles={graduateProfiles}
@@ -207,7 +207,7 @@ export default async function QaCurriculumPage({
         },
         {
             id: 'submit',
-            title: '10. Submit & Approval',
+            title: '10. Pengajuan & Persetujuan',
             content: (
                 <div className="space-y-8">
                     <CurriculumApprovalBanner
@@ -232,11 +232,11 @@ export default async function QaCurriculumPage({
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Curriculum Builder</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Penyusun Kurikulum</h1>
                     <div className="flex items-center gap-3 mt-1">
                         <p className="text-muted-foreground">Menyusun kurikulum: </p>
                         <Badge variant="outline" className="text-sm">
-                            {curriculumYears.find(y => y.id === selectedYearId)?.name || 'Unknown Year'}
+                            {curriculumYears.find(y => y.id === selectedYearId)?.name || 'Tahun Tidak Diketahui'}
                         </Badge>
                     </div>
                 </div>

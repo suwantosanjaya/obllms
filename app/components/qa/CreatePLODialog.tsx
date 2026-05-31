@@ -43,7 +43,7 @@ export function CreatePLODialog({ graduateProfiles, selectedYearId, departmentId
         const result = await createPLO(payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Program Learning Outcome (PLO) created successfully.' })
+            toast({ title: 'Success', description: 'Program Learning Outcome (PLO) berhasil dibuat.' })
             setOpen(false)
             setFormData({ code: '', description: '' })
             setSelectedGPs([])
@@ -56,32 +56,32 @@ export function CreatePLODialog({ graduateProfiles, selectedYearId, departmentId
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" /> Add PLO</Button>
+                <Button><Plus className="w-4 h-4 mr-2" /> Tambah PLO</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Program Learning Outcome</DialogTitle>
+                        <DialogTitle>Tambah Program Learning Outcome</DialogTitle>
                         <DialogDescription>
-                            Create a new PLO and link it to Graduate Profiles.
+                            Buat PLO baru dan hubungkan ke Profil Lulusan.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
-                                placeholder="e.g., PLO-1"
+                                placeholder="misal: PLO-1"
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label>Alignment (Graduate Profiles)</Label>
+                            <Label>Penyelarasan (Profil Lulusan)</Label>
                             <div className="flex flex-col gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
                                 {graduateProfiles.length === 0 && (
-                                    <span className="text-sm text-muted-foreground">No graduate profiles available.</span>
+                                    <span className="text-sm text-muted-foreground">Data profil lulusan tidak tersedia.</span>
                                 )}
                                 {graduateProfiles.map(gp => (
                                     <div key={gp.id} className="flex flex-row items-start space-x-2">
@@ -103,10 +103,10 @@ export function CreatePLODialog({ graduateProfiles, selectedYearId, departmentId
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Description of the PLO..."
+                                placeholder="Deskripsi PLO..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 required

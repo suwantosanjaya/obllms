@@ -40,10 +40,11 @@ export async function updateProfile(userId: string, data: {
     angkatan?: number,
     jenisKelamin?: string,
     alamat?: string,
-    isStudentProfile?: boolean
+    isStudentProfile?: boolean,
+    isTeacherProfile?: boolean
 }) {
     try {
-        const { name, email, nidn, nip, gelarDepan, gelarBelakang, nim, angkatan, jenisKelamin, alamat, isStudentProfile } = data
+        const { name, email, nidn, nip, gelarDepan, gelarBelakang, nim, angkatan, jenisKelamin, alamat, isStudentProfile, isTeacherProfile } = data
 
         // Check if email is already used by someone else
         const existingEmail = await prisma.user.findUnique({ where: { email } })
@@ -56,11 +57,11 @@ export async function updateProfile(userId: string, data: {
             data: {
                 name,
                 email,
-                ...(nidn !== undefined ? {
+                ...(isTeacherProfile ? {
                     teacherProfile: {
                         upsert: {
-                            create: { nidn: nidn || "", nip: nip || "", gelarDepan, gelarBelakang },
-                            update: { nidn: nidn || "", nip: nip || "", gelarDepan, gelarBelakang }
+                            create: { nidn: nidn || null, nip: nip || null, gelarDepan, gelarBelakang },
+                            update: { nidn: nidn || null, nip: nip || null, gelarDepan, gelarBelakang }
                         }
                     }
                 } : {}),

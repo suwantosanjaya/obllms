@@ -35,14 +35,14 @@ export function DeleteSubjectButton({ id, title }: DeleteSubjectButtonProps) {
 
         if (result.success) {
             toast({
-                title: 'Success',
-                description: 'Subject deleted successfully.',
+                title: 'Sukses',
+                description: 'Mata kuliah berhasil dihapus.',
             })
             router.refresh()
         } else {
             toast({
                 title: 'Error',
-                description: result.error || 'Failed to delete Subject.',
+                description: result.error || 'Gagal menghapus mata kuliah.',
                 variant: 'destructive',
             })
         }
@@ -57,10 +57,10 @@ export function DeleteSubjectButton({ id, title }: DeleteSubjectButtonProps) {
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Subject?</AlertDialogTitle>
+                    <AlertDialogTitle>Hapus Mata Kuliah?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Are you sure you want to delete <strong>{title}</strong>? This action cannot be undone.
-                        The subject cannot be deleted if there are active classes using it.
+                        Apakah Anda yakin ingin menghapus <strong>{title}</strong>? Tindakan ini tidak dapat dibatalkan.
+                        Mata kuliah tidak dapat dihapus jika ada kelas aktif yang menggunakannya.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

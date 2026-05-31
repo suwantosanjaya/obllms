@@ -48,7 +48,7 @@ export function CreateGraduateProfileDialog({
         const result = await createGraduateProfile(payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Graduate Profile created successfully.' })
+            toast({ title: 'Sukses', description: 'Profil Lulusan berhasil dibuat.' })
             setOpen(false)
             setFormData({ code: '', title: '', description: '', visionMissionId: '', departmentId: '' })
         } else {
@@ -60,32 +60,32 @@ export function CreateGraduateProfileDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" /> Add Graduate Profile</Button>
+                <Button><Plus className="w-4 h-4 mr-2" /> Tambah Profil Lulusan</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Graduate Profile</DialogTitle>
+                        <DialogTitle>Tambah Profil Lulusan</DialogTitle>
                         <DialogDescription>
-                            Create a new graduate profile and link it to a vision/mission and program study.
+                            Buat profil lulusan baru dan hubungkan ke visi/misi dan departemen.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Code</Label>
+                            <Label htmlFor="code">Kode</Label>
                             <Input
                                 id="code"
-                                placeholder="e.g., GP-1"
+                                placeholder="misal: PL-1"
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Title / Role</Label>
+                            <Label htmlFor="title">Judul / Peran</Label>
                             <Input
                                 id="title"
-                                placeholder="e.g., Software Engineer"
+                                placeholder="misal: Software Engineer"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 required
@@ -93,7 +93,7 @@ export function CreateGraduateProfileDialog({
                         </div>
                         {!departmentId && (
                             <div className="grid gap-2">
-                                <Label htmlFor="departmentId">Program Study (Departemen)</Label>
+                                <Label htmlFor="departmentId">Departemen</Label>
                                 <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Departemen" />
@@ -107,10 +107,10 @@ export function CreateGraduateProfileDialog({
                             </div>
                         )}
                         <div className="grid gap-2">
-                            <Label htmlFor="visionMissionId">Alignment (Vision/Mission)</Label>
+                            <Label htmlFor="visionMissionId">Penyelarasan (Visi/Misi)</Label>
                             <Select value={formData.visionMissionId} onValueChange={(value) => setFormData({ ...formData, visionMissionId: value })}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select Alignment" />
+                                    <SelectValue placeholder="Pilih Penyelarasan" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {visionMissions.map(vm => (
@@ -120,10 +120,10 @@ export function CreateGraduateProfileDialog({
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Description of the profile..."
+                                placeholder="Deskripsi profil..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,12 +9,14 @@ export function CourseTabsWrapper({
   children, 
   isForumEnabled, 
   isReflectionsEnabled, 
-  isGamificationEnabled 
+  isGamificationEnabled,
+  showFeedback,
 }: { 
   children: React.ReactNode, 
   isForumEnabled?: boolean, 
   isReflectionsEnabled?: boolean, 
-  isGamificationEnabled?: boolean 
+  isGamificationEnabled?: boolean,
+  showFeedback?: boolean,
 }) {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -42,6 +44,7 @@ export function CourseTabsWrapper({
                             {isForumEnabled && <SelectItem value="forum">Forum Diskusi</SelectItem>}
                             {isReflectionsEnabled && <SelectItem value="refleksi">Jurnal SRL &amp; Refleksi</SelectItem>}
                             {isGamificationEnabled && <SelectItem value="leaderboard">Papan Peringkat</SelectItem>}
+                            {showFeedback && <SelectItem value="feedback">Umpan Balik</SelectItem>}
                         </SelectContent>
                     </Select>
                 </div>
@@ -55,6 +58,7 @@ export function CourseTabsWrapper({
                         {isForumEnabled && <TabsTrigger value="forum" className="px-4 py-2 whitespace-nowrap">Forum Diskusi</TabsTrigger>}
                         {isReflectionsEnabled && <TabsTrigger value="refleksi" className="px-4 py-2 whitespace-nowrap">Jurnal SRL &amp; Refleksi</TabsTrigger>}
                         {isGamificationEnabled && <TabsTrigger value="leaderboard" className="px-4 py-2 whitespace-nowrap">Papan Peringkat</TabsTrigger>}
+                        {showFeedback && <TabsTrigger value="feedback" className="px-4 py-2 whitespace-nowrap">Umpan Balik</TabsTrigger>}
                     </TabsList>
                 </div>
             </div>

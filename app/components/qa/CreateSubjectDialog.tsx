@@ -85,7 +85,7 @@ export function CreateSubjectDialog() {
         setIsLoading(false)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Subject added to catalog successfully.' })
+            toast({ title: 'Sukses', description: 'Mata kuliah berhasil ditambahkan ke katalog.' })
             setOpen(false)
             router.refresh()
         } else {
@@ -98,31 +98,31 @@ export function CreateSubjectDialog() {
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Subject
+                    Tambah Mata Kuliah
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[520px]">
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>New Subject</DialogTitle>
+                        <DialogTitle>Mata Kuliah Baru</DialogTitle>
                         <DialogDescription>
-                            Add a new Master Subject to the catalog.
+                            Tambahkan Master Mata Kuliah baru ke katalog.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         {/* Kode & Nama */}
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Subject Code</Label>
-                            <Input id="code" name="code" placeholder="e.g., CS101, MAT201" required />
+                            <Label htmlFor="code">Kode Mata Kuliah</Label>
+                            <Input id="code" name="code" placeholder="misal: CS101, MAT201" required />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Subject Name</Label>
-                            <Input id="title" name="title" placeholder="e.g., Basic Programming" required />
+                            <Label htmlFor="title">Nama Mata Kuliah</Label>
+                            <Input id="title" name="title" placeholder="misal: Pemrograman Dasar" required />
                         </div>
 
                         {/* Tipe */}
                         <div className="grid gap-2">
-                            <Label>Type</Label>
+                            <Label>Tipe</Label>
                             <Select value={type} onValueChange={v => setType(v as any)}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -150,15 +150,15 @@ export function CreateSubjectDialog() {
 
                         {/* Kelompok / Scope */}
                         <div className="grid gap-2">
-                            <Label>Scope</Label>
+                            <Label>Cakupan</Label>
                             <Select value={scope} onValueChange={v => { setScope(v as any); setFakultasId(''); setProdiId('') }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="universitas">Mata Kuliah Universitas</SelectItem>
-                                    <SelectItem value="faculty">Mata Kuliah Faculty</SelectItem>
-                                    <SelectItem value="department">Mata Kuliah Department</SelectItem>
+                                    <SelectItem value="faculty">Mata Kuliah Fakultas</SelectItem>
+                                    <SelectItem value="department">Mata Kuliah Departemen</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -166,10 +166,10 @@ export function CreateSubjectDialog() {
                         {/* Faculty — muncul jika scope = 'faculty' atau 'department' */}
                         {(scope === 'faculty' || scope === 'department') && (
                             <div className="grid gap-2">
-                                <Label>Faculty</Label>
+                                <Label>Fakultas</Label>
                                 <Select value={facultyId} onValueChange={setFakultasId} disabled={loadingFakultas} required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Select Faculty'} />
+                                        <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Pilih Fakultas'} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {facultyList.map(f => (
@@ -183,14 +183,14 @@ export function CreateSubjectDialog() {
                         {/* Department — muncul jika scope = 'department' dan faculty sudah dipilih */}
                         {scope === 'department' && facultyId && (
                             <div className="grid gap-2">
-                                <Label>Program Study</Label>
+                                <Label>Departemen</Label>
                                 <Select value={departmentId} onValueChange={setProdiId} required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Program Study" />
+                                        <SelectValue placeholder="Pilih Departemen" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {prodiList.length === 0 ? (
-                                            <SelectItem value="_none" disabled>No programs in this faculty</SelectItem>
+                                            <SelectItem value="_none" disabled>Tidak ada departemen di fakultas ini</SelectItem>
                                         ) : prodiList.map(p => (
                                             <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
                                         ))}
@@ -201,14 +201,14 @@ export function CreateSubjectDialog() {
 
                         {/* Deskripsi */}
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
-                            <Textarea id="description" name="description" placeholder="Short description of the subject..." rows={3} />
+                            <Label htmlFor="description">Deskripsi (Opsional)</Label>
+                            <Textarea id="description" name="description" placeholder="Deskripsi singkat tentang mata kuliah..." rows={3} />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menyimpan...</> : 'Save Subject'}
+                            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menyimpan...</> : 'Simpan Mata Kuliah'}
                         </Button>
                     </DialogFooter>
                 </form>

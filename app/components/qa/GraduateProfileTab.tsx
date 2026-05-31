@@ -29,8 +29,8 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
         <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <CardTitle>Program Graduate Profiles</CardTitle>
-                    <CardDescription>Expected roles and capabilities of graduates, aligned with Vision/Mission.</CardDescription>
+                    <CardTitle>Profil Lulusan Program</CardTitle>
+                    <CardDescription>Peran dan kemampuan yang diharapkan dari lulusan, diselaraskan dengan Visi/Misi.</CardDescription>
                 </div>
                 {!isLocked && <CreateGraduateProfileDialog visionMissions={mappedVisionMissionsToDropdown} departments={departments} selectedYearId={selectedYearId} departmentId={departmentId} />}
             </CardHeader>
@@ -38,7 +38,7 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
                 <div className="flex items-center space-x-2">
                     <Search className="w-4 h-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Cari Graduate Profile..." 
+                        placeholder="Cari Profil Lulusan..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="max-w-sm h-8"
@@ -49,16 +49,16 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
-                                <SortableTableHead className="w-[100px]" label="Code" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Role / Title" sortKey="title" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Program Study" sortKey="department.name" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Alignment (V/M)" sortKey="visionMission.code" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="text-right">Actions</TableHead>
+                                <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Peran / Nama" sortKey="title" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Departemen" sortKey="department.name" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Penyelarasan (Visi/Misi)" sortKey="visionMission.code" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedData.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-4">No Graduate Profiles found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center py-4">Data Profil Lulusan tidak ditemukan.</TableCell></TableRow>
                             ) : (
                                 paginatedData.map((gp: any, index: number) => (
                                     <TableRow key={gp.id}>

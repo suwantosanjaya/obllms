@@ -14,8 +14,8 @@ export default async function AdminSubjectsPage() {
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Subject Catalog</h1>
-                    <p className="text-muted-foreground mt-1">Manage the master subjects available in the program study.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Katalog Mata Kuliah</h1>
+                    <p className="text-muted-foreground mt-1">Kelola master mata kuliah yang tersedia di departemen.</p>
                 </div>
                 <CreateSubjectDialog />
             </div>

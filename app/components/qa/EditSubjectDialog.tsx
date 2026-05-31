@@ -105,7 +105,7 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
         setIsLoading(false)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'Subject updated successfully.' })
+            toast({ title: 'Sukses', description: 'Mata kuliah berhasil diperbarui.' })
             setOpen(false)
             router.refresh()
         } else {
@@ -123,30 +123,30 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
             <DialogContent className="sm:max-w-[520px]">
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Subject</DialogTitle>
+                        <DialogTitle>Edit Mata Kuliah</DialogTitle>
                         <DialogDescription>
-                            Update the Master Subject details in the catalog.
+                            Perbarui detail Master Mata Kuliah di katalog.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         {/* Kode & Nama */}
                         <div className="grid gap-2">
-                            <Label htmlFor="code">Subject Code</Label>
+                            <Label htmlFor="code">Kode Mata Kuliah</Label>
                             <Input 
                                 id="code" 
                                 name="code" 
-                                placeholder="e.g., CS101, MAT201" 
+                                placeholder="misal: CS101, MAT201" 
                                 required 
                                 value={formData.code}
                                 onChange={e => setFormData(p => ({ ...p, code: e.target.value }))}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Subject Name</Label>
+                            <Label htmlFor="title">Nama Mata Kuliah</Label>
                             <Input 
                                 id="title" 
                                 name="title" 
-                                placeholder="e.g., Basic Programming" 
+                                placeholder="misal: Pemrograman Dasar" 
                                 required 
                                 value={formData.title}
                                 onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
@@ -155,7 +155,7 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
 
                         {/* Tipe */}
                         <div className="grid gap-2">
-                            <Label>Type</Label>
+                            <Label>Tipe</Label>
                             <Select value={type} onValueChange={v => setType(v as any)}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -183,15 +183,15 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
 
                         {/* Kelompok / Scope */}
                         <div className="grid gap-2">
-                            <Label>Scope</Label>
+                            <Label>Cakupan</Label>
                             <Select value={scope} onValueChange={v => { setScope(v as any); setFakultasId(''); setProdiId('') }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="universitas">Mata Kuliah Universitas</SelectItem>
-                                    <SelectItem value="faculty">Mata Kuliah Faculty</SelectItem>
-                                    <SelectItem value="department">Mata Kuliah Department</SelectItem>
+                                    <SelectItem value="faculty">Mata Kuliah Fakultas</SelectItem>
+                                    <SelectItem value="department">Mata Kuliah Departemen</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -199,10 +199,10 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                         {/* Faculty — muncul jika scope = 'faculty' atau 'department' */}
                         {(scope === 'faculty' || scope === 'department') && (
                             <div className="grid gap-2">
-                                <Label>Faculty</Label>
+                                <Label>Fakultas</Label>
                                 <Select value={facultyId} onValueChange={handleFakultasChange} disabled={loadingFakultas} required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Select Faculty'} />
+                                        <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Pilih Fakultas'} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {facultyList.map(f => (
@@ -216,14 +216,14 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                         {/* Department — muncul jika scope = 'department' dan faculty sudah dipilih */}
                         {scope === 'department' && facultyId && (
                             <div className="grid gap-2">
-                                <Label>Program Study</Label>
+                                <Label>Departemen</Label>
                                 <Select value={departmentId} onValueChange={setProdiId} required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Program Study" />
+                                        <SelectValue placeholder="Pilih Departemen" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {prodiList.length === 0 ? (
-                                            <SelectItem value="_none" disabled>No programs in this faculty</SelectItem>
+                                            <SelectItem value="_none" disabled>Tidak ada departemen di fakultas ini</SelectItem>
                                         ) : prodiList.map(p => (
                                             <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
                                         ))}
@@ -234,11 +234,11 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
 
                         {/* Deskripsi */}
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Label htmlFor="description">Deskripsi (Opsional)</Label>
                             <Textarea 
                                 id="description" 
                                 name="description" 
-                                placeholder="Short description of the subject..." 
+                                placeholder="Deskripsi singkat tentang mata kuliah..." 
                                 rows={3} 
                                 value={formData.description}
                                 onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
@@ -248,7 +248,7 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menyimpan...</> : 'Save Changes'}
+                            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menyimpan...</> : 'Simpan Perubahan'}
                         </Button>
                     </DialogFooter>
                 </form>

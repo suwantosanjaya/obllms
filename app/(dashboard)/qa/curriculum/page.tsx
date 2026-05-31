@@ -9,6 +9,7 @@ import { CreateCurriculumYearDialog } from '@/app/components/qa/CreateCurriculum
 import { ArrowRight, FileEdit, Eye, PlusCircle, Clock, CheckCheck } from 'lucide-react'
 import { CurriculumApprovalCardActions } from '@/app/components/qa/CurriculumApprovalCardActions'
 import { CurriculumRevisionRequestButton } from '@/app/components/qa/CurriculumRevisionRequestButton'
+import { SetDefaultCurriculumButton } from '@/app/components/qa/SetDefaultCurriculumButton'
 export default async function QaCurriculumDashboard() {
     const user = await getSessionUser()
     const departmentId = user?.activeDepartmentId
@@ -49,7 +50,7 @@ export default async function QaCurriculumDashboard() {
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Curriculum Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Kurikulum</h1>
                     <p className="text-muted-foreground mt-1">
                         {isHod
                             ? 'Tinjau dan setujui kurikulum yang telah diajukan oleh tim QA.'
@@ -156,7 +157,10 @@ export default async function QaCurriculumDashboard() {
                                 }`} />
                             )}
                             <CardHeader>
-                                <CardTitle>{year.name}</CardTitle>
+                                <div className="flex justify-between items-start">
+                                    <CardTitle>{year.name}</CardTitle>
+                                    {year.isActive && <Badge variant="secondary" className="bg-blue-100 text-blue-800">Default</Badge>}
+                                </div>
                                 <CardDescription className="line-clamp-2 mt-1 min-h-10">
                                     {year.startYear && year.endYear ? `Masa Berlaku: ${year.startYear}-${year.endYear}` : 'Periode penyusunan kurikulum'}
                                     {year.description && <span className="block mt-1 text-xs text-muted-foreground">{year.description}</span>}
@@ -262,6 +266,9 @@ export default async function QaCurriculumDashboard() {
                                                     </Link>
                                                 )}
                                             </Button>
+                                        )}
+                                        {status === 'APPROVED' && departmentId && (
+                                            <SetDefaultCurriculumButton yearId={year.id} departmentId={departmentId} isActive={year.isActive} />
                                         )}
                                     </div>
                                 )}

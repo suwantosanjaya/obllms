@@ -1,27 +1,34 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Construction } from 'lucide-react'
+import { getSessionUser } from '@/app/actions/userActions'
+import { getInstructorCourses } from '@/app/actions/courseActions'
+import { redirect } from 'next/navigation'
+import TeacherStudentsClient from '@/app/components/teacher/TeacherStudentsClient'
 
-export default function PlaceholderPage() {
+export default async function TeacherStudentsPage() {
+    const session = await getSessionUser()
+    if (!session || !session.roles?.includes('teacher')) {
+        redirect('/')
+    }
+
+    const coursesRes = await getInstructorCourses(session.id, session.activeDepartmentId)
+    const courses = coursesRes.success ? (coursesRes.courses || []) : []
+
+    // Map course data to match what the client component needs
+    const simplifiedCourses = courses.map((c: any) => ({
+        id: c.id,
+        name: `${c.subject?.code} - ${c.subject?.title} (${c.classCode || 'Reguler'})`,
+        semester: c.semester,
+        academicYear: c.academicYear,
+    }))
+
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 w-full max-w-full">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Analitik Mahasiswa</h1>
-                <p className="text-muted-foreground mt-1">Pemantauan progres dan risiko gagal (At-Risk).</p>
+                <p className="text-muted-foreground mt-1">Pemantauan progres dan risiko gagal (At-Risk) per kelas.</p>
             </div>
-            <Card>
-                <CardHeader className="text-center pb-2">
-                    <div className="mx-auto bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                        <Construction className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle>Fitur Sedang Dalam Pengembangan</CardTitle>
-                    <CardDescription>
-                        Modul ini belum tersedia pada versi Alpha.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center text-sm text-muted-foreground pt-4">
-                    Silakan kembali pada pembaruan aplikasi berikutnya.
-                </CardContent>
-            </Card>
+            
+            <TeacherStudentsClient courses={simplifiedCourses} />
         </div>
     )
 }
+

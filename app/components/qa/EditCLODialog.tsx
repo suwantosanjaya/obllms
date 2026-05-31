@@ -48,7 +48,7 @@ export function EditCLODialog({
         const result = await updateCLO(clo.id, payload)
 
         if (result.success) {
-            toast({ title: 'Success', description: 'CLO berhasil diperbarui.' })
+            toast({ title: 'Sukses', description: 'CLO berhasil diperbarui.' })
             setOpen(false)
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
@@ -80,10 +80,10 @@ export function EditCLODialog({
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label>Alignment (PLOs)</Label>
+                            <Label>Penyelarasan (PLO)</Label>
                             <div className="flex flex-col gap-2 border rounded-md p-3 max-h-32 overflow-y-auto">
                                 {plos.length === 0 && (
-                                    <span className="text-sm text-muted-foreground">No PLOs available.</span>
+                                    <span className="text-sm text-muted-foreground">Data PLO tidak tersedia.</span>
                                 )}
                                 {plos.map(plo => (
                                     <div key={plo.id} className="flex flex-row items-start space-x-2">
@@ -117,7 +117,7 @@ export function EditCLODialog({
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Menyimpan...' : 'Simpan'}
+                            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>
                     </DialogFooter>
                 </form>

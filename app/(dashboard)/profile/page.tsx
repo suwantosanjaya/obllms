@@ -84,7 +84,8 @@ export default function ProfilePage() {
             angkatan: angkatan ? parseInt(angkatan) : undefined,
             jenisKelamin,
             alamat,
-            isStudentProfile: isStudent
+            isStudentProfile: isStudent,
+            isTeacherProfile: isTeacherOrQa
         })
         
         if (res.success) {

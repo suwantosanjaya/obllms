@@ -38,6 +38,7 @@ model User {
   accessRequests DepartmentAccessRequest[]
   forumThreads   ForumThread[]
   forumReplies   ForumReply[]
+  announcements  Announcement[]
 }
 
 // Profile specifically for Students (Mahasiswa)
@@ -133,6 +134,7 @@ model Department {
   visionMissions   InstitutionVisionMission[]
   curriculumYears  CurriculumYear[]
   accessRequests   DepartmentAccessRequest[]
+  announcements    Announcement[]
 }
 
 // Model for Teacher requesting access to a different department
@@ -565,6 +567,7 @@ model CurriculumYear {
   name      String
   departmentId String?
   department Department? @relation(fields: [departmentId], references: [id])
+  isActive  Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -588,6 +591,7 @@ model CurriculumSubject {
   id               String   @id @default(cuid())
   curriculumYearId String
   subjectId        String
+  includeInAnalytics Boolean @default(true) // Toggle per-course analytics
   createdAt        DateTime @default(now())
 
   curriculumYear   CurriculumYear @relation(fields: [curriculumYearId], references: [id], onDelete: Cascade)
@@ -643,4 +647,21 @@ model GradeScale {
   minScore Float  // e.g., 85
   maxScore Float  // e.g., 100
   point    Float  // GPA point, e.g., 4.0
+}
+
+// System & Departmental Announcements
+model Announcement {
+  id           String    @id @default(cuid())
+  title        String
+  content      String
+  tag          String    @default("Info") // "Fitur Baru" | "Pengumuman" | "Info" | "Penting"
+  scope        String    @default("global") // "global" | "department"
+  departmentId String?   // null = global announcement
+  authorId     String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  author     User        @relation(fields: [authorId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
 }

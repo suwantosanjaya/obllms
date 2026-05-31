@@ -30,7 +30,7 @@ export function VisionMissionTab({ visionMissions, department, departmentId, sel
         <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <CardTitle>Institution Vision & Mission</CardTitle>
+                    <CardTitle>Visi & Misi Institusi</CardTitle>
                     <CardDescription>
                         Visi dan misi departemen {department?.name || 'Anda'}.
                     </CardDescription>
@@ -52,15 +52,15 @@ export function VisionMissionTab({ visionMissions, department, departmentId, sel
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
-                                <SortableTableHead className="w-[100px]" label="Code" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead className="w-[100px]" label="Type" sortKey="type" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Description" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="text-right">Actions</TableHead>
+                                <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead className="w-[100px]" label="Tipe" sortKey="type" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedData.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center py-4">No Vision/Mission data found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center py-4">Data Visi/Misi tidak ditemukan.</TableCell></TableRow>
                             ) : (
                                 paginatedData.map((vm: any, index: number) => (
                                     <TableRow key={vm.id}>

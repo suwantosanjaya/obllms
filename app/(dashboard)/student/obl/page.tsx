@@ -64,7 +64,7 @@ export default async function StudentOBLPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Daftar CPMK & Asesmen (Course Learning Outcomes)</CardTitle>
+                    <CardTitle>Daftar CLO & Asesmen (Course Learning Outcomes)</CardTitle>
                     <CardDescription>
                         Capaian pembelajaran spesifik dan teknik penilaian untuk setiap mata kuliah yang Anda ikuti.
                     </CardDescription>
@@ -75,7 +75,7 @@ export default async function StudentOBLPage() {
                             <TableRow>
                                 <TableHead className="w-[120px]">Mata Kuliah</TableHead>
                                 <TableHead className="w-[100px]">Kode</TableHead>
-                                <TableHead>Deskripsi CPMK</TableHead>
+                                <TableHead>Deskripsi CLO</TableHead>
                                 <TableHead className="w-[150px]">Pemetaan CPL</TableHead>
                                 <TableHead className="w-[180px]">Teknik & Bobot Asesmen</TableHead>
                             </TableRow>
@@ -84,7 +84,7 @@ export default async function StudentOBLPage() {
                             {subjectCloMappings.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                        Anda belum terdaftar di kelas manapun atau belum ada pemetaan CPMK.
+                                        Anda belum terdaftar di kelas manapun atau belum ada pemetaan CLO.
                                     </TableCell>
                                 </TableRow>
                             ) : (
