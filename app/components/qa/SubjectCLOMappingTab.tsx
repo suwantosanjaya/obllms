@@ -246,7 +246,7 @@ export function SubjectCLOMappingTab({
                                 <SortableTableHead 
                                     className="w-[300px] font-bold border-r"
                                     sortKey="code"
-                                    sortConfig={sortConfig}
+                                    currentSort={sortConfig}
                                     onSort={handleSort}
                                     label="Mata Kuliah"
                                 />

@@ -821,9 +821,6 @@ export async function getQuestionBankBySubject(subjectId: string) {
                     }
                 }
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
         })
 
         // Remove exact text duplicates to make it cleaner

@@ -14,7 +14,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
     }
 
     const scaleRes = await getGradeScales()
-    const gradeScales = scaleRes.success ? scaleRes.data : []
+    const gradeScales = scaleRes.success ? (scaleRes.data ?? []) : []
 
     const { course, submissions, subjectClos } = dataRes
     const enrollments = course.enrollments || []

@@ -27,8 +27,8 @@ export default async function SuperAdminUsersPage() {
         <div className="flex flex-col gap-6 w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Manajemen Admin Department</h1>
-                    <p className="text-muted-foreground mt-1">Kelola data administrator tingkat department dan persetujuan akun.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Manajemen Administrator Global</h1>
+                    <p className="text-muted-foreground mt-1">Kelola data Administrator Global tingkat universitas dan persetujuan akun.</p>
                 </div>
                 <CreateUserDialog departments={departments} allowedRoles={['admin']} />
             </div>
@@ -51,8 +51,8 @@ export default async function SuperAdminUsersPage() {
                         users={users} 
                         departments={departments} 
                         allowedRoles={['admin']}
-                        title="Daftar Admin Department"
-                        description="Menampilkan daftar Administrator Department yang aktif di sistem."
+                        title="Daftar Administrator Global"
+                        description="Menampilkan daftar Administrator Global yang aktif di sistem."
                     />
                 </TabsContent>
 

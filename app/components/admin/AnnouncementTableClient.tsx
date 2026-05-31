@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +33,10 @@ export function AnnouncementTableClient({
     const router = useRouter()
     const { toast } = useToast()
     const [announcements, setAnnouncements] = useState(initial)
+
+    useEffect(() => {
+        setAnnouncements(initial)
+    }, [initial])
     const [searchQuery, setSearchQuery] = useState('')
     const [filterTag, setFilterTag] = useState('All')
     const [currentPage, setCurrentPage] = useState(1)
@@ -132,19 +136,21 @@ export function AnnouncementTableClient({
                         <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: a.content }} />
                         <p className="text-[11px] text-muted-foreground/70 mt-1">Oleh: {a.author?.name}</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Switch checked={a.isActive} onCheckedChange={() => handleToggleActive(a.id, a.isActive)} title="Aktif/nonaktifkan" />
-                        <AnnouncementDialog
-                            mode="edit"
-                            announcement={a}
-                            departments={departments}
-                            activeRole={activeRole}
-                            activeDepartmentId={activeDepartmentId}
-                        />
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(a.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </div>
+                    {(activeRole === 'admin' || (activeRole === 'qa' && a.departmentId === activeDepartmentId)) && (
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Switch checked={a.isActive} onCheckedChange={() => handleToggleActive(a.id, a.isActive)} title="Aktif/nonaktifkan" />
+                            <AnnouncementDialog
+                                mode="edit"
+                                announcement={a}
+                                departments={departments}
+                                activeRole={activeRole}
+                                activeDepartmentId={activeDepartmentId}
+                            />
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(a.id)} className="text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
             ))}
 

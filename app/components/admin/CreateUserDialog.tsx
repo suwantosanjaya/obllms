@@ -161,7 +161,7 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                                 }}
                                             />
                                             <Label htmlFor={`role-${r}`} className="font-normal cursor-pointer capitalize font-medium">
-                                                {r === 'admin' ? 'Department Admin' : r.replace('_', ' ')}
+                                                {r === 'admin' ? 'Administrator' : r.replace('_', ' ')}
                                             </Label>
                                         </div>
                                         

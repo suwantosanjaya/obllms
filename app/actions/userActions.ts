@@ -182,7 +182,7 @@ export async function getSessionUser() {
         visibleDepartments = await prisma.department.findMany({ orderBy: { name: 'asc' } })
     } else {
         visibleDepartments = user.departmentRoles
-            .filter(dr => dr.role.split(',').map(r => r.trim()).includes(activeRole as string) && dr.department)
+            .filter(dr => dr.role?.split(',').map((r: string) => r.trim()).includes(activeRole as string) && dr.department)
             .map(dr => dr.department)
     }
 

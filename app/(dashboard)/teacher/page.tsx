@@ -144,7 +144,9 @@ export default async function DosenDashboard() {
                                         <div>
                                             <p className="text-sm font-semibold">{risk.studentName}</p>
                                             <p className="text-xs text-muted-foreground mt-1">{risk.courseName} - {risk.reason}.</p>
-                                            <Button size="sm" variant="link" className="p-0 h-auto mt-2 text-orange-600">Terbitkan Peringatan</Button>
+                                            <Button size="sm" variant="link" className="p-0 h-auto mt-2 text-orange-600" asChild>
+                                                <Link href="/teacher/students">Tinjau Analitik Mahasiswa</Link>
+                                            </Button>
                                         </div>
                                     </div>
                                 ))

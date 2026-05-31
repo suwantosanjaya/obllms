@@ -11,6 +11,7 @@ const roleFeatures = [
             { name: 'Konfigurasi Tahun Kurikulum', admin: true, qa: false, teacher: false, student: false },
             { name: 'Manajemen Akun Mahasiswa & Dosen', admin: true, qa: false, teacher: false, student: false },
             { name: 'Aktivasi / Nonaktivasi Akun', admin: true, qa: false, teacher: false, student: false },
+            { name: 'Manajemen Pengumuman', admin: true, qa: true, teacher: false, student: false },
         ]
     },
     {

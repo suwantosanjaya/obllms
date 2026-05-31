@@ -111,7 +111,7 @@ export async function getAllAnnouncementsAdmin() {
 
     const where = user.activeRole === 'qa'
         ? { OR: [{ scope: 'global' }, { departmentId: user.activeDepartmentId }] }
-        : {}
+        : { scope: 'global' }
 
     try {
         const announcements = await prisma.announcement.findMany({

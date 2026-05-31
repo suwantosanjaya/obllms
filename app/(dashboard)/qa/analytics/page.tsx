@@ -26,7 +26,7 @@ export default async function QaAnalyticsPage({
     const angkatanList = angkatanRes.success ? (angkatanRes.angkatan || []) : []
     const angkatanFilter = params.angkatan ? parseInt(params.angkatan) : (angkatanList.length > 0 ? angkatanList[0] : undefined)
 
-    const curriculumYears = await getCurriculumYears(departmentId) || []
+    const curriculumYears = await getCurriculumYears(departmentId, true) || []
     
     // Default to active curriculum, or most recent if none active
     const activeCurriculum = curriculumYears.find((c: any) => c.isActive) || curriculumYears[0]

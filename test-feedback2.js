@@ -1,7 +1,0 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-async function main() {
-    const feedbacks = await prisma.feedback.findMany();
-    console.log(JSON.stringify(feedbacks, null, 2));
-}
-main();

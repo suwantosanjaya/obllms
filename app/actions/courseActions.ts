@@ -327,7 +327,6 @@ export async function getAvailableCourses(studentId: string, activeProdiId?: str
                         name: true,
                     }
                 },
-                config: true,
                 _count: {
                     select: { enrollments: true }
                 }

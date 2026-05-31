@@ -123,7 +123,10 @@ export async function getDepartmentList(facultyId?: string) {
         const list = await prisma.department.findMany({
             where: facultyId ? { facultyId } : undefined,
             orderBy: { name: 'asc' },
-            include: { faculty: { include: { university: true } } }
+            include: { 
+                faculty: { include: { university: true } },
+                activeHead: { select: { id: true, name: true, email: true } }
+            }
         })
         return { success: true, departmentList: list }
     } catch {

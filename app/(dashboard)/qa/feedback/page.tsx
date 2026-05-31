@@ -17,7 +17,7 @@ export default async function QaFeedbackPage({
         return <div className="p-8 text-center text-muted-foreground">Pilih Departemen terlebih dahulu.</div>
     }
 
-    const curriculumYears = await getCurriculumYears(departmentId) || []
+    const curriculumYears = await getCurriculumYears(departmentId, true) || []
     
     // Default to active curriculum, or most recent if none active
     const activeCurriculum = curriculumYears.find((c: any) => c.isActive) || curriculumYears[0]

@@ -154,7 +154,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                                <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} disabled className="bg-muted" />
                             </div>
                             
                             {/* Student-specific fields */}

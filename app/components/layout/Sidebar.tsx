@@ -1,7 +1,5 @@
 'use client'
 
-import { Building2 } from 'lucide-react'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useUserStore } from '@/lib/store/useUserStore'
@@ -17,7 +15,14 @@ import {
     ShieldCheck,
     GraduationCap,
     CalendarDays,
-    Megaphone
+    Megaphone,
+    Building2,
+    Library,
+    BookMarked,
+    Activity,
+    UserCog,
+    PieChart,
+    Route
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,7 +32,7 @@ export function getSidebarLinks(activeRole: string | null) {
             return [
                 { href: '/student', label: 'Dashboard', icon: LayoutDashboard },
                 { href: '/student/courses', label: 'Kelas Saya', icon: BookOpen },
-                { href: '/student/obl', label: 'Pemetaan OBL', icon: GraduationCap },
+                { href: '/student/obl', label: 'Pemetaan OBL', icon: Route },
                 { href: '/student/assessments', label: 'Tugas & Ujian', icon: ClipboardList },
                 { href: '/student/srl', label: 'Pelacak SRL', icon: Target },
                 { href: '/student/analytics', label: 'Analitik Capaian', icon: BarChart },
@@ -37,23 +42,23 @@ export function getSidebarLinks(activeRole: string | null) {
             return [
                 { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
                 { href: '/teacher/courses', label: 'Manajemen Kelas', icon: BookOpen },
-                { href: '/teacher/obl', label: 'Pemetaan OBL', icon: GraduationCap },
-                { href: '/teacher/students', label: 'Analitik Mahasiswa', icon: BarChart },
+                { href: '/teacher/obl', label: 'Pemetaan OBL', icon: Route },
+                { href: '/teacher/students', label: 'Analitik Mahasiswa', icon: PieChart },
                 { href: '/teacher/assessments', label: 'Penilaian', icon: ClipboardList },
             ]
         case 'qa':
             return [
                 { href: '/qa', label: 'Dashboard', icon: LayoutDashboard },
-                { href: '/qa/subjects', label: 'Katalog Mata Kuliah', icon: BookOpen },
-                { href: '/qa/curriculum', label: 'Tinjauan Kurikulum', icon: BookOpen },
+                { href: '/qa/subjects', label: 'Katalog Mata Kuliah', icon: Library },
+                { href: '/qa/curriculum', label: 'Tinjauan Kurikulum', icon: BookMarked },
+                { href: '/qa/teachers', label: 'Daftar Dosen', icon: Users },
+                { href: '/qa/students', label: 'Daftar Mahasiswa', icon: GraduationCap },
                 { href: '/qa/schedules', label: 'Manajemen Jadwal', icon: CalendarDays },
                 { href: '/qa/analytics', label: 'Analitik Capaian', icon: BarChart },
-                { href: '/qa/metrics', label: 'Metrik QA', icon: BarChart },
-                { href: '/qa/feedback', label: 'Umpan Balik Mahasiswa', icon: MessageSquare },
-                { href: '/qa/students', label: 'Daftar Mahasiswa', icon: GraduationCap },
-                { href: '/qa/teachers', label: 'Daftar Dosen', icon: Users },
-                { href: '/admin/users', label: 'Manajemen Pengguna', icon: Users },
+                { href: '/qa/metrics', label: 'Metrik QA', icon: Activity },
+                { href: '/qa/feedback', label: 'Umpan Balik', icon: MessageSquare },
                 { href: '/admin/announcements', label: 'Pengumuman', icon: Megaphone },
+                { href: '/admin/users', label: 'Manajemen Pengguna', icon: UserCog },
             ]
         case 'super_admin':
             return [
@@ -62,20 +67,17 @@ export function getSidebarLinks(activeRole: string | null) {
             ]
         case 'head_of_department':
             return [
-                { href: '/qa/curriculum', label: 'Tinjauan Kurikulum', icon: BookOpen },
+                { href: '/qa/curriculum', label: 'Tinjauan Kurikulum', icon: BookMarked },
                 { href: '/qa/analytics', label: 'Analitik Capaian', icon: BarChart },
-                { href: '/qa/metrics', label: 'Metrik QA', icon: BarChart },
-                { href: '/qa/feedback', label: 'Umpan Balik Mahasiswa', icon: MessageSquare },
+                { href: '/qa/metrics', label: 'Metrik QA', icon: Activity },
+                { href: '/qa/feedback', label: 'Umpan Balik', icon: MessageSquare },
             ]
         case 'admin':
             return [
                 { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
                 { href: '/admin/institutions', label: 'Manajemen Institusi', icon: Building2 },
-                { href: '/admin/department-heads', label: 'Penetapan Ketua', icon: Users },
-                { href: '/admin/users', label: 'Manajemen Pengguna', icon: Users },
-                { href: '/admin/roles', label: 'Akses Peran', icon: ShieldCheck },
+                { href: '/admin/users', label: 'Manajemen Pengguna', icon: UserCog },
                 { href: '/admin/announcements', label: 'Pengumuman', icon: Megaphone },
-                { href: '/admin/settings/grades', label: 'Rentang Nilai', icon: Settings },
                 { href: '/admin/settings', label: 'Pengaturan Sistem', icon: Settings },
             ]
         default:

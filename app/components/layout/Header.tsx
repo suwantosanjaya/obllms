@@ -16,11 +16,12 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { SidebarNav } from './Sidebar'
 import { useRouter } from 'next/navigation'
 import { setActiveProdiCookie } from '@/app/actions/userActions'
-import { HeaderRoleSwitcher } from './HeaderRoleSwitcher'
+import { HeaderRoleSwitcher, roleMap } from './HeaderRoleSwitcher'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { StudentNotificationBell } from '../student/StudentNotificationBell'
 
 export function Header() {
-    const { role, activeRole, roles, userName, logout, departments, activeDepartmentId, setActiveDepartmentId, departmentRoles, isSidebarCollapsed, toggleSidebar } = useUserStore()
+    const { role, activeRole, roles, userName, userId, logout, departments, activeDepartmentId, setActiveDepartmentId, departmentRoles, isSidebarCollapsed, toggleSidebar } = useUserStore()
     const router = useRouter()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -38,7 +39,7 @@ export function Header() {
 
     const visibleDepartments = activeRole === 'super_admin' ? departments : 
         (departmentRoles || [])
-            .filter(dr => dr.role.split(',').map(r => r.trim()).includes(activeRole as string) && dr.department)
+            .filter(dr => dr.role?.split(',').map((r: string) => r.trim()).includes(activeRole as string) && dr.department)
             .map(dr => dr.department) as { id: string, name: string, code: string }[]
 
     return (
@@ -114,6 +115,10 @@ export function Header() {
                 )}
             </div>
 
+            {activeRole === 'student' && userId && (
+                <StudentNotificationBell studentId={userId} departmentId={activeDepartmentId} />
+            )}
+
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="secondary" size="icon" className="rounded-full">
@@ -124,7 +129,7 @@ export function Header() {
                 <DropdownMenuContent align="end">
                     {role ? (
                         <>
-                            <DropdownMenuLabel>{userName} ({activeRole || role})</DropdownMenuLabel>
+                            <DropdownMenuLabel>{userName} ({roleMap[activeRole || role || ''] || activeRole || role})</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => router.push('/profile')}>Profil</DropdownMenuItem>
                             <DropdownMenuItem onClick={handleLogout} className="text-red-500 font-medium">Keluar</DropdownMenuItem>

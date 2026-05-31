@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { updateUserRole } from '@/app/actions/adminActions'
-import { Edit2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 
 interface EditUserRoleDialogProps {
     user: {
@@ -92,7 +92,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [] }: Edi
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
-                    <Edit2 className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                     <span className="sr-only sm:not-sr-only">Edit Role</span>
                 </Button>
             </DialogTrigger>

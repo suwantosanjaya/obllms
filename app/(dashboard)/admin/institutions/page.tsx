@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getUniversityList, getFacultyList, getDepartmentList } from '@/app/actions/institutionActions'
+import { getHeadOfDepartmentCandidates } from '@/app/actions/adminActions'
 import { Building2, GraduationCap, Library } from 'lucide-react'
 import { 
     UniversityTableClient, 
@@ -17,20 +18,25 @@ export default async function AdminInstitutionsPage() {
     const depRes = await getDepartmentList()
     const departments = depRes.success && depRes.departmentList ? depRes.departmentList : []
 
+    const candidatesMap: Record<string, any[]> = {}
+    for (const dep of departments) {
+        candidatesMap[dep.id] = await getHeadOfDepartmentCandidates(dep.id)
+    }
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Institution Management</h1>
-                    <p className="text-muted-foreground mt-1">Manage Universities, Faculties, and Departments.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Manajemen Institusi</h1>
+                    <p className="text-muted-foreground mt-1">Kelola data Universitas, Fakultas, dan Departemen.</p>
                 </div>
             </div>
 
             <Tabs defaultValue="universities" className="w-full">
                 <TabsList className="mb-4">
-                    <TabsTrigger value="universities"><Library className="w-4 h-4 mr-2" />Universities</TabsTrigger>
-                    <TabsTrigger value="faculties"><Building2 className="w-4 h-4 mr-2" />Faculties</TabsTrigger>
-                    <TabsTrigger value="departments"><GraduationCap className="w-4 h-4 mr-2" />Departments</TabsTrigger>
+                    <TabsTrigger value="universities"><Library className="w-4 h-4 mr-2" />Universitas</TabsTrigger>
+                    <TabsTrigger value="faculties"><Building2 className="w-4 h-4 mr-2" />Fakultas</TabsTrigger>
+                    <TabsTrigger value="departments"><GraduationCap className="w-4 h-4 mr-2" />Departemen</TabsTrigger>
                 </TabsList>
 
                 {/* Universities Tab */}
@@ -45,7 +51,11 @@ export default async function AdminInstitutionsPage() {
 
                 {/* Departments Tab */}
                 <TabsContent value="departments">
-                    <DepartmentTableClient departments={departments} faculties={faculties.map(f => ({ id: f.id, code: f.code, name: f.name }))} />
+                    <DepartmentTableClient 
+                        departments={departments} 
+                        faculties={faculties.map(f => ({ id: f.id, code: f.code, name: f.name }))} 
+                        candidatesMap={candidatesMap}
+                    />
                 </TabsContent>
             </Tabs>
         </div>

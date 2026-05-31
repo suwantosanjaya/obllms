@@ -16,7 +16,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import {
     createUniversity, updateUniversity,
     createFaculty, updateFaculty,
@@ -39,32 +39,32 @@ export function CreateUniversityDialog() {
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'University created successfully' })
+            toast({ title: 'Berhasil', description: 'Universitas berhasil ditambahkan' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-2" />Add University</Button>
+                <Button size="sm"><Plus className="w-4 h-4 mr-2" />Tambah Universitas</Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add University</DialogTitle>
-                        <DialogDescription>Add a new university to the system.</DialogDescription>
+                        <DialogTitle>Tambah Universitas</DialogTitle>
+                        <DialogDescription>Tambahkan universitas baru ke dalam sistem.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>University Code</Label>
-                            <Input name="code" placeholder="e.g. UNIV1" required />
+                            <Label>Kode Universitas</Label>
+                            <Input name="code" placeholder="Cth. UNIV1" required />
                         </div>
                         <div className="space-y-2">
-                            <Label>University Name</Label>
-                            <Input name="name" placeholder="e.g. State University" required />
+                            <Label>Nama Universitas</Label>
+                            <Input name="name" placeholder="Cth. Universitas Negeri" required />
                         </div>
                     </div>
                     <DialogFooter>
@@ -91,30 +91,30 @@ export function EditUniversityDialog({ university }: { university: { id: string,
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'University updated successfully' })
+            toast({ title: 'Berhasil', description: 'Universitas berhasil diperbarui' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"><Edit className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit University</DialogTitle>
+                        <DialogTitle>Edit Universitas</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>University Code</Label>
+                            <Label>Kode Universitas</Label>
                             <Input name="code" defaultValue={university.code} required />
                         </div>
                         <div className="space-y-2">
-                            <Label>University Name</Label>
+                            <Label>Nama Universitas</Label>
                             <Input name="name" defaultValue={university.name} required />
                         </div>
                     </div>
@@ -145,28 +145,28 @@ export function CreateFacultyDialog({ universities }: { universities: { id: stri
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Faculty created successfully' })
+            toast({ title: 'Berhasil', description: 'Fakultas berhasil ditambahkan' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Add Faculty</Button>
+                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Tambah Fakultas</Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Faculty</DialogTitle>
+                        <DialogTitle>Tambah Fakultas</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>University</Label>
+                            <Label>Universitas</Label>
                             <Select name="universityId" required>
-                                <SelectTrigger><SelectValue placeholder="Select University..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Universitas..." /></SelectTrigger>
                                 <SelectContent>
                                     {universities.map(u => (
                                         <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
@@ -175,12 +175,12 @@ export function CreateFacultyDialog({ universities }: { universities: { id: stri
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Faculty Code</Label>
-                            <Input name="code" placeholder="e.g. FT" required />
+                            <Label>Kode Fakultas</Label>
+                            <Input name="code" placeholder="Cth. FT" required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Faculty Name</Label>
-                            <Input name="name" placeholder="e.g. Faculty of Engineering" required />
+                            <Label>Nama Fakultas</Label>
+                            <Input name="name" placeholder="Cth. Fakultas Teknik" required />
                         </div>
                     </div>
                     <DialogFooter>
@@ -208,28 +208,28 @@ export function EditFacultyDialog({ faculty, universities }: { faculty: any, uni
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Faculty updated successfully' })
+            toast({ title: 'Berhasil', description: 'Fakultas berhasil diperbarui' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"><Edit className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Faculty</DialogTitle>
+                        <DialogTitle>Edit Fakultas</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>University</Label>
+                            <Label>Universitas</Label>
                             <Select name="universityId" defaultValue={faculty.universityId} required>
-                                <SelectTrigger><SelectValue placeholder="Select University..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Universitas..." /></SelectTrigger>
                                 <SelectContent>
                                     {universities.map(u => (
                                         <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
@@ -238,11 +238,11 @@ export function EditFacultyDialog({ faculty, universities }: { faculty: any, uni
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Faculty Code</Label>
+                            <Label>Kode Fakultas</Label>
                             <Input name="code" defaultValue={faculty.code} required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Faculty Name</Label>
+                            <Label>Nama Fakultas</Label>
                             <Input name="name" defaultValue={faculty.name} required />
                         </div>
                     </div>
@@ -273,28 +273,28 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Department created successfully' })
+            toast({ title: 'Berhasil', description: 'Departemen berhasil ditambahkan' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Add Department</Button>
+                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Tambah Departemen</Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Department</DialogTitle>
+                        <DialogTitle>Tambah Departemen</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Faculty</Label>
+                            <Label>Fakultas</Label>
                             <Select name="facultyId" required>
-                                <SelectTrigger><SelectValue placeholder="Select Faculty..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Fakultas..." /></SelectTrigger>
                                 <SelectContent>
                                     {faculties.map(f => (
                                         <SelectItem key={f.id} value={f.id}>{f.code} - {f.name}</SelectItem>
@@ -303,12 +303,12 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Department Code</Label>
-                            <Input name="code" placeholder="e.g. TI" required />
+                            <Label>Kode Departemen</Label>
+                            <Input name="code" placeholder="Cth. TI" required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Department Name</Label>
-                            <Input name="name" placeholder="e.g. Information Technology" required />
+                            <Label>Nama Departemen</Label>
+                            <Input name="name" placeholder="Cth. Teknik Informatika" required />
                         </div>
                     </div>
                     <DialogFooter>
@@ -336,28 +336,28 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Department updated successfully' })
+            toast({ title: 'Berhasil', description: 'Departemen berhasil diperbarui' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"><Edit className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Department</DialogTitle>
+                        <DialogTitle>Edit Departemen</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Faculty</Label>
+                            <Label>Fakultas</Label>
                             <Select name="facultyId" defaultValue={department.facultyId} required>
-                                <SelectTrigger><SelectValue placeholder="Select Faculty..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Fakultas..." /></SelectTrigger>
                                 <SelectContent>
                                     {faculties.map(f => (
                                         <SelectItem key={f.id} value={f.id}>{f.code} - {f.name}</SelectItem>
@@ -366,11 +366,11 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Department Code</Label>
+                            <Label>Kode Departemen</Label>
                             <Input name="code" defaultValue={department.code} required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Department Name</Label>
+                            <Label>Nama Departemen</Label>
                             <Input name="name" defaultValue={department.name} required />
                         </div>
                     </div>
@@ -394,10 +394,10 @@ export function DeleteUniversityDialog({ id, name }: { id: string, name: string 
         const res = await deleteUniversity(id)
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'University deleted successfully' })
+            toast({ title: 'Berhasil', description: 'Universitas berhasil dihapus' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
@@ -409,9 +409,9 @@ export function DeleteUniversityDialog({ id, name }: { id: string, name: string 
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Delete University</DialogTitle>
+                        <DialogTitle>Hapus Universitas</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete university <strong>{name}</strong>? This action cannot be undone.
+                            Apakah Anda yakin ingin menghapus universitas <strong>{name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">
@@ -435,10 +435,10 @@ export function DeleteFacultyDialog({ id, name }: { id: string, name: string }) 
         const res = await deleteFaculty(id)
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Faculty deleted successfully' })
+            toast({ title: 'Berhasil', description: 'Fakultas berhasil dihapus' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
@@ -450,9 +450,9 @@ export function DeleteFacultyDialog({ id, name }: { id: string, name: string }) 
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Delete Faculty</DialogTitle>
+                        <DialogTitle>Hapus Fakultas</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete faculty <strong>{name}</strong>? This action cannot be undone.
+                            Apakah Anda yakin ingin menghapus fakultas <strong>{name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">
@@ -476,10 +476,10 @@ export function DeleteDepartmentDialog({ id, name }: { id: string, name: string 
         const res = await deleteDepartment(id)
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Success', description: 'Department deleted successfully' })
+            toast({ title: 'Berhasil', description: 'Departemen berhasil dihapus' })
             setOpen(false)
         } else {
-            toast({ title: 'Error', description: res.error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
         }
     }
 
@@ -491,9 +491,9 @@ export function DeleteDepartmentDialog({ id, name }: { id: string, name: string 
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Delete Department</DialogTitle>
+                        <DialogTitle>Hapus Departemen</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete department <strong>{name}</strong>? This action cannot be undone.
+                            Apakah Anda yakin ingin menghapus departemen <strong>{name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">

@@ -31,7 +31,7 @@ export default async function QADashboard() {
         reviewTableData: []
     }
 
-    const cyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined)
+    const cyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined, true)
     const curriculumYears = cyRes || []
 
     return (

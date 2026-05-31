@@ -87,7 +87,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
                     <DialogHeader>
                         <DialogTitle>{mode === 'edit' ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</DialogTitle>
                         <DialogDescription>
-                            {isQA ? 'Pengumuman akan ditampilkan untuk mahasiswa di departemen Anda.' : 'Buat pengumuman global atau untuk departemen tertentu.'}
+                            {isQA ? 'Pengumuman akan ditampilkan untuk mahasiswa di departemen Anda.' : 'Buat pengumuman global untuk seluruh mahasiswa.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -113,33 +113,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
                                 </Select>
                             </div>
 
-                            {!isQA && (
-                                <div className="space-y-2">
-                                    <Label>Lingkup</Label>
-                                    <Select value={scope} onValueChange={setScope}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="global">Global (Semua Mahasiswa)</SelectItem>
-                                            <SelectItem value="department">Departemen Tertentu</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
                         </div>
-
-                        {scope === 'department' && !isQA && (
-                            <div className="space-y-2">
-                                <Label>Departemen</Label>
-                                <Select value={departmentId} onValueChange={setDepartmentId}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih departemen..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {departments.map((d: any) => (
-                                            <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
 
                         <div className="flex items-center gap-3">
                             <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />

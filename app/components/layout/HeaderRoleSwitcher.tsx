@@ -11,7 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { setActiveRoleCookie } from '@/app/actions/userActions'
+import { setActiveRoleCookie, setActiveProdiCookie } from '@/app/actions/userActions'
 import { useUserStore } from '@/lib/store/useUserStore'
 import { UserCircle2, Check, RefreshCw } from 'lucide-react'
 
@@ -20,11 +20,11 @@ interface HeaderRoleSwitcherProps {
     activeRole: string
 }
 
-const roleMap: Record<string, string> = {
-    super_admin: 'Super Admin',
-    admin: 'Department Admin',
+export const roleMap: Record<string, string> = {
+    super_admin: 'Super Administrator',
+    admin: 'Administrator',
     head_of_department: 'Ketua Departemen',
-    qa: 'Quality Assurance',
+    qa: 'QA',
     teacher: 'Dosen',
     student: 'Mahasiswa'
 }
@@ -40,12 +40,12 @@ export function HeaderRoleSwitcher({ roles, activeRole }: HeaderRoleSwitcherProp
         if (role === activeRole) return
         
         setLoadingRole(role)
-        setActiveRole(role as any) // Update Zustand
+        useUserStore.getState().setActiveRole(role as any) // Update Zustand
         
         const { departmentRoles, departments, setActiveDepartmentId } = useUserStore.getState()
         const visibleDeps = role === 'super_admin' ? departments : 
             (departmentRoles || [])
-                .filter(dr => dr.role.split(',').map(r => r.trim()).includes(role) && dr.department)
+                .filter(dr => dr.role?.split(',').map((r: string) => r.trim()).includes(role) && dr.department)
                 .map(dr => dr.department) as any[]
         
         let newDepId = null
@@ -56,8 +56,6 @@ export function HeaderRoleSwitcher({ roles, activeRole }: HeaderRoleSwitcherProp
 
         await setActiveRoleCookie(role)
         if (newDepId) {
-            // Need to import setActiveProdiCookie, assuming it's available in userActions
-            const { setActiveProdiCookie } = await import('@/app/actions/userActions')
             await setActiveProdiCookie(newDepId)
         }
         

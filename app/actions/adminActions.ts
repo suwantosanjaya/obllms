@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
+import os from 'os'
 
 export async function getAllUsers() {
     return await prisma.user.findMany({
@@ -361,4 +362,67 @@ export async function getDepartmentHeadHistory(departmentId: string) {
         },
         orderBy: { createdAt: 'desc' }
     })
+}
+
+// Get global system stats for Admin Dashboard
+export async function getAdminDashboardStats() {
+    const [
+        totalUsers,
+        totalStudents,
+        totalTeachers,
+        totalQa,
+        totalAdmins,
+        totalSuperAdmins,
+        totalUniversities,
+        totalFaculties,
+        totalDepartments
+    ] = await Promise.all([
+        prisma.user.count(),
+        prisma.user.count({ where: { role: { contains: 'student' } } }),
+        prisma.user.count({ where: { role: { contains: 'teacher' } } }),
+        prisma.user.count({ where: { role: { contains: 'qa' } } }),
+        prisma.user.count({ where: { role: { contains: 'admin' } } }),
+        prisma.user.count({ where: { role: { contains: 'super_admin' } } }),
+        prisma.university.count(),
+        prisma.faculty.count(),
+        prisma.department.count(),
+    ])
+
+    // Get Server Stats
+    const uptimeInSeconds = os.uptime()
+    const days = Math.floor(uptimeInSeconds / (3600 * 24))
+    const hours = Math.floor((uptimeInSeconds % (3600 * 24)) / 3600)
+    const minutes = Math.floor((uptimeInSeconds % 3600) / 60)
+    
+    let uptimeString = `${minutes}m`
+    if (hours > 0) uptimeString = `${hours}j ${minutes}m`
+    if (days > 0) uptimeString = `${days}h ${hours}j`
+
+    const totalMem = os.totalmem()
+    const freeMem = os.freemem()
+    const usedMem = totalMem - freeMem
+    const memoryUsagePercent = Math.round((usedMem / totalMem) * 100)
+
+    const serverStatus = memoryUsagePercent > 90 ? 'Peringatan' : 'Normal'
+
+    return {
+        totalUsers,
+        breakdown: {
+            student: totalStudents,
+            teacher: totalTeachers,
+            qa: totalQa,
+            admin: totalAdmins,
+            super_admin: totalSuperAdmins
+        },
+        institutions: {
+            universities: totalUniversities,
+            faculties: totalFaculties,
+            departments: totalDepartments
+        },
+        serverStats: {
+            uptime: uptimeString,
+            memoryUsagePercent,
+            status: serverStatus
+        }
+    }
 }
