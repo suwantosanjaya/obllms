@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -30,7 +31,7 @@ import { getFacultyList } from '@/app/actions/institutionActions'
 type Department = { id: string; code: string; name: string }
 type Faculty = { id: string; code: string; name: string; departments: Department[] }
 
-export function EditSubjectDialog({ subject }: { subject: any }) {
+export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, defaultDepartmentId }: { subject: any, isLocked?: boolean, defaultFacultyId?: string, defaultDepartmentId?: string }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
@@ -52,6 +53,12 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
     const [facultyList, setFakultasList] = useState<Faculty[]>([])
     const [loadingFakultas, setLoadingFakultas] = useState(false)
 
+    // SCL Config
+    const [isEntrepreneurshipEnabled, setIsEntrepreneurshipEnabled] = useState(subject.isEntrepreneurshipEnabled ?? true)
+    const [isLeadershipEnabled, setIsLeadershipEnabled] = useState(subject.isLeadershipEnabled ?? true)
+    const [isIndustrySkillEnabled, setIsIndustrySkillEnabled] = useState(subject.isIndustrySkillEnabled ?? true)
+    const [isEmployabilitySkillEnabled, setIsEmployabilitySkillEnabled] = useState(subject.isEmployabilitySkillEnabled ?? true)
+
     // Load faculty list when dialog opens
     useEffect(() => {
         if (open) {
@@ -62,22 +69,27 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
             })
             // Reset to initial values
             setType(subject.type || 'wajib')
-            setScope(subject.scope || 'department')
+            setScope((subject.scope === 'prodi' ? 'department' : subject.scope) || 'department')
             setCredits(subject.credits?.toString() || '3')
-            setFakultasId(subject.facultyId || '')
+            setFakultasId(subject.facultyId || subject.department?.facultyId || '')
             setProdiId(subject.departmentId || '')
             setFormData({
                 code: subject.code || '',
                 title: subject.title || '',
                 description: subject.description || ''
             })
+            setIsEntrepreneurshipEnabled(subject.isEntrepreneurshipEnabled ?? true)
+            setIsLeadershipEnabled(subject.isLeadershipEnabled ?? true)
+            setIsIndustrySkillEnabled(subject.isIndustrySkillEnabled ?? true)
+            setIsEmployabilitySkillEnabled(subject.isEmployabilitySkillEnabled ?? true)
         }
     }, [open, subject])
 
     // Reset department selection when faculty changes (only if it wasn't the initial load match)
     const handleFakultasChange = (newFakultasId: string) => {
         setFakultasId(newFakultasId)
-        if (newFakultasId !== subject.facultyId) {
+        const initialFakultasId = subject.facultyId || subject.department?.facultyId
+        if (newFakultasId !== initialFakultasId) {
             setProdiId('')
         } else {
             setProdiId(subject.departmentId || '')
@@ -100,6 +112,10 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
             credits: parseInt(credits) || 3,
             facultyId: facultyId || undefined,
             departmentId: departmentId || undefined,
+            isEntrepreneurshipEnabled,
+            isLeadershipEnabled,
+            isIndustrySkillEnabled,
+            isEmployabilitySkillEnabled
         })
 
         setIsLoading(false)
@@ -184,7 +200,16 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                         {/* Kelompok / Scope */}
                         <div className="grid gap-2">
                             <Label>Cakupan</Label>
-                            <Select value={scope} onValueChange={v => { setScope(v as any); setFakultasId(''); setProdiId('') }}>
+                            <Select value={scope} onValueChange={v => { 
+                                setScope(v as any); 
+                                if (isLocked) {
+                                    setFakultasId(defaultFacultyId || '');
+                                    setProdiId(v === 'department' ? (defaultDepartmentId || '') : '');
+                                } else {
+                                    setFakultasId(''); 
+                                    setProdiId('');
+                                }
+                            }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -200,7 +225,7 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                         {(scope === 'faculty' || scope === 'department') && (
                             <div className="grid gap-2">
                                 <Label>Fakultas</Label>
-                                <Select value={facultyId} onValueChange={handleFakultasChange} disabled={loadingFakultas} required>
+                                <Select disabled={isLocked || loadingFakultas} value={facultyId} onValueChange={handleFakultasChange} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Pilih Fakultas'} />
                                     </SelectTrigger>
@@ -217,7 +242,7 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                         {scope === 'department' && facultyId && (
                             <div className="grid gap-2">
                                 <Label>Departemen</Label>
-                                <Select value={departmentId} onValueChange={setProdiId} required>
+                                <Select disabled={isLocked} value={departmentId} onValueChange={setProdiId} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Departemen" />
                                     </SelectTrigger>
@@ -243,6 +268,27 @@ export function EditSubjectDialog({ subject }: { subject: any }) {
                                 value={formData.description}
                                 onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
                             />
+                        </div>
+
+                        {/* SCL Settings */}
+                        <div className="grid gap-4 py-2 border-t mt-2 pt-4">
+                            <Label className="font-bold text-md mb-2">Penugasan Penilaian SCL</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-entre" className="font-normal cursor-pointer">Menilai Kewirausahaan (Entrepreneurship)</Label>
+                                <Switch id="edit-entre" checked={isEntrepreneurshipEnabled} onCheckedChange={setIsEntrepreneurshipEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-lead" className="font-normal cursor-pointer">Menilai Kepemimpinan (Leadership)</Label>
+                                <Switch id="edit-lead" checked={isLeadershipEnabled} onCheckedChange={setIsLeadershipEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-ind" className="font-normal cursor-pointer">Menilai Wawasan Industri (Industry Knowledge)</Label>
+                                <Switch id="edit-ind" checked={isIndustrySkillEnabled} onCheckedChange={setIsIndustrySkillEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-emp" className="font-normal cursor-pointer">Menilai Kesiapan Kerja (Employability)</Label>
+                                <Switch id="edit-emp" checked={isEmployabilitySkillEnabled} onCheckedChange={setIsEmployabilitySkillEnabled} />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>

@@ -17,7 +17,7 @@ export default async function StudentAnalyticsPage() {
         return <div className="p-8 text-center text-red-500">Gagal memuat analitik: {analyticsResult.error || 'Data tidak ditemukan'}</div>
     }
 
-    const { student, clos, plos } = analyticsResult
+    const { student, clos, plos, sclAssessments } = analyticsResult
 
     return (
         <div className="flex flex-col gap-6 max-w-5xl">
@@ -35,7 +35,7 @@ export default async function StudentAnalyticsPage() {
                         NIM: {student.studentProfile?.nim} | Angkatan: {student.studentProfile?.angkatan}
                     </p>
                 </div>
-                <StudentAnalyticsClient plos={plos || []} clos={clos || []} studentId={student.id} />
+                <StudentAnalyticsClient plos={plos || []} clos={clos || []} sclAssessments={sclAssessments || []} studentId={student.id} />
             </div>
         </div>
     )

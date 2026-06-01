@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -30,19 +31,25 @@ import { getFacultyList } from '@/app/actions/institutionActions'
 type Department = { id: string; code: string; name: string }
 type Faculty = { id: string; code: string; name: string; departments: Department[] }
 
-export function CreateSubjectDialog() {
+export function CreateSubjectDialog({ defaultFacultyId, defaultDepartmentId, isLocked }: { defaultFacultyId?: string, defaultDepartmentId?: string, isLocked?: boolean }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
     const router = useRouter()
 
     const [type, setType] = useState<'wajib' | 'pilihan'>('wajib')
-    const [scope, setScope] = useState<'universitas' | 'faculty' | 'department'>('department')
+    const [scope, setScope] = useState<'universitas' | 'faculty' | 'department'>(isLocked ? 'department' : 'department')
     const [credits, setCredits] = useState<string>('3')
-    const [facultyId, setFakultasId] = useState<string>('')
-    const [departmentId, setProdiId] = useState<string>('')
+    const [facultyId, setFakultasId] = useState<string>(isLocked ? (defaultFacultyId || '') : '')
+    const [departmentId, setProdiId] = useState<string>(isLocked ? (defaultDepartmentId || '') : '')
     const [facultyList, setFakultasList] = useState<Faculty[]>([])
     const [loadingFakultas, setLoadingFakultas] = useState(false)
+
+    // SCL Config
+    const [isEntrepreneurshipEnabled, setIsEntrepreneurshipEnabled] = useState(false)
+    const [isLeadershipEnabled, setIsLeadershipEnabled] = useState(false)
+    const [isIndustrySkillEnabled, setIsIndustrySkillEnabled] = useState(false)
+    const [isEmployabilitySkillEnabled, setIsEmployabilitySkillEnabled] = useState(false)
 
     // Load faculty list when dialog opens
     useEffect(() => {
@@ -52,16 +59,34 @@ export function CreateSubjectDialog() {
                 if (res.success && res.facultyList) setFakultasList(res.facultyList as Faculty[])
                 setLoadingFakultas(false)
             })
-        }
-        // Reset form on close
-        if (!open) {
-            setType('wajib'); setScope('department'); setCredits('3')
-            setFakultasId(''); setProdiId('')
+            // Force reset SCL defaults to OFF on open
+            setIsEntrepreneurshipEnabled(false)
+            setIsLeadershipEnabled(false)
+            setIsIndustrySkillEnabled(false)
+            setIsEmployabilitySkillEnabled(false)
+            
+            if (isLocked) {
+                setScope('department')
+                setFakultasId(defaultFacultyId || '')
+                setProdiId(defaultDepartmentId || '')
+            }
+        } else {
+            // Reset form on close
+            // Reset form on close
+            setType('wajib'); setCredits('3')
+            if (!isLocked) {
+                setScope('department')
+                setFakultasId('')
+                setProdiId('')
+            }
         }
     }, [open])
 
-    // Reset department selection when faculty changes
-    useEffect(() => { setProdiId('') }, [facultyId])
+    // Handle faculty change manually instead of useEffect to avoid resetting initial state
+    const handleFakultasChange = (newFakultasId: string) => {
+        setFakultasId(newFakultasId)
+        setProdiId('')
+    }
 
     const selectedFakultas = facultyList.find(f => f.id === facultyId)
     const prodiList = selectedFakultas?.departments ?? []
@@ -80,6 +105,10 @@ export function CreateSubjectDialog() {
             credits: parseInt(credits) || 3,
             facultyId: facultyId || undefined,
             departmentId: departmentId || undefined,
+            isEntrepreneurshipEnabled,
+            isLeadershipEnabled,
+            isIndustrySkillEnabled,
+            isEmployabilitySkillEnabled
         })
 
         setIsLoading(false)
@@ -151,7 +180,16 @@ export function CreateSubjectDialog() {
                         {/* Kelompok / Scope */}
                         <div className="grid gap-2">
                             <Label>Cakupan</Label>
-                            <Select value={scope} onValueChange={v => { setScope(v as any); setFakultasId(''); setProdiId('') }}>
+                            <Select value={scope} onValueChange={v => { 
+                                setScope(v as any); 
+                                if (isLocked) {
+                                    setFakultasId(defaultFacultyId || '');
+                                    setProdiId(v === 'department' ? (defaultDepartmentId || '') : '');
+                                } else {
+                                    setFakultasId(''); 
+                                    setProdiId('');
+                                }
+                            }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -167,7 +205,7 @@ export function CreateSubjectDialog() {
                         {(scope === 'faculty' || scope === 'department') && (
                             <div className="grid gap-2">
                                 <Label>Fakultas</Label>
-                                <Select value={facultyId} onValueChange={setFakultasId} disabled={loadingFakultas} required>
+                                <Select disabled={isLocked || loadingFakultas} value={facultyId} onValueChange={handleFakultasChange} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder={loadingFakultas ? 'Loading...' : 'Pilih Fakultas'} />
                                     </SelectTrigger>
@@ -184,7 +222,7 @@ export function CreateSubjectDialog() {
                         {scope === 'department' && facultyId && (
                             <div className="grid gap-2">
                                 <Label>Departemen</Label>
-                                <Select value={departmentId} onValueChange={setProdiId} required>
+                                <Select disabled={isLocked} value={departmentId} onValueChange={setProdiId} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Departemen" />
                                     </SelectTrigger>
@@ -203,6 +241,27 @@ export function CreateSubjectDialog() {
                         <div className="grid gap-2">
                             <Label htmlFor="description">Deskripsi (Opsional)</Label>
                             <Textarea id="description" name="description" placeholder="Deskripsi singkat tentang mata kuliah..." rows={3} />
+                        </div>
+
+                        {/* SCL Settings */}
+                        <div className="grid gap-4 py-2 border-t mt-2 pt-4">
+                            <Label className="font-bold text-md mb-2">Penugasan Penilaian SCL</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="entre" className="font-normal cursor-pointer">Menilai Kewirausahaan (Entrepreneurship)</Label>
+                                <Switch id="entre" checked={isEntrepreneurshipEnabled} onCheckedChange={setIsEntrepreneurshipEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="lead" className="font-normal cursor-pointer">Menilai Kepemimpinan (Leadership)</Label>
+                                <Switch id="lead" checked={isLeadershipEnabled} onCheckedChange={setIsLeadershipEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="ind" className="font-normal cursor-pointer">Menilai Wawasan Industri (Industry Knowledge)</Label>
+                                <Switch id="ind" checked={isIndustrySkillEnabled} onCheckedChange={setIsIndustrySkillEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="emp" className="font-normal cursor-pointer">Menilai Kesiapan Kerja (Employability)</Label>
+                                <Switch id="emp" checked={isEmployabilitySkillEnabled} onCheckedChange={setIsEmployabilitySkillEnabled} />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>

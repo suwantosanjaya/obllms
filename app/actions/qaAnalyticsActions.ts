@@ -307,11 +307,39 @@ export async function getStudentCloAnalytics(studentId: string, curriculumYearId
             }
         })
 
+        // Fetch SCL Skill Assessments
+        const enrollmentsWithScl = await prisma.enrollment.findMany({
+            where: {
+                studentId,
+                skillAssessment: { isNot: null }
+            },
+            include: {
+                skillAssessment: true,
+                course: {
+                    include: { subject: true }
+                }
+            }
+        })
+
+        const sclAssessments = enrollmentsWithScl.map(e => {
+            const subj = e.course.subject;
+            return {
+                courseCode: subj?.code,
+                courseName: subj?.title,
+                semester: e.course.semester,
+                entrepreneurship: subj?.isEntrepreneurshipEnabled ? (e.skillAssessment?.entrepreneurshipScore ?? 0) : null,
+                leadership: subj?.isLeadershipEnabled ? (e.skillAssessment?.leadershipScore ?? 0) : null,
+                industryKnowledge: subj?.isIndustrySkillEnabled ? (e.skillAssessment?.industryKnowledgeScore ?? 0) : null,
+                employabilitySkill: subj?.isEmployabilitySkillEnabled ? (e.skillAssessment?.employabilitySkillScore ?? 0) : null,
+            }
+        })
+
         return { 
             success: true, 
             student,
             clos: closResult, 
-            plos: plosResult 
+            plos: plosResult,
+            sclAssessments
         }
 
     } catch (error: unknown) {

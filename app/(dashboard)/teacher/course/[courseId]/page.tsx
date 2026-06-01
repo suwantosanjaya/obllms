@@ -12,6 +12,7 @@ import { RemoveStudentButton } from '@/app/components/teacher/RemoveStudentButto
 import { redirect } from 'next/navigation'
 import { TabsContent } from "@/components/ui/tabs"
 import { ForumTab } from '@/app/components/course/ForumTab'
+import { SclSkillAssessmentDialog } from '@/app/components/dosen/SclSkillAssessmentDialog'
 import { LeaderboardTab } from '@/app/components/course/LeaderboardTab'
 import { ReflectionReviewTab } from '@/app/components/teacher/ReflectionReviewTab'
 import { CourseTabsWrapper } from '@/app/components/course/CourseTabsWrapper'
@@ -198,6 +199,17 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                                         Nonaktif
                                                     </Badge>
                                                 )}
+                                                <SclSkillAssessmentDialog 
+                                                    enrollmentId={enr.id}
+                                                    studentName={enr.student.name}
+                                                    initialData={enr.skillAssessment}
+                                                    enabledSkills={{
+                                                        entrepreneurship: course.subject?.isEntrepreneurshipEnabled ?? true,
+                                                        leadership: course.subject?.isLeadershipEnabled ?? true,
+                                                        industryKnowledge: course.subject?.isIndustrySkillEnabled ?? true,
+                                                        employabilitySkill: course.subject?.isEmployabilitySkillEnabled ?? true,
+                                                    }}
+                                                />
                                                 <RemoveStudentButton studentId={enr.studentId} courseId={course.id} studentName={enr.student.name} />
                                             </div>
                                         </div>

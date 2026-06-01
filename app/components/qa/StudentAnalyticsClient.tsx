@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight, Printer } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-export function StudentAnalyticsClient({ plos, clos, studentId }: { plos: any[], clos: any[], studentId: string }) {
+export function StudentAnalyticsClient({ plos, clos, sclAssessments = [], studentId }: { plos: any[], clos: any[], sclAssessments?: any[], studentId: string }) {
     const [expandedPlos, setExpandedPlos] = useState<Record<string, boolean>>({})
 
     const togglePlo = (ploId: string) => {
@@ -47,6 +47,35 @@ export function StudentAnalyticsClient({ plos, clos, studentId }: { plos: any[],
         )
     }
 
+    const calcAverage = (scores: (number | null)[]) => {
+        const valid = scores.filter(s => s !== null) as number[];
+        if (valid.length === 0) return null;
+        return valid.reduce((a, b) => a + b, 0) / valid.length;
+    };
+
+    const aggregatedScl = [
+        {
+            code: 'SCL-1',
+            name: 'Kewirausahaan (Entrepreneurship)',
+            average: calcAverage(sclAssessments.map(s => s.entrepreneurship))
+        },
+        {
+            code: 'SCL-2',
+            name: 'Kepemimpinan (Leadership)',
+            average: calcAverage(sclAssessments.map(s => s.leadership))
+        },
+        {
+            code: 'SCL-3',
+            name: 'Wawasan Industri (Industry Knowledge)',
+            average: calcAverage(sclAssessments.map(s => s.industryKnowledge))
+        },
+        {
+            code: 'SCL-4',
+            name: 'Kesiapan Kerja (Employability)',
+            average: calcAverage(sclAssessments.map(s => s.employabilitySkill))
+        }
+    ];
+
     return (
         <div className="space-y-4">
             <div className="flex justify-end mb-2">
@@ -61,6 +90,7 @@ export function StudentAnalyticsClient({ plos, clos, studentId }: { plos: any[],
                 <TabsList className="mb-4">
                     <TabsTrigger value="plo">Rata-rata PLO</TabsTrigger>
                     <TabsTrigger value="clo">Rata-rata CLO</TabsTrigger>
+                    <TabsTrigger value="scl">Rata-rata SCL</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="plo" className="space-y-4">
@@ -171,6 +201,31 @@ export function StudentAnalyticsClient({ plos, clos, studentId }: { plos: any[],
                             </Table>
                         </div>
                     )}
+                </TabsContent>
+
+                <TabsContent value="scl" className="space-y-4">
+                    <div className="border rounded-md overflow-x-auto bg-card">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[120px]">Kode SCL</TableHead>
+                                    <TableHead>Kompetensi Soft-Skill</TableHead>
+                                    <TableHead className="text-right w-[100px]">Skor</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {aggregatedScl.map((scl) => (
+                                    <TableRow key={scl.code} className={getRowBgColor(scl.average)}>
+                                        <TableCell className="font-semibold">{scl.code}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">{scl.name}</TableCell>
+                                        <TableCell className="text-right">
+                                            {renderScoreWithProgress(scl.average)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

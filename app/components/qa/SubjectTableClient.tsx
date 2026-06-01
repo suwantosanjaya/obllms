@@ -19,7 +19,7 @@ const SCOPE_LABELS: Record<string, { label: string; icon: React.ElementType; cla
     department: { label: 'Departemen', icon: GraduationCap, className: 'bg-green-100 text-green-800 border-green-300' },
 }
 
-export function SubjectTableClient({ subjects }: { subjects: any[] }) {
+export function SubjectTableClient({ subjects, isLocked, defaultFacultyId, defaultDepartmentId }: { subjects: any[], isLocked?: boolean, defaultFacultyId?: string, defaultDepartmentId?: string }) {
     const [selectedScope, setSelectedScope] = useState('ALL')
 
     const scopeFilteredSubjects = subjects.filter(s => {
@@ -143,7 +143,12 @@ export function SubjectTableClient({ subjects }: { subjects: any[] }) {
                                                 {unitLabel}
                                             </TableCell>
                                             <TableCell className="text-right flex items-center justify-end gap-2">
-                                                <EditSubjectDialog subject={subject} />
+                                                <EditSubjectDialog 
+                                                    subject={subject} 
+                                                    isLocked={isLocked}
+                                                    defaultFacultyId={defaultFacultyId}
+                                                    defaultDepartmentId={defaultDepartmentId}
+                                                />
                                                 <DeleteSubjectButton id={subject.id} title={subject.title} />
                                             </TableCell>
                                         </TableRow>

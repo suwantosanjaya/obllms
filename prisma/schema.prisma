@@ -171,6 +171,12 @@ model Subject {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // SCL (Student Centered Learning) Features
+  isEntrepreneurshipEnabled Boolean @default(false)
+  isLeadershipEnabled       Boolean @default(false)
+  isIndustrySkillEnabled    Boolean @default(false)
+  isEmployabilitySkillEnabled Boolean @default(false)
+
   // Relations
   faculty     Faculty? @relation(fields: [facultyId], references: [id])
   department  Department?    @relation(fields: [departmentId], references: [id])
@@ -222,6 +228,8 @@ model Enrollment {
   // Tracking Progress
   gameProfile GamificationProfile?
   reflections SrlReflection[]
+  skillAssessment StudentSkillAssessment?
+  courseEvaluations StudentCourseEvaluation[]
 
   @@unique([studentId, courseId])
 }
@@ -486,6 +494,7 @@ model CourseModule {
   title      String
   content    String? // Rich text or embedded URL (Video, PDF, etc)
   weekNumber Int? // For scheduling
+  estimatedDurationMinutes Int? // "Appropriate Time" / Waktu Pembelajaran yang sesuai
   cloId      String? // Legacy single CLO (kept for backward compat)
 
   course    Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -556,6 +565,32 @@ model GamificationProfile {
   badges       String? // JSON Array of badge names
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// 5b. SCL Skill Assessment (Entrepreneurship, Leadership, Industry Knowledge)
+model StudentSkillAssessment {
+  id                     String   @id @default(cuid())
+  enrollmentId           String   @unique
+  entrepreneurshipScore  Float?   // Score for Entrepreneurship Skill
+  leadershipScore        Float?   // Score for Leadership Skill
+  industryKnowledgeScore Float?   // Score for Knowledge and Skill of Industry needs
+  employabilitySkillScore Float?  // Score for Employability Skill
+  notes                  String?  // Dosen's notes on SCL performance
+  updatedAt              DateTime @updatedAt
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// 5c. Student Evaluation (Perception & Expectation)
+model StudentCourseEvaluation {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  type         String   // 'EXPECTATION' (di awal semester) | 'PERCEPTION' (di akhir semester)
+  content      String   // The student's perception/expectation details (text or JSON)
+  rating       Int?     // Overall satisfaction/expectation rating 1-5
+  createdAt    DateTime @default(now())
+
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 }
 
 // 6. Analytics Activity Log

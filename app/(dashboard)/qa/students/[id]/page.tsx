@@ -24,7 +24,7 @@ export default async function QaStudentAnalyticsPage({
         return <div className="p-8 text-center text-red-500">Gagal memuat analitik: {analyticsResult.error || 'Mahasiswa tidak ditemukan'}</div>
     }
 
-    const { student, clos, plos } = analyticsResult
+    const { student, clos, plos, sclAssessments } = analyticsResult
 
     return (
         <div className="flex flex-col gap-6 max-w-5xl">
@@ -43,7 +43,7 @@ export default async function QaStudentAnalyticsPage({
             </div>
 
             <div className="bg-card p-6 rounded-lg border shadow-sm">
-                <StudentAnalyticsClient plos={plos || []} clos={clos || []} studentId={student.id} />
+                <StudentAnalyticsClient plos={plos || []} clos={clos || []} sclAssessments={sclAssessments || []} studentId={student.id} />
             </div>
         </div>
     )

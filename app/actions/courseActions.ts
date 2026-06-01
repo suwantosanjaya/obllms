@@ -364,7 +364,8 @@ export async function getCourseDetails(courseId: string) {
                                     select: { nim: true }
                                 }
                             }
-                        }
+                        },
+                        skillAssessment: true
                     }
                 },
                 _count: {

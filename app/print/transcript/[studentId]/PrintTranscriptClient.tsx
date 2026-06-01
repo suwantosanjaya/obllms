@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from 'react'
 
 export function PrintTranscriptClient({ 
-    student, plos, clos, passThreshold, moderateThreshold 
+    student, plos, clos, sclAssessments, passThreshold, moderateThreshold 
 }: { 
-    student: any, plos: any[], clos: any[], passThreshold: number, moderateThreshold: number 
+    student: any, plos: any[], clos: any[], sclAssessments: any[], passThreshold: number, moderateThreshold: number 
 }) {
     const [isClient, setIsClient] = useState(false)
 
@@ -36,6 +36,35 @@ export function PrintTranscriptClient({
     const institutionName = student.homebaseDepartment?.faculty?.university?.name || 'Universitas XYZ'
     const facultyName = student.homebaseDepartment?.faculty?.name || 'Fakultas Ilmu Komputer'
     const departmentName = student.homebaseDepartment?.name || 'Teknik Informatika'
+
+    const calcAverage = (scores: (number | null)[]) => {
+        const valid = scores.filter(s => s !== null) as number[];
+        if (valid.length === 0) return null;
+        return valid.reduce((a, b) => a + b, 0) / valid.length;
+    };
+
+    const aggregatedScl = [
+        {
+            code: 'SCL-1',
+            name: 'Kewirausahaan (Entrepreneurship)',
+            average: calcAverage(sclAssessments.map(s => s.entrepreneurship))
+        },
+        {
+            code: 'SCL-2',
+            name: 'Kepemimpinan (Leadership)',
+            average: calcAverage(sclAssessments.map(s => s.leadership))
+        },
+        {
+            code: 'SCL-3',
+            name: 'Wawasan Industri (Industry Knowledge)',
+            average: calcAverage(sclAssessments.map(s => s.industryKnowledge))
+        },
+        {
+            code: 'SCL-4',
+            name: 'Kesiapan Kerja (Employability)',
+            average: calcAverage(sclAssessments.map(s => s.employabilitySkill))
+        }
+    ];
 
     return (
         <div className="font-serif max-w-[210mm] mx-auto p-4 print:p-0 bg-white text-black min-h-screen">
@@ -139,6 +168,35 @@ export function PrintTranscriptClient({
                                 </tr>
                             ))
                         )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Tabel Soft Skills / SCL */}
+            <div className="mb-4 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
+                <h3 className="text-sm font-bold mb-2">C. Capaian Keterampilan Non-Teknis & Penilaian Berbasis Siswa (SCL)</h3>
+                <table className="w-full text-xs border-collapse border border-black">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th className="border border-black px-2 py-1 text-left w-20">Kode</th>
+                            <th className="border border-black px-2 py-1 text-left">Kompetensi Soft-Skill</th>
+                            <th className="border border-black px-2 py-1 text-center w-24">Nilai Rata-rata</th>
+                            <th className="border border-black px-2 py-1 text-center w-20">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {aggregatedScl.map((scl, index) => (
+                            <tr key={index}>
+                                <td className="border border-black px-2 py-1 text-center font-semibold">{scl.code}</td>
+                                <td className="border border-black px-2 py-1">{scl.name}</td>
+                                <td className="border border-black px-2 py-1 text-center font-medium">
+                                    {scl.average !== null ? scl.average.toFixed(2) : '-'}
+                                </td>
+                                <td className="border border-black px-2 py-1 text-center">
+                                    {getStatusText(scl.average)}
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>

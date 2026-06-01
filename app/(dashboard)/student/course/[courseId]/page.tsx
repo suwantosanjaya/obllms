@@ -15,6 +15,7 @@ import { StudentAssessmentsTab } from '@/app/components/student/StudentAssessmen
 import { StudentGradebookTab } from '@/app/components/student/StudentGradebookTab'
 import { CourseFeedbackTab } from '@/app/components/student/CourseFeedbackTab'
 import { getMyCourseFeedback } from '@/app/actions/qaFeedbackActions'
+import { CourseEvaluationDialog } from '@/app/components/student/CourseEvaluationDialog'
 
 export default async function StudentCourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
     const params = await props.params
@@ -31,6 +32,10 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                 studentId: user.id,
                 courseId: params.courseId,
             }
+        },
+        include: {
+            courseEvaluations: true,
+            skillAssessment: true
         }
     })
 
@@ -208,6 +213,88 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
         </div>
                 {/* Sidebar: Course Info */}
                 <div className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Survei Pembelajaran (SCL)</CardTitle>
+                            <CardDescription>Bantu kami meningkatkan kualitas.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-2">
+                            <CourseEvaluationDialog 
+                                enrollmentId={enrollment.id} 
+                                courseName={course.subject?.title} 
+                                type="EXPECTATION" 
+                                isCompleted={enrollment.courseEvaluations?.some((e: any) => e.type === 'EXPECTATION')}
+                            />
+                            <CourseEvaluationDialog 
+                                enrollmentId={enrollment.id} 
+                                courseName={course.subject?.title} 
+                                type="PERCEPTION" 
+                                isCompleted={enrollment.courseEvaluations?.some((e: any) => e.type === 'PERCEPTION')}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {enrollment.skillAssessment && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Hasil Penilaian SCL</CardTitle>
+                                <CardDescription>Evaluasi soft skill Anda oleh Dosen.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                                {course.subject?.isEntrepreneurshipEnabled !== false && (
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-muted-foreground">Kewirausahaan (Entrepreneurship)</span>
+                                            <span className="font-medium">{enrollment.skillAssessment.entrepreneurshipScore ?? 0}/100</span>
+                                        </div>
+                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500 transition-all" style={{ width: `${enrollment.skillAssessment.entrepreneurshipScore ?? 0}%` }} />
+                                        </div>
+                                    </div>
+                                )}
+                                {course.subject?.isLeadershipEnabled !== false && (
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-muted-foreground">Kepemimpinan (Leadership)</span>
+                                            <span className="font-medium">{enrollment.skillAssessment.leadershipScore ?? 0}/100</span>
+                                        </div>
+                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-purple-500 transition-all" style={{ width: `${enrollment.skillAssessment.leadershipScore ?? 0}%` }} />
+                                        </div>
+                                    </div>
+                                )}
+                                {course.subject?.isIndustrySkillEnabled !== false && (
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-muted-foreground">Wawasan Industri (Industry Knowledge)</span>
+                                            <span className="font-medium">{enrollment.skillAssessment.industryKnowledgeScore ?? 0}/100</span>
+                                        </div>
+                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-orange-500 transition-all" style={{ width: `${enrollment.skillAssessment.industryKnowledgeScore ?? 0}%` }} />
+                                        </div>
+                                    </div>
+                                )}
+                                {course.subject?.isEmployabilitySkillEnabled !== false && (
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-muted-foreground">Kesiapan Kerja (Employability)</span>
+                                            <span className="font-medium">{enrollment.skillAssessment.employabilitySkillScore ?? 0}/100</span>
+                                        </div>
+                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-teal-500 transition-all" style={{ width: `${enrollment.skillAssessment.employabilitySkillScore ?? 0}%` }} />
+                                        </div>
+                                    </div>
+                                )}
+                                {enrollment.skillAssessment.notes && (
+                                    <div className="mt-4 p-3 bg-muted/50 rounded-lg border text-xs text-muted-foreground">
+                                        <span className="font-semibold block mb-1">Catatan Dosen:</span>
+                                        {enrollment.skillAssessment.notes}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">Informasi Kelas</CardTitle>

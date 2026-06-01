@@ -24,7 +24,7 @@ export default async function TranscriptPrintPage({
         )
     }
 
-    const { student, clos, plos } = analyticsResult
+    const { student, clos, plos, sclAssessments } = analyticsResult
 
     const passThreshold = parseFloat(await getSystemSetting('PASS_THRESHOLD', '70')) || 70
     const moderateThreshold = parseFloat(await getSystemSetting('MODERATE_THRESHOLD', '50')) || 50
@@ -34,6 +34,7 @@ export default async function TranscriptPrintPage({
             student={student} 
             plos={plos || []} 
             clos={clos || []} 
+            sclAssessments={sclAssessments || []}
             passThreshold={passThreshold}
             moderateThreshold={moderateThreshold}
         />
