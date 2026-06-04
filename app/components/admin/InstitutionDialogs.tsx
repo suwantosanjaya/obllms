@@ -33,10 +33,7 @@ export function CreateUniversityDialog() {
         e.preventDefault()
         setLoading(true)
         const formData = new FormData(e.currentTarget)
-        const res = await createUniversity({
-            code: formData.get('code') as string,
-            name: formData.get('name') as string
-        })
+        const res = await createUniversity(formData)
         setLoading(false)
         if (res.success) {
             toast({ title: 'Berhasil', description: 'Universitas berhasil ditambahkan' })
@@ -66,6 +63,10 @@ export function CreateUniversityDialog() {
                             <Label>Nama Universitas</Label>
                             <Input name="name" placeholder="Cth. Universitas Negeri" required />
                         </div>
+                        <div className="space-y-2">
+                            <Label>Logo Universitas (Opsional)</Label>
+                            <Input name="logoFile" type="file" accept="image/*" />
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>
@@ -76,7 +77,7 @@ export function CreateUniversityDialog() {
     )
 }
 
-export function EditUniversityDialog({ university }: { university: { id: string, code: string, name: string } }) {
+export function EditUniversityDialog({ university }: { university: { id: string, code: string, name: string, logo?: string | null } }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { toast } = useToast()
@@ -85,10 +86,7 @@ export function EditUniversityDialog({ university }: { university: { id: string,
         e.preventDefault()
         setLoading(true)
         const formData = new FormData(e.currentTarget)
-        const res = await updateUniversity(university.id, {
-            code: formData.get('code') as string,
-            name: formData.get('name') as string
-        })
+        const res = await updateUniversity(university.id, formData)
         setLoading(false)
         if (res.success) {
             toast({ title: 'Berhasil', description: 'Universitas berhasil diperbarui' })
@@ -116,6 +114,16 @@ export function EditUniversityDialog({ university }: { university: { id: string,
                         <div className="space-y-2">
                             <Label>Nama Universitas</Label>
                             <Input name="name" defaultValue={university.name} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Logo Universitas (Opsional)</Label>
+                            {university.logo && (
+                                <div className="mb-2">
+                                    <img src={university.logo} alt="Logo" className="w-16 h-16 object-contain border rounded p-1" />
+                                </div>
+                            )}
+                            <Input name="logoFile" type="file" accept="image/*" />
+                            <p className="text-[10px] text-muted-foreground">Pilih file baru untuk mengganti logo sebelumnya.</p>
                         </div>
                     </div>
                     <DialogFooter>
@@ -273,7 +281,7 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Berhasil', description: 'Departemen berhasil ditambahkan' })
+            toast({ title: 'Berhasil', description: 'Program Studi berhasil ditambahkan' })
             setOpen(false)
         } else {
             toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
@@ -283,12 +291,12 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Tambah Departemen</Button>
+                <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Tambah Program Studi</Button>
             </DialogTrigger>
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Tambah Departemen</DialogTitle>
+                        <DialogTitle>Tambah Program Studi</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
@@ -303,11 +311,11 @@ export function CreateDepartmentDialog({ faculties }: { faculties: { id: string,
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Kode Departemen</Label>
+                            <Label>Kode Program Studi</Label>
                             <Input name="code" placeholder="Cth. TI" required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Nama Departemen</Label>
+                            <Label>Nama Program Studi</Label>
                             <Input name="name" placeholder="Cth. Teknik Informatika" required />
                         </div>
                     </div>
@@ -336,7 +344,7 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
         })
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Berhasil', description: 'Departemen berhasil diperbarui' })
+            toast({ title: 'Berhasil', description: 'Program Studi berhasil diperbarui' })
             setOpen(false)
         } else {
             toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
@@ -351,7 +359,7 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Departemen</DialogTitle>
+                        <DialogTitle>Edit Program Studi</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
@@ -366,11 +374,11 @@ export function EditDepartmentDialog({ department, faculties }: { department: an
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Kode Departemen</Label>
+                            <Label>Kode Program Studi</Label>
                             <Input name="code" defaultValue={department.code} required />
                         </div>
                         <div className="space-y-2">
-                            <Label>Nama Departemen</Label>
+                            <Label>Nama Program Studi</Label>
                             <Input name="name" defaultValue={department.name} required />
                         </div>
                     </div>
@@ -476,7 +484,7 @@ export function DeleteDepartmentDialog({ id, name }: { id: string, name: string 
         const res = await deleteDepartment(id)
         setLoading(false)
         if (res.success) {
-            toast({ title: 'Berhasil', description: 'Departemen berhasil dihapus' })
+            toast({ title: 'Berhasil', description: 'Program Studi berhasil dihapus' })
             setOpen(false)
         } else {
             toast({ title: 'Gagal', description: res.error, variant: 'destructive' })
@@ -491,9 +499,9 @@ export function DeleteDepartmentDialog({ id, name }: { id: string, name: string 
             <DialogContent>
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Hapus Departemen</DialogTitle>
+                        <DialogTitle>Hapus Program Studi</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus departemen <strong>{name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus program studi <strong>{name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">

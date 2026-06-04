@@ -84,7 +84,7 @@ export default function ApprovalTableClient({ initialUsers, currentUserId, activ
         student: 'Mahasiswa',
         teacher: 'Dosen (Teacher)',
         qa: 'Tim QA',
-        admin: 'Admin Departemen',
+        admin: 'Admin Program Studi',
         super_admin: 'Super Admin'
     }
 

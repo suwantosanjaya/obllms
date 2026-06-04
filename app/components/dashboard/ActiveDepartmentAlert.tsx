@@ -13,10 +13,10 @@ export function ActiveDepartmentAlert({ department }: { department?: DepartmentI
         <Alert className="mb-6 bg-primary/10 border-primary/20 text-primary">
             <Building2 className="h-5 w-5 !text-primary" />
             <AlertTitle className="font-semibold text-primary">
-                Departemen Aktif: {department.name} {department.code ? `(${department.code})` : ''}
+                Program Studi Aktif: {department.name} {department.code ? `(${department.code})` : ''}
             </AlertTitle>
             <AlertDescription className="text-primary/80">
-                Informasi dan data yang ditampilkan pada halaman ini dikhususkan untuk departemen yang sedang Anda kelola saat ini.
+                Informasi dan data yang ditampilkan pada halaman ini dikhususkan untuk program studi yang sedang Anda kelola saat ini.
             </AlertDescription>
         </Alert>
     )

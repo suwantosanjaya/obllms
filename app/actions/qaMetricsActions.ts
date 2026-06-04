@@ -180,6 +180,7 @@ export async function getComplianceMetrics(departmentId: string, academicYear?: 
             include: {
                 subject: true,
                 instructor: true,
+                department: true,
                 assessments: {
                     include: {
                         submissions: {
@@ -200,7 +201,8 @@ export async function getComplianceMetrics(departmentId: string, academicYear?: 
                 subjectCode: course.subject.code,
                 subjectName: course.subject.title,
                 instructorName: course.instructor.name,
-                classCode: course.classCode || 'Reguler'
+                classCode: course.classCode || 'Reguler',
+                departmentName: course.department?.name || 'Umum'
             };
 
             if (isCompliant) {

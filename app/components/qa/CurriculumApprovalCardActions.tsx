@@ -151,7 +151,7 @@ export function CurriculumApprovalCardActions({
             return (
                 <div className="flex flex-col gap-2 w-full">
                     <p className="text-xs text-center text-amber-600 bg-amber-50 p-2 rounded-md">
-                        Ada permintaan revisi. Hanya Ketua Departemen aktif yang dapat merespons.
+                        Ada permintaan revisi. Hanya Ketua Program Studi aktif yang dapat merespons.
                     </p>
                     <Button variant="outline" className="w-full" asChild>
                         <Link href={`/qa/curriculum/builder?yearId=${yearId}`}>
@@ -237,7 +237,7 @@ export function CurriculumApprovalCardActions({
             return (
                 <div className="flex flex-col gap-2 w-full">
                     <p className="text-xs text-center text-amber-600 bg-amber-50 p-2 rounded-md">
-                        Hanya Ketua Departemen aktif yang dapat menyetujui.
+                        Hanya Ketua Program Studi aktif yang dapat menyetujui.
                     </p>
                     <Button variant="outline" className="w-full" asChild>
                         <Link href={`/qa/curriculum/builder?yearId=${yearId}`}>

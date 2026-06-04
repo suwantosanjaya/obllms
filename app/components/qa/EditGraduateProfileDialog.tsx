@@ -89,10 +89,10 @@ export function EditGraduateProfileDialog({
                         </div>
                         {!departmentId && (
                             <div className="grid gap-2">
-                                <Label htmlFor="departmentId">Departemen</Label>
+                                <Label htmlFor="departmentId">Program Studi</Label>
                                 <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Departemen" />
+                                        <SelectValue placeholder="Pilih Program Studi" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {departments.map(p => (

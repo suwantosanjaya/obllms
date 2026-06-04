@@ -34,6 +34,7 @@ export function PrintTranscriptClient({
     })
 
     const institutionName = student.homebaseDepartment?.faculty?.university?.name || 'Universitas XYZ'
+    const institutionLogo = student.homebaseDepartment?.faculty?.university?.logo || '/university-logo.svg'
     const facultyName = student.homebaseDepartment?.faculty?.name || 'Fakultas Ilmu Komputer'
     const departmentName = student.homebaseDepartment?.name || 'Teknik Informatika'
 
@@ -69,16 +70,16 @@ export function PrintTranscriptClient({
     return (
         <div className="font-serif max-w-[210mm] mx-auto p-4 print:p-0 bg-white text-black min-h-screen">
             {/* Header / Kop Surat */}
-            <div className="border-b-2 border-black pb-2 mb-4 flex items-center justify-between">
-                <div>
-                    <h1 className="font-bold">{institutionName}</h1>
-                    <p className="text-xs">{facultyName}</p>
-                    <p className="text-xs">Departemen {departmentName}</p>
+            <div className="border-b-2 border-black pb-4 mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <img src={institutionLogo} alt="Logo Universitas" className="w-20 h-20 object-contain" />
+                    <div>
+                        <h1 className="font-bold text-lg leading-tight capitalize">{institutionName}</h1>
+                        <p className="text-sm font-semibold leading-tight">{facultyName}</p>
+                        <p className="text-xs leading-tight mt-1">Program Studi {departmentName}</p>
+                    </div>
                 </div>
-                <div className="text-right">
-                    <p className="text-xs text-gray-500">Form: OBE-01</p>
-                    <p className="text-xs text-gray-500">Rev: 2.0</p>
-                </div>
+                {/* Removed Form info */}
             </div>
 
             <div className="text-center mb-4">
@@ -226,18 +227,41 @@ export function PrintTranscriptClient({
             </div>
 
             {/* TTD / Keterangan */}
-            <div className="flex justify-end mt-8 text-sm break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
-                <div className="text-center w-64">
-                    <p className="mb-16">Dikeluarkan pada tanggal: {currentDate}</p>
-                    <p className="border-t border-black pt-1">Sistem Penjaminan Mutu OBE</p>
+            <div className="mt-8 text-sm break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
+                <div className="flex justify-end pr-16 mt-8">
+                    <div className="text-left w-64">
+                        <p className="mb-1">Dikeluarkan pada tanggal: {currentDate}</p>
+                        <p className="font-bold">Dekan {facultyName}</p>
+                        <div className="h-20"></div>
+                        
+                        {(() => {
+                            const dean = student.homebaseDepartment?.faculty?.activeDean;
+                            if (dean) {
+                                const profile = dean.teacherProfile;
+                                const prefix = profile?.gelarDepan ? `${profile.gelarDepan} ` : '';
+                                const suffix = profile?.gelarBelakang ? `, ${profile.gelarBelakang}` : '';
+                                const fullName = `${prefix}${dean.name}${suffix}`;
+                                const nip = profile?.nip || '.........................';
+                                
+                                return (
+                                    <>
+                                        <p className="font-bold underline">{fullName}</p>
+                                        <p className="text-xs">NIP. {nip}</p>
+                                    </>
+                                )
+                            }
+                            return (
+                                <>
+                                    <p className="font-bold underline">___________________________</p>
+                                    <p className="text-xs">NIP. .........................</p>
+                                </>
+                            )
+                        })()}
+                    </div>
                 </div>
             </div>
 
-            {/* Fixed Footer untuk Print */}
-            <div className="hidden print:block fixed bottom-0 left-0 w-full text-center text-[10px] text-gray-500 border-t pt-2 bg-white">
-                Transkrip Portofolio OBE ini dihasilkan secara otomatis oleh Outcome-Based Learning Management System (OBLMS).
-            </div>
-
+            {/* Removed Fixed Footer untuk Print */}
             {/* Print Styling */}
             <style jsx global>{`
                 @media print {

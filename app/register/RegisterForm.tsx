@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,23 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
+
+    // Captcha state
+    const [captchaQuestion, setCaptchaQuestion] = useState('')
+    const [captchaAnswer, setCaptchaAnswer] = useState(0)
+    const [userAnswer, setUserAnswer] = useState('')
+
+    const generateCaptcha = () => {
+        const num1 = Math.floor(Math.random() * 10) + 1
+        const num2 = Math.floor(Math.random() * 10) + 1
+        setCaptchaQuestion(`${num1} + ${num2}`)
+        setCaptchaAnswer(num1 + num2)
+        setUserAnswer('')
+    }
+
+    useEffect(() => {
+        generateCaptcha()
+    }, [])
 
     // Form state
     const [role, setRole] = useState('')
@@ -55,6 +72,13 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
         const password = formData.get('password') as string
         const confirm = formData.get('confirm_password') as string
 
+        if (parseInt(userAnswer) !== captchaAnswer) {
+            setError('Jawaban perhitungan salah. Silakan coba lagi.')
+            generateCaptcha()
+            setLoading(false)
+            return
+        }
+
         if (password !== confirm) {
             setError('Password dan Konfirmasi Password tidak cocok.')
             setLoading(false)
@@ -62,7 +86,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
         }
 
         if (needsDepartment && !deptId) {
-            setError('Silakan pilih Departemen / Program Studi Anda.')
+            setError('Silakan pilih Program Studi / Program Studi Anda.')
             setLoading(false)
             return
         }
@@ -81,6 +105,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
             setSuccess(true)
         } else {
             setError(res.error || 'Terjadi kesalahan')
+            generateCaptcha()
         }
         setLoading(false)
     }
@@ -151,8 +176,8 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             <SelectContent>
                                 <SelectItem value="student">Mahasiswa</SelectItem>
                                 <SelectItem value="teacher">Dosen (Teacher)</SelectItem>
-                                <SelectItem value="qa">Tim QA Departemen</SelectItem>
-                                <SelectItem value="admin">Admin Departemen</SelectItem>
+                                <SelectItem value="qa">Tim QA Program Studi</SelectItem>
+                                <SelectItem value="admin">Admin Program Studi</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -216,7 +241,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                     {needsDepartment && (
                         <div className="space-y-4 p-4 border rounded-md bg-muted/20">
                             <div className="flex flex-col space-y-1 mb-4">
-                                <h4 className="text-sm font-semibold text-muted-foreground">{isDlb ? "Informasi Departemen Tujuan Mengajar Pertama" : "Informasi Homebase (Unit Kerja)"}</h4>
+                                <h4 className="text-sm font-semibold text-muted-foreground">{isDlb ? "Informasi Program Studi Tujuan Mengajar Pertama" : "Informasi Homebase (Unit Kerja)"}</h4>
                                 {role === 'teacher' && (
                                     <div className="flex flex-col space-y-2 mt-2 bg-background p-3 rounded border">
                                         <div className="flex items-center space-x-2">
@@ -226,7 +251,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                                             <Label htmlFor="isDlb" className="cursor-pointer font-medium text-amber-700">Saya adalah Dosen Luar Biasa (DLB)</Label>
                                         </div>
                                         <p className="text-xs text-muted-foreground ml-6">
-                                            Dosen Luar Biasa adalah praktisi atau dosen tidak tetap yang mengajar tanpa memiliki homebase spesifik di dalam departemen ini.
+                                            Dosen Luar Biasa adalah praktisi atau dosen tidak tetap yang mengajar tanpa memiliki homebase spesifik di dalam program studi ini.
                                         </p>
                                     </div>
                                 )}
@@ -257,9 +282,9 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Program Studi / Departemen</Label>
+                                <Label>Program Studi / Program Studi</Label>
                                 <Select value={deptId} onValueChange={setDeptId} disabled={!facId || loading}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih Departemen" /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Pilih Program Studi" /></SelectTrigger>
                                     <SelectContent>
                                         {departments.map((d: any) => (
                                             <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
@@ -269,8 +294,21 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             </div>
                         </div>
                     )}
+
+                    <div className="space-y-2">
+                        <Label htmlFor="captcha">Hitung: <span className="font-bold text-primary tracking-widest">{captchaQuestion} = ?</span></Label>
+                        <Input
+                            id="captcha"
+                            type="number"
+                            placeholder="Masukkan jawaban"
+                            value={userAnswer}
+                            onChange={e => setUserAnswer(e.target.value)}
+                            required
+                            disabled={loading}
+                        />
+                    </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-3">
+                <CardFooter className="flex flex-col gap-3 mt-4 pt-4 border-t border-muted/50">
                     <Button className="w-full" type="submit" disabled={loading || (needsDepartment && !deptId)}>
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         Daftar Akun

@@ -8,6 +8,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { useUserStore } from '@/lib/store/useUserStore'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { seedSimulatedUsers, loginWithEmail, setActiveProdiCookie, forceChangePasswordAction, forceCompleteProfileAction } from '@/app/actions/userActions'
@@ -21,6 +22,19 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { toast } = useToast()
+
+  // Captcha state
+  const [captchaQuestion, setCaptchaQuestion] = useState('')
+  const [captchaAnswer, setCaptchaAnswer] = useState(0)
+  const [userAnswer, setUserAnswer] = useState('')
+
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 10) + 1
+    const num2 = Math.floor(Math.random() * 10) + 1
+    setCaptchaQuestion(`${num1} + ${num2}`)
+    setCaptchaAnswer(num1 + num2)
+    setUserAnswer('')
+  }
 
   // Force Password Change state
   const [forceChangeEmail, setForceChangeEmail] = useState('')
@@ -47,12 +61,17 @@ export default function Home() {
   useEffect(() => {
     // Seed DB if it's empty on first load
     seedSimulatedUsers().then(() => setIsInitializing(false))
+    generateCaptcha()
   }, [])
 
   useEffect(() => {
     if (_hasHydrated && activeRole) {
       if (activeRole === 'head_of_department') {
         window.location.href = '/qa/curriculum'
+      } else if (activeRole === 'dean') {
+        window.location.href = '/dean/analytics'
+      } else if (activeRole === 'rector') {
+        window.location.href = '/rector/analytics'
       } else {
         window.location.href = `/${activeRole}`
       }
@@ -63,6 +82,13 @@ export default function Home() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    if (parseInt(userAnswer) !== captchaAnswer) {
+      setError('Jawaban perhitungan salah. Silakan coba lagi.')
+      generateCaptcha()
+      setLoading(false)
+      return
+    }
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
@@ -88,7 +114,7 @@ export default function Home() {
 
     if (res.success && res.user) {
       console.log('Login successful. res.user:', res.user)
-      setActiveRole(res.user.activeRole as 'student' | 'teacher' | 'qa' | 'admin' | 'super_admin')
+      setActiveRole(res.user.activeRole as any)
       setRoles(res.user.roles || [])
       setUserName(res.user.name)
       setUserId(res.user.id)
@@ -97,6 +123,9 @@ export default function Home() {
       useUserStore.getState().setProdis(userDepartments)
       if (res.user.departmentRoles) {
         useUserStore.getState().setDepartmentRoles(res.user.departmentRoles)
+      }
+      if ((res.user as any).facultyName) {
+        useUserStore.getState().setFacultyName((res.user as any).facultyName)
       }
 
       let defaultDeps = userDepartments
@@ -115,12 +144,17 @@ export default function Home() {
 
       if (res.user.activeRole === 'head_of_department') {
           window.location.href = '/qa/curriculum'
+      } else if (res.user.activeRole === 'dean') {
+          window.location.href = '/dean/analytics'
+      } else if (res.user.activeRole === 'rector') {
+          window.location.href = '/rector/analytics'
       } else {
           const path = `/${res.user.activeRole}`
           window.location.href = path
       }
     } else {
       setError(res.error || "Gagal masuk. Periksa kembali kredensial Anda.")
+      generateCaptcha()
       setLoading(false)
     }
   }
@@ -162,6 +196,8 @@ export default function Home() {
         
         let path = `/${resLogin.user.activeRole}`
         if (resLogin.user.activeRole === 'head_of_department') path = '/qa/curriculum'
+        else if (resLogin.user.activeRole === 'dean') path = '/dean/analytics'
+        else if (resLogin.user.activeRole === 'rector') path = '/rector/analytics'
         window.location.href = path
       } else {
         setForceChangeEmail('')
@@ -199,6 +235,8 @@ export default function Home() {
         
         let path = `/${resLogin.user.activeRole}`
         if (resLogin.user.activeRole === 'head_of_department') path = '/qa/curriculum'
+        else if (resLogin.user.activeRole === 'dean') path = '/dean/analytics'
+        else if (resLogin.user.activeRole === 'rector') path = '/rector/analytics'
         window.location.href = path
       } else {
         setForceProfileEmail('')
@@ -217,7 +255,11 @@ export default function Home() {
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center space-y-8 bg-muted/10 py-12 px-4">
       <div className="text-center space-y-4">
-        <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OBLMS</h1>
+        <div className="flex items-center justify-center gap-4">
+          <Image src="/logo-icon.png" alt="OBLMS Logo Light" width={80} height={80} className="object-contain drop-shadow-md dark:hidden" />
+          <Image src="/logo-dark-v2.png" alt="OBLMS Logo Dark" width={80} height={80} className="object-contain drop-shadow-md hidden dark:block" />
+          <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OBLMS</h1>
+        </div>
         <p className="text-xl text-muted-foreground">Outcome Based Learning Management System</p>
       </div>
 
@@ -385,6 +427,18 @@ export default function Home() {
                   name="password"
                   type="password"
                   placeholder="••••••••"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="captcha">Hitung: <span className="font-bold text-primary tracking-widest">{captchaQuestion} = ?</span></Label>
+                <Input
+                  id="captcha"
+                  type="number"
+                  placeholder="Masukkan jawaban"
+                  value={userAnswer}
+                  onChange={e => setUserAnswer(e.target.value)}
                   required
                   disabled={loading}
                 />

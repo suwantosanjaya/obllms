@@ -14,8 +14,8 @@ export default async function QaStudentAnalyticsPage({
     const { id } = await params
     const sessionUser = await getSessionUser()
     
-    if (sessionUser?.role !== 'qa' && sessionUser?.role !== 'admin') {
-        redirect('/login')
+    if (!sessionUser || !['qa', 'head_of_department', 'dean'].includes(sessionUser.activeRole)) {
+        redirect('/')
     }
 
     const analyticsResult = await getStudentCloAnalytics(id)

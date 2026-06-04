@@ -54,7 +54,7 @@ export default async function QaCurriculumDashboard() {
                     <p className="text-muted-foreground mt-1">
                         {isHod
                             ? 'Tinjau dan setujui kurikulum yang telah diajukan oleh tim QA.'
-                            : 'Pilih tahun kurikulum untuk mulai menyusun atau meninjau kurikulum departemen Anda.'}
+                            : 'Pilih tahun kurikulum untuk mulai menyusun atau meninjau kurikulum program studi Anda.'}
                     </p>
                 </div>
                 {departmentId && !isHod && <CreateCurriculumYearDialog departmentId={departmentId} />}

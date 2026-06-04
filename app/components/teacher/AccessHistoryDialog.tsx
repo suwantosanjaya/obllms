@@ -27,9 +27,9 @@ export function AccessHistoryDialog({ requests }: { requests: any[] }) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[700px] max-h-[80vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Riwayat Pengajuan Akses Departemen</DialogTitle>
+                    <DialogTitle>Riwayat Pengajuan Akses Program Studi</DialogTitle>
                     <DialogDescription>
-                        Status persetujuan untuk setiap permintaan akses mengajar lintas departemen yang pernah Anda ajukan.
+                        Status persetujuan untuk setiap permintaan akses mengajar lintas program studi yang pernah Anda ajukan.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto pr-2 mt-2">
@@ -37,7 +37,7 @@ export function AccessHistoryDialog({ requests }: { requests: any[] }) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Tanggal</TableHead>
-                                <TableHead>Departemen Tujuan</TableHead>
+                                <TableHead>Program Studi Tujuan</TableHead>
                                 <TableHead>Universitas</TableHead>
                                 <TableHead className="text-right">Status</TableHead>
                             </TableRow>

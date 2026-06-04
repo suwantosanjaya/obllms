@@ -28,6 +28,7 @@ export default async function QADashboard() {
         reviewNeededCount: 0,
         totalPlosMeasured: 0,
         totalPlos: 0,
+        avgGradingTimeHours: 0,
         reviewTableData: []
     }
 
@@ -38,15 +39,56 @@ export default async function QADashboard() {
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Quality Assurance (Departemen)</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Quality Assurance (Program Studi)</h1>
                     <p className="text-muted-foreground mt-1">Pemantauan keselarasan kurikulum (PLO-CLO) dan metrik kualitas.</p>
                 </div>
             </div>
 
-
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Keselarasan Kurikulum</CardTitle>
+                        <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics?.alignmentRate ?? 0}%</div>
+                        <p className="text-xs text-muted-foreground">Mata Kuliah tersinkronisasi PLO-CLO</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">PLO Terukur</CardTitle>
+                        <LineChart className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics?.totalPlosMeasured ?? 0} / {metrics?.totalPlos ?? 0}</div>
+                        <p className="text-xs text-muted-foreground">PLO diukur dalam mata kuliah aktif</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Responsivitas Dosen</CardTitle>
+                        <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics?.avgGradingTimeHours ?? 0} Jam</div>
+                        <p className="text-xs text-muted-foreground">Rata-rata waktu penilaian tugas (SLA)</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Perlu Tinjauan</CardTitle>
+                        <FileSearch className="h-4 w-4 text-destructive" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics?.reviewNeededCount ?? 0}</div>
+                        <p className="text-xs text-muted-foreground">Mata kuliah tanpa asesmen/CLO valid</p>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Alignment Review Table */}
-            <QAAlignmentTableClient metrics={metrics} curriculumYears={curriculumYears} />
+            <QAAlignmentTableClient metrics={metrics!} curriculumYears={curriculumYears} />
         </div>
     )
 }

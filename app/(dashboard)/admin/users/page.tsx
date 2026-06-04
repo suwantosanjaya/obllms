@@ -101,7 +101,7 @@ export default async function AdminUsersPage() {
                         departments={departments} 
                         allowedRoles={['student', 'teacher', 'qa']}
                         title="Daftar Pengguna Sistem"
-                        description={activeRole === 'qa' ? "Menampilkan daftar pengguna di departemen Anda." : "Menampilkan daftar Student, Teacher, dan QA/Department."}
+                        description={activeRole === 'qa' ? "Menampilkan daftar pengguna di program studi Anda." : "Menampilkan daftar Student, Teacher, dan QA/Department."}
                         hideEditRole={activeRole === 'qa'}
                     />
                 </TabsContent>

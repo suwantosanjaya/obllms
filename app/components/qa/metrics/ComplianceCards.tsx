@@ -11,6 +11,14 @@ export default function ComplianceCards({ compliance }: { compliance: any }) {
     const compliant = compliance?.compliantCourses || 0
     const nonCompliantList = compliance?.details?.nonCompliant || []
 
+    // Group by department
+    const groupedByDept = nonCompliantList.reduce((acc: Record<string, any[]>, course: any) => {
+        const dept = course.departmentName || 'Umum';
+        if (!acc[dept]) acc[dept] = [];
+        acc[dept].push(course);
+        return acc;
+    }, {});
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -59,28 +67,36 @@ export default function ComplianceCards({ compliance }: { compliance: any }) {
                                         Mata kuliah berikut belum memiliki satupun nilai evaluasi (Tugas/Kuis/Ujian) yang dimasukkan oleh dosen pengampu.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="mt-4 border rounded-md">
-                                    <Table>
-                                        <TableHeader className="bg-muted/50">
-                                            <TableRow>
-                                                <TableHead>Mata Kuliah</TableHead>
-                                                <TableHead>Kelas</TableHead>
-                                                <TableHead>Dosen Pengampu</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {nonCompliantList.map((course: any, idx: number) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell>
-                                                        <div className="font-medium">{course.subjectCode}</div>
-                                                        <div className="text-xs text-muted-foreground">{course.subjectName}</div>
-                                                    </TableCell>
-                                                    <TableCell className="text-sm">{course.classCode}</TableCell>
-                                                    <TableCell className="text-sm">{course.instructorName}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                <div className="mt-4 flex flex-col gap-4">
+                                    {Object.entries(groupedByDept).map(([deptName, courses]: [string, any]) => (
+                                        <div key={deptName} className="border rounded-md overflow-hidden">
+                                            <div className="bg-muted/70 px-4 py-2 font-semibold text-sm border-b flex items-center justify-between text-foreground">
+                                                <span>Program Studi: {deptName}</span>
+                                                <span className="text-muted-foreground font-normal text-xs bg-background px-2 py-0.5 rounded-full border shadow-sm">{courses.length} Kelas</span>
+                                            </div>
+                                            <Table>
+                                                <TableHeader className="bg-muted/30">
+                                                    <TableRow>
+                                                        <TableHead>Mata Kuliah</TableHead>
+                                                        <TableHead>Kelas</TableHead>
+                                                        <TableHead>Dosen Pengampu</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {courses.map((course: any, idx: number) => (
+                                                        <TableRow key={idx}>
+                                                            <TableCell>
+                                                                <div className="font-medium">{course.subjectCode}</div>
+                                                                <div className="text-xs text-muted-foreground">{course.subjectName}</div>
+                                                            </TableCell>
+                                                            <TableCell className="text-sm">{course.classCode}</TableCell>
+                                                            <TableCell className="text-sm">{course.instructorName}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    ))}
                                 </div>
                             </DialogContent>
                         </Dialog>

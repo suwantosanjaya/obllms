@@ -67,7 +67,7 @@ export function CreateGraduateProfileDialog({
                     <DialogHeader>
                         <DialogTitle>Tambah Profil Lulusan</DialogTitle>
                         <DialogDescription>
-                            Buat profil lulusan baru dan hubungkan ke visi/misi dan departemen.
+                            Buat profil lulusan baru dan hubungkan ke visi/misi dan program studi.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -93,10 +93,10 @@ export function CreateGraduateProfileDialog({
                         </div>
                         {!departmentId && (
                             <div className="grid gap-2">
-                                <Label htmlFor="departmentId">Departemen</Label>
+                                <Label htmlFor="departmentId">Program Studi</Label>
                                 <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Departemen" />
+                                        <SelectValue placeholder="Pilih Program Studi" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {departments.map(p => (

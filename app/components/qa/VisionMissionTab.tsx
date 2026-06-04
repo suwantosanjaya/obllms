@@ -32,7 +32,7 @@ export function VisionMissionTab({ visionMissions, department, departmentId, sel
                 <div>
                     <CardTitle>Visi & Misi Institusi</CardTitle>
                     <CardDescription>
-                        Visi dan misi departemen {department?.name || 'Anda'}.
+                        Visi dan misi program studi {department?.name || 'Anda'}.
                     </CardDescription>
                 </div>
                 {!isLocked && <CreateVisionMissionDialog isLocked={isLocked} departmentId={departmentId} curriculumYearId={selectedYearId} />}

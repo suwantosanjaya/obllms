@@ -23,7 +23,9 @@ interface HeaderRoleSwitcherProps {
 export const roleMap: Record<string, string> = {
     super_admin: 'Super Administrator',
     admin: 'Administrator',
-    head_of_department: 'Ketua Departemen',
+    head_of_department: 'Ketua Program Studi',
+    dean: 'Dekan',
+    rector: 'Rektor',
     qa: 'QA',
     teacher: 'Dosen',
     student: 'Mahasiswa'

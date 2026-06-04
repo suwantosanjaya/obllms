@@ -22,7 +22,9 @@ import {
     Activity,
     UserCog,
     PieChart,
-    Route
+    Route,
+    HelpCircle,
+    MonitorPlay
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -37,6 +39,7 @@ export function getSidebarLinks(activeRole: string | null) {
                 { href: '/student/srl', label: 'Pelacak SRL', icon: Target },
                 { href: '/student/analytics', label: 'Analitik Capaian', icon: BarChart },
                 { href: '/student/community', label: 'Komunitas', icon: MessageSquare },
+                { href: '/student/support', label: 'Pusat Bantuan', icon: HelpCircle },
             ]
         case 'teacher':
             return [
@@ -45,6 +48,7 @@ export function getSidebarLinks(activeRole: string | null) {
                 { href: '/teacher/obl', label: 'Pemetaan OBL', icon: Route },
                 { href: '/teacher/students', label: 'Analitik Mahasiswa', icon: PieChart },
                 { href: '/teacher/assessments', label: 'Penilaian', icon: ClipboardList },
+                { href: '/teacher/training', label: 'Pusat Pelatihan', icon: MonitorPlay },
             ]
         case 'qa':
             return [
@@ -57,6 +61,8 @@ export function getSidebarLinks(activeRole: string | null) {
                 { href: '/qa/analytics', label: 'Analitik Capaian', icon: BarChart },
                 { href: '/qa/metrics', label: 'Metrik QA', icon: Activity },
                 { href: '/qa/feedback', label: 'Umpan Balik', icon: MessageSquare },
+                { href: '/qa/training', label: 'Pelatihan Dosen', icon: MonitorPlay },
+                { href: '/qa/support', label: 'Pusat Bantuan', icon: HelpCircle },
                 { href: '/admin/announcements', label: 'Pengumuman', icon: Megaphone },
                 { href: '/admin/users', label: 'Manajemen Pengguna', icon: UserCog },
             ]
@@ -64,13 +70,26 @@ export function getSidebarLinks(activeRole: string | null) {
             return [
                 { href: '/super_admin', label: 'Dashboard', icon: LayoutDashboard },
                 { href: '/super_admin/users', label: 'Manajemen Admin', icon: ShieldCheck },
+                { href: '/admin/institutions', label: 'Manajemen Institusi', icon: Building2 },
             ]
         case 'head_of_department':
             return [
+                { href: '/qa/students', label: 'Daftar Mahasiswa', icon: GraduationCap },
                 { href: '/qa/curriculum', label: 'Tinjauan Kurikulum', icon: BookMarked },
                 { href: '/qa/analytics', label: 'Analitik Capaian', icon: BarChart },
                 { href: '/qa/metrics', label: 'Metrik QA', icon: Activity },
                 { href: '/qa/feedback', label: 'Umpan Balik', icon: MessageSquare },
+            ]
+        case 'dean':
+            return [
+                { href: '/dean/analytics', label: 'Analitik Capaian Fakultas', icon: BarChart },
+                { href: '/qa/metrics', label: 'Metrik QA Fakultas', icon: Activity },
+                { href: '/qa/students', label: 'Daftar Mahasiswa', icon: GraduationCap },
+            ]
+        case 'rector':
+            return [
+                { href: '/rector/analytics', label: 'Analitik Capaian Universitas', icon: BarChart },
+                { href: '/qa/metrics', label: 'Metrik QA Universitas', icon: Activity },
             ]
         case 'admin':
             return [
@@ -79,6 +98,7 @@ export function getSidebarLinks(activeRole: string | null) {
                 { href: '/admin/users', label: 'Manajemen Pengguna', icon: UserCog },
                 { href: '/admin/announcements', label: 'Pengumuman', icon: Megaphone },
                 { href: '/admin/settings', label: 'Pengaturan Sistem', icon: Settings },
+                { href: '/admin/support', label: 'Pusat Bantuan', icon: HelpCircle },
             ]
         default:
             return []

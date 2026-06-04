@@ -14,7 +14,31 @@ export async function getDepartmentStudents(departmentId: string) {
                 ]
             },
             include: {
-                studentProfile: true
+                studentProfile: true,
+                homebaseDepartment: { select: { id: true, name: true, code: true } }
+            },
+            orderBy: { name: 'asc' }
+        })
+
+        return { success: true, students }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message }
+    }
+}
+
+export async function getFacultyStudents(facultyId: string) {
+    try {
+        const students = await prisma.user.findMany({
+            where: {
+                role: { contains: 'student' },
+                OR: [
+                    { homebaseDepartment: { facultyId } },
+                    { departmentRoles: { some: { department: { facultyId } } } }
+                ]
+            },
+            include: {
+                studentProfile: true,
+                homebaseDepartment: { select: { id: true, name: true, code: true } }
             },
             orderBy: { name: 'asc' }
         })

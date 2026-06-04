@@ -19,7 +19,7 @@ export default async function QaAnalyticsPage({
     const departmentId = sessionUser?.activeDepartmentId
 
     if (!departmentId) {
-        return <div className="p-8 text-center text-muted-foreground">Pilih Departemen terlebih dahulu.</div>
+        return <div className="p-8 text-center text-muted-foreground">Pilih Program Studi terlebih dahulu.</div>
     }
 
     const angkatanRes = await getAvailableAngkatan(departmentId)

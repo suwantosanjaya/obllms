@@ -12,7 +12,7 @@ export default async function QaTeachersPage() {
     const { activeDepartmentId } = sessionUser
 
     if (!activeDepartmentId) {
-        return <div className="p-8 text-center text-muted-foreground">Pilih Departemen terlebih dahulu.</div>
+        return <div className="p-8 text-center text-muted-foreground">Pilih Program Studi terlebih dahulu.</div>
     }
 
     const res = await getDepartmentTeachers(activeDepartmentId)
@@ -22,7 +22,7 @@ export default async function QaTeachersPage() {
         <div className="flex flex-col gap-6 w-full">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Daftar Dosen</h1>
-                <p className="text-muted-foreground mt-1">Kelola data dosen dan tambahkan akun dosen baru di departemen Anda.</p>
+                <p className="text-muted-foreground mt-1">Kelola data dosen dan tambahkan akun dosen baru di program studi Anda.</p>
             </div>
             <TeacherTableClient teachers={teachers} departmentId={activeDepartmentId} />
         </div>

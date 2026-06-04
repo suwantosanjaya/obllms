@@ -17,7 +17,7 @@ export async function createAccessRequest(userId: string, departmentId: string) 
         })
 
         if (existingRole) {
-            return { success: false, error: 'Anda sudah memiliki akses ke departemen ini.' }
+            return { success: false, error: 'Anda sudah memiliki akses ke program studi ini.' }
         }
 
         // Check if request already pending
@@ -30,7 +30,7 @@ export async function createAccessRequest(userId: string, departmentId: string) 
         })
 
         if (existingRequest) {
-            return { success: false, error: 'Anda sudah mengajukan akses untuk departemen ini dan sedang menunggu persetujuan.' }
+            return { success: false, error: 'Anda sudah mengajukan akses untuk program studi ini dan sedang menunggu persetujuan.' }
         }
 
         const request = await prisma.departmentAccessRequest.create({

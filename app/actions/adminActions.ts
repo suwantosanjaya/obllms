@@ -70,12 +70,12 @@ export async function deleteUser(id: string) {
         }
 
         await prisma.$transaction(async (tx) => {
-            // Lepas jabatan ketua departemen jika aktif
+            // Lepas jabatan ketua program studi jika aktif
             await tx.department.updateMany({
                 where: { activeHeadId: id },
                 data: { activeHeadId: null }
             })
-            // Hapus riwayat kepala departemen
+            // Hapus riwayat kepala program studi
             await tx.departmentHeadHistory.deleteMany({ where: { userId: id } })
             // Hapus feedback
             await tx.feedback.deleteMany({ where: { userId: id } })
@@ -238,18 +238,41 @@ export async function getDepartmentsWithHeads() {
 
 // Get users who can be appointed as head of department for a specific department
 export async function getHeadOfDepartmentCandidates(departmentId: string) {
-    return await prisma.user.findMany({
+    const users = await prisma.user.findMany({
         where: {
             role: { contains: 'teacher' },
+            isActive: true,
+            headedFaculties: { none: {} },
+            headedUniversities: { none: {} },
             headedDepartments: {
                 none: {
                     id: { not: departmentId }
                 }
-            },
-            isActive: true
+            }
         },
-        select: { id: true, name: true, email: true }
+        select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+        }
     })
+    
+    return users.map(u => {
+        let titleName = u.name;
+        if (u.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = u.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            titleName = `${prefix}${u.name}${suffix}`;
+        }
+        return {
+            id: u.id,
+            name: titleName,
+            originalName: u.name,
+            email: u.email
+        };
+    });
 }
 
 // Assign an active head to a department
@@ -264,7 +287,7 @@ export async function assignDepartmentHead(departmentId: string, userId: string 
                 }
             })
             if (existingHead) {
-                return { success: false, error: `Dosen ini sudah menjabat sebagai Ketua di Departemen ${existingHead.name} (${existingHead.code}).` }
+                return { success: false, error: `Dosen ini sudah menjabat sebagai Ketua di Program Studi ${existingHead.name} (${existingHead.code}).` }
             }
 
             // Ensure the user has the global role
@@ -355,13 +378,326 @@ export async function assignDepartmentHead(departmentId: string, userId: string 
 
 // Get the history of heads for a department
 export async function getDepartmentHeadHistory(departmentId: string) {
-    return await prisma.departmentHeadHistory.findMany({
+    const list = await prisma.departmentHeadHistory.findMany({
         where: { departmentId },
         include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: { 
+                select: { 
+                    id: true, 
+                    name: true, 
+                    email: true,
+                    teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+                } 
+            }
         },
         orderBy: { createdAt: 'desc' }
     })
+
+    return list.map(h => {
+        if (h.user && h.user.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = h.user.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            (h.user as any).name = `${prefix}${h.user.name}${suffix}`;
+        }
+        return h;
+    });
+}
+
+// ---------------------------------------------
+// FACULTY DEAN (DEKAN) MANAGEMENT
+// ---------------------------------------------
+
+export async function getDeanCandidates(facultyId: string) {
+    const users = await prisma.user.findMany({
+        where: {
+            role: { contains: 'teacher' },
+            isActive: true,
+            headedDepartments: { none: {} },
+            headedUniversities: { none: {} },
+            headedFaculties: {
+                none: {
+                    id: { not: facultyId }
+                }
+            }
+        },
+        select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+        }
+    })
+    
+    return users.map(u => {
+        let titleName = u.name;
+        if (u.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = u.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            titleName = `${prefix}${u.name}${suffix}`;
+        }
+        return {
+            id: u.id,
+            name: titleName,
+            originalName: u.name,
+            email: u.email
+        };
+    });
+}
+
+export async function assignFacultyDean(facultyId: string, userId: string | null, startYear?: number, endYear?: number, appointmentDate?: string) {
+    try {
+        if (userId) {
+            const existingDean = await prisma.faculty.findFirst({
+                where: {
+                    activeDeanId: userId,
+                    id: { not: facultyId }
+                }
+            })
+            if (existingDean) {
+                return { success: false, error: `Dosen ini sudah menjabat sebagai Dekan di Fakultas ${existingDean.name}.` }
+            }
+
+            const user = await prisma.user.findUnique({ where: { id: userId } })
+            if (user && !user.role.includes('dean')) {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { role: `${user.role},dean` }
+                })
+            }
+        }
+
+        const previousHistories = await prisma.facultyDeanHistory.findMany({
+            where: { facultyId, isActive: true }
+        })
+        const previousDeanIds = previousHistories.map(h => h.userId)
+
+        if (userId && startYear && endYear) {
+            await prisma.facultyDeanHistory.updateMany({
+                where: { facultyId, isActive: true },
+                data: { isActive: false }
+            })
+            await prisma.facultyDeanHistory.create({
+                data: {
+                    facultyId,
+                    userId,
+                    startYear,
+                    endYear,
+                    appointmentDate: appointmentDate ? new Date(appointmentDate) : new Date(),
+                    isActive: true
+                }
+            })
+        } else if (!userId) {
+            await prisma.facultyDeanHistory.updateMany({
+                where: { facultyId, isActive: true },
+                data: { isActive: false }
+            })
+        }
+
+        await prisma.faculty.update({
+            where: { id: facultyId },
+            data: { activeDeanId: userId }
+        })
+
+        for (const prevId of previousDeanIds) {
+            if (prevId === userId) continue
+
+            const stillDeanElsewhere = await prisma.faculty.findFirst({
+                where: { activeDeanId: prevId }
+            })
+            if (!stillDeanElsewhere) {
+                const prevUser = await prisma.user.findUnique({ where: { id: prevId } })
+                if (prevUser) {
+                    const newRoles = prevUser.role.split(',').map(r => r.trim()).filter(r => r !== 'dean')
+                    await prisma.user.update({
+                        where: { id: prevId },
+                        data: { role: newRoles.join(',') }
+                    })
+                }
+            }
+        }
+
+        revalidatePath('/admin/institutions')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getFacultyDeanHistory(facultyId: string) {
+    const list = await prisma.facultyDeanHistory.findMany({
+        where: { facultyId },
+        include: {
+            user: { 
+                select: { 
+                    id: true, 
+                    name: true, 
+                    email: true,
+                    teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+                } 
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    return list.map(h => {
+        if (h.user && h.user.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = h.user.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            (h.user as any).name = `${prefix}${h.user.name}${suffix}`;
+        }
+        return h;
+    });
+}
+
+// ---------------------------------------------
+// UNIVERSITY RECTOR (REKTOR) MANAGEMENT
+// ---------------------------------------------
+
+export async function getRectorCandidates(universityId: string) {
+    const users = await prisma.user.findMany({
+        where: {
+            role: { contains: 'teacher' },
+            isActive: true,
+            headedDepartments: { none: {} },
+            headedFaculties: { none: {} },
+            headedUniversities: {
+                none: {
+                    id: { not: universityId }
+                }
+            }
+        },
+        select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+        }
+    })
+    
+    return users.map(u => {
+        let titleName = u.name;
+        if (u.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = u.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            titleName = `${prefix}${u.name}${suffix}`;
+        }
+        return {
+            id: u.id,
+            name: titleName,
+            originalName: u.name,
+            email: u.email
+        };
+    });
+}
+
+export async function assignUniversityRector(universityId: string, userId: string | null, startYear?: number, endYear?: number, appointmentDate?: string) {
+    try {
+        if (userId) {
+            const existingRector = await prisma.university.findFirst({
+                where: {
+                    activeRectorId: userId,
+                    id: { not: universityId }
+                }
+            })
+            if (existingRector) {
+                return { success: false, error: `Dosen ini sudah menjabat sebagai Rektor di Universitas ${existingRector.name}.` }
+            }
+
+            const user = await prisma.user.findUnique({ where: { id: userId } })
+            if (user && !user.role.includes('rector')) {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { role: `${user.role},rector` }
+                })
+            }
+        }
+
+        const previousHistories = await prisma.universityRectorHistory.findMany({
+            where: { universityId, isActive: true }
+        })
+        const previousRectorIds = previousHistories.map(h => h.userId)
+
+        if (userId && startYear && endYear) {
+            await prisma.universityRectorHistory.updateMany({
+                where: { universityId, isActive: true },
+                data: { isActive: false }
+            })
+            await prisma.universityRectorHistory.create({
+                data: {
+                    universityId,
+                    userId,
+                    startYear,
+                    endYear,
+                    appointmentDate: appointmentDate ? new Date(appointmentDate) : new Date(),
+                    isActive: true
+                }
+            })
+        } else if (!userId) {
+            await prisma.universityRectorHistory.updateMany({
+                where: { universityId, isActive: true },
+                data: { isActive: false }
+            })
+        }
+
+        await prisma.university.update({
+            where: { id: universityId },
+            data: { activeRectorId: userId }
+        })
+
+        for (const prevId of previousRectorIds) {
+            if (prevId === userId) continue
+
+            const stillRectorElsewhere = await prisma.university.findFirst({
+                where: { activeRectorId: prevId }
+            })
+            if (!stillRectorElsewhere) {
+                const prevUser = await prisma.user.findUnique({ where: { id: prevId } })
+                if (prevUser) {
+                    const newRoles = prevUser.role.split(',').map(r => r.trim()).filter(r => r !== 'rector')
+                    await prisma.user.update({
+                        where: { id: prevId },
+                        data: { role: newRoles.join(',') }
+                    })
+                }
+            }
+        }
+
+        revalidatePath('/admin/institutions')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getUniversityRectorHistory(universityId: string) {
+    const list = await prisma.universityRectorHistory.findMany({
+        where: { universityId },
+        include: {
+            user: { 
+                select: { 
+                    id: true, 
+                    name: true, 
+                    email: true,
+                    teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+                } 
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    return list.map(h => {
+        if (h.user && h.user.teacherProfile) {
+            const { gelarDepan, gelarBelakang } = h.user.teacherProfile;
+            const prefix = gelarDepan ? `${gelarDepan} ` : '';
+            const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+            (h.user as any).name = `${prefix}${h.user.name}${suffix}`;
+        }
+        return h;
+    });
 }
 
 // Get global system stats for Admin Dashboard

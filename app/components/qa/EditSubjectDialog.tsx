@@ -53,11 +53,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
     const [facultyList, setFakultasList] = useState<Faculty[]>([])
     const [loadingFakultas, setLoadingFakultas] = useState(false)
 
-    // SCL Config
-    const [isEntrepreneurshipEnabled, setIsEntrepreneurshipEnabled] = useState(subject.isEntrepreneurshipEnabled ?? true)
-    const [isLeadershipEnabled, setIsLeadershipEnabled] = useState(subject.isLeadershipEnabled ?? true)
-    const [isIndustrySkillEnabled, setIsIndustrySkillEnabled] = useState(subject.isIndustrySkillEnabled ?? true)
-    const [isEmployabilitySkillEnabled, setIsEmployabilitySkillEnabled] = useState(subject.isEmployabilitySkillEnabled ?? true)
+    // SCL Config removed
 
     // Load faculty list when dialog opens
     useEffect(() => {
@@ -78,10 +74,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                 title: subject.title || '',
                 description: subject.description || ''
             })
-            setIsEntrepreneurshipEnabled(subject.isEntrepreneurshipEnabled ?? true)
-            setIsLeadershipEnabled(subject.isLeadershipEnabled ?? true)
-            setIsIndustrySkillEnabled(subject.isIndustrySkillEnabled ?? true)
-            setIsEmployabilitySkillEnabled(subject.isEmployabilitySkillEnabled ?? true)
+            // SCL set states removed
         }
     }, [open, subject])
 
@@ -111,11 +104,6 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
             scope,
             credits: parseInt(credits) || 3,
             facultyId: facultyId || undefined,
-            departmentId: departmentId || undefined,
-            isEntrepreneurshipEnabled,
-            isLeadershipEnabled,
-            isIndustrySkillEnabled,
-            isEmployabilitySkillEnabled
         })
 
         setIsLoading(false)
@@ -216,7 +204,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                                 <SelectContent>
                                     <SelectItem value="universitas">Mata Kuliah Universitas</SelectItem>
                                     <SelectItem value="faculty">Mata Kuliah Fakultas</SelectItem>
-                                    <SelectItem value="department">Mata Kuliah Departemen</SelectItem>
+                                    <SelectItem value="department">Mata Kuliah Program Studi</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -241,14 +229,14 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                         {/* Department — muncul jika scope = 'department' dan faculty sudah dipilih */}
                         {scope === 'department' && facultyId && (
                             <div className="grid gap-2">
-                                <Label>Departemen</Label>
+                                <Label>Program Studi</Label>
                                 <Select disabled={isLocked} value={departmentId} onValueChange={setProdiId} required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Departemen" />
+                                        <SelectValue placeholder="Pilih Program Studi" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {prodiList.length === 0 ? (
-                                            <SelectItem value="_none" disabled>Tidak ada departemen di fakultas ini</SelectItem>
+                                            <SelectItem value="_none" disabled>Tidak ada program studi di fakultas ini</SelectItem>
                                         ) : prodiList.map(p => (
                                             <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
                                         ))}
@@ -270,26 +258,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                             />
                         </div>
 
-                        {/* SCL Settings */}
-                        <div className="grid gap-4 py-2 border-t mt-2 pt-4">
-                            <Label className="font-bold text-md mb-2">Penugasan Penilaian SCL</Label>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="edit-entre" className="font-normal cursor-pointer">Menilai Kewirausahaan (Entrepreneurship)</Label>
-                                <Switch id="edit-entre" checked={isEntrepreneurshipEnabled} onCheckedChange={setIsEntrepreneurshipEnabled} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="edit-lead" className="font-normal cursor-pointer">Menilai Kepemimpinan (Leadership)</Label>
-                                <Switch id="edit-lead" checked={isLeadershipEnabled} onCheckedChange={setIsLeadershipEnabled} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="edit-ind" className="font-normal cursor-pointer">Menilai Wawasan Industri (Industry Knowledge)</Label>
-                                <Switch id="edit-ind" checked={isIndustrySkillEnabled} onCheckedChange={setIsIndustrySkillEnabled} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="edit-emp" className="font-normal cursor-pointer">Menilai Kesiapan Kerja (Employability)</Label>
-                                <Switch id="edit-emp" checked={isEmployabilitySkillEnabled} onCheckedChange={setIsEmployabilitySkillEnabled} />
-                            </div>
-                        </div>
+
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>

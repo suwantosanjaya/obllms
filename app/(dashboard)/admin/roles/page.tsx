@@ -17,7 +17,7 @@ const roleFeatures = [
     {
         category: 'Data Master & Kurikulum',
         features: [
-            { name: 'Manajemen Data Fakultas & Departemen', admin: true, qa: false, teacher: false, student: false },
+            { name: 'Manajemen Data Fakultas & Program Studi', admin: true, qa: false, teacher: false, student: false },
             { name: 'Pembuatan Katalog Mata Kuliah', admin: true, qa: true, teacher: false, student: false },
             { name: 'Definisi Profil Lulusan & PLO', admin: true, qa: true, teacher: false, student: false },
             { name: 'Tinjauan Kualitas (QA Metrics)', admin: true, qa: true, teacher: false, student: false },
@@ -50,16 +50,16 @@ export default function RolesMatrixPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <Settings className="h-5 w-5 mb-2 text-blue-500" />
-                        <CardTitle className="text-base">Admin Departemen</CardTitle>
+                        <CardTitle className="text-base">Admin Program Studi</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-xs text-muted-foreground">Pengelola data master universitas, fakultas, departemen, dan pengaturan global.</p>
+                        <p className="text-xs text-muted-foreground">Pengelola data master universitas, fakultas, program studi, dan pengaturan global.</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <BookOpen className="h-5 w-5 mb-2 text-green-500" />
-                        <CardTitle className="text-base">QA / Departemen</CardTitle>
+                        <CardTitle className="text-base">QA / Program Studi</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-xs text-muted-foreground">Penjamin mutu yang mengelola kurikulum dan memantau analitik lulusan.</p>
@@ -96,7 +96,7 @@ export default function RolesMatrixPage() {
                         <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[300px] font-semibold">Fitur / Modul</TableHead>
-                                <TableHead className="text-center">Admin Departemen</TableHead>
+                                <TableHead className="text-center">Admin Program Studi</TableHead>
                                 <TableHead className="text-center">QA</TableHead>
                                 <TableHead className="text-center">Teacher</TableHead>
                                 <TableHead className="text-center">Student</TableHead>

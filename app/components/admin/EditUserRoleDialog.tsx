@@ -21,7 +21,7 @@ interface EditUserRoleDialogProps {
 
 const roleMap: Record<string, string> = {
     super_admin: 'Super Administrator',
-    admin: 'Administrator (Departemen)',
+    admin: 'Administrator (Program Studi)',
     qa: 'Quality Assurance (QA)',
     teacher: 'Dosen (Teacher)',
     student: 'Mahasiswa (Student)'
@@ -131,7 +131,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [] }: Edi
                                         
                                         {selectedRoles.includes(r) && departments && departments.length > 0 && (
                                             <div className="ml-6 mt-2 space-y-2 border-l-2 pl-4 border-muted py-1">
-                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Departemen:</Label>
+                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Program Studi:</Label>
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                                                     {departments.map(d => (
                                                         <div key={d.id} className="flex items-center space-x-2">

@@ -211,8 +211,16 @@ export async function getStudentCloAnalytics(studentId: string, curriculumYearId
                 studentProfile: true,
                 homebaseDepartment: {
                     include: {
+                        activeHead: true,
                         faculty: {
-                            include: { university: true }
+                            include: { 
+                                activeDean: {
+                                    include: { teacherProfile: true }
+                                },
+                                university: {
+                                    include: { activeRector: true }
+                                } 
+                            }
                         }
                     }
                 }
@@ -316,21 +324,29 @@ export async function getStudentCloAnalytics(studentId: string, curriculumYearId
             include: {
                 skillAssessment: true,
                 course: {
-                    include: { subject: true }
+                    include: { 
+                        subject: true,
+                        curriculumYear: {
+                            include: {
+                                curriculumSubjects: true
+                            }
+                        }
+                    }
                 }
             }
         })
 
         const sclAssessments = enrollmentsWithScl.map(e => {
             const subj = e.course.subject;
+            const curSubj = e.course.curriculumYear?.curriculumSubjects.find(cs => cs.subjectId === subj.id);
             return {
                 courseCode: subj?.code,
                 courseName: subj?.title,
                 semester: e.course.semester,
-                entrepreneurship: subj?.isEntrepreneurshipEnabled ? (e.skillAssessment?.entrepreneurshipScore ?? 0) : null,
-                leadership: subj?.isLeadershipEnabled ? (e.skillAssessment?.leadershipScore ?? 0) : null,
-                industryKnowledge: subj?.isIndustrySkillEnabled ? (e.skillAssessment?.industryKnowledgeScore ?? 0) : null,
-                employabilitySkill: subj?.isEmployabilitySkillEnabled ? (e.skillAssessment?.employabilitySkillScore ?? 0) : null,
+                entrepreneurship: curSubj?.isEntrepreneurshipEnabled ? (e.skillAssessment?.entrepreneurshipScore ?? 0) : null,
+                leadership: curSubj?.isLeadershipEnabled ? (e.skillAssessment?.leadershipScore ?? 0) : null,
+                industryKnowledge: curSubj?.isIndustrySkillEnabled ? (e.skillAssessment?.industryKnowledgeScore ?? 0) : null,
+                employabilitySkill: curSubj?.isEmployabilitySkillEnabled ? (e.skillAssessment?.employabilitySkillScore ?? 0) : null,
             }
         })
 
@@ -344,5 +360,97 @@ export async function getStudentCloAnalytics(studentId: string, curriculumYearId
 
     } catch (error: unknown) {
         return { success: false, error: (error as Error).message }
+    }
+}
+
+export async function getDeanAnalytics(userId: string) {
+    try {
+        const faculties = await prisma.faculty.findMany({
+            where: { activeDeanId: userId },
+            include: {
+                departments: {
+                    include: {
+                        clos: { select: { id: true } },
+                        plos: { select: { id: true } }
+                    }
+                }
+            }
+        });
+
+        if (faculties.length === 0) return { success: false, error: 'Bukan dekan aktif' };
+
+        const faculty = faculties[0];
+        
+        // Fetch submission scores for all departments in this faculty
+        const cloIds = faculty.departments.flatMap(d => d.clos.map(c => c.id));
+        const scores = await prisma.submissionCLOScore.findMany({
+            where: { cloId: { in: cloIds } },
+            include: { clo: { select: { departmentId: true } } }
+        });
+
+        const departmentStats = faculty.departments.map(dept => {
+            const deptScores = scores.filter(s => s.clo.departmentId === dept.id && s.score !== null);
+            const totalScore = deptScores.reduce((sum, s) => sum + (s.score as number), 0);
+            const average = deptScores.length > 0 ? totalScore / deptScores.length : null;
+            return {
+                id: dept.id,
+                name: dept.name,
+                average,
+                scoreCount: deptScores.length
+            };
+        });
+
+        return { success: true, facultyName: faculty.name, departments: departmentStats };
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message };
+    }
+}
+
+export async function getRectorAnalytics(userId: string) {
+    try {
+        const universities = await prisma.university.findMany({
+            where: { activeRectorId: userId },
+            include: {
+                faculties: {
+                    include: {
+                        departments: {
+                            include: {
+                                clos: { select: { id: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (universities.length === 0) return { success: false, error: 'Bukan rektor aktif' };
+
+        const university = universities[0];
+        
+        // Fetch submission scores for all faculties in this university
+        const facultyStats = await Promise.all(university.faculties.map(async (fac) => {
+            const cloIds = fac.departments.flatMap(d => d.clos.map(c => c.id));
+            if (cloIds.length === 0) return { id: fac.id, name: fac.name, average: null, scoreCount: 0 };
+
+            const scores = await prisma.submissionCLOScore.findMany({
+                where: { cloId: { in: cloIds } },
+                select: { score: true }
+            });
+
+            const validScores = scores.filter(s => s.score !== null);
+            const totalScore = validScores.reduce((sum, s) => sum + (s.score as number), 0);
+            const average = validScores.length > 0 ? totalScore / validScores.length : null;
+
+            return {
+                id: fac.id,
+                name: fac.name,
+                average,
+                scoreCount: scores.length
+            };
+        }));
+
+        return { success: true, universityName: university.name, faculties: facultyStats };
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message };
     }
 }

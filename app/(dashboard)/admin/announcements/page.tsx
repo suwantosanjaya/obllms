@@ -32,8 +32,8 @@ export default async function AnnouncementsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Manajemen Pengumuman</h1>
                     <p className="text-muted-foreground mt-1">
                         {user.activeRole === 'qa'
-                            ? 'Kelola pengumuman untuk mahasiswa di departemen Anda.'
-                            : 'Kelola pengumuman global dan per-departemen untuk mahasiswa.'}
+                            ? 'Kelola pengumuman untuk mahasiswa di program studi Anda.'
+                            : 'Kelola pengumuman global dan per-program studi untuk mahasiswa.'}
                     </p>
                 </div>
                 <AnnouncementDialog
@@ -65,7 +65,7 @@ export default async function AnnouncementsPage() {
                 <Card>
                     <CardContent className="pt-4">
                         <p className="text-2xl font-black text-emerald-600">{deptCount}</p>
-                        <p className="text-xs text-muted-foreground">Per-Departemen</p>
+                        <p className="text-xs text-muted-foreground">Per-Program Studi</p>
                     </CardContent>
                 </Card>
             </div>

@@ -21,7 +21,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { StudentNotificationBell } from '../student/StudentNotificationBell'
 
 export function Header() {
-    const { role, activeRole, roles, userName, userId, logout, departments, activeDepartmentId, setActiveDepartmentId, departmentRoles, isSidebarCollapsed, toggleSidebar } = useUserStore()
+    const { role, activeRole, roles, userName, userId, logout, departments, activeDepartmentId, setActiveDepartmentId, departmentRoles, isSidebarCollapsed, toggleSidebar, facultyName } = useUserStore()
     const router = useRouter()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -37,7 +37,7 @@ export function Header() {
         router.refresh()
     }
 
-    const visibleDepartments = activeRole === 'super_admin' ? departments : 
+    const visibleDepartments = (activeRole === 'super_admin' || activeRole === 'rector' || activeRole === 'dean') ? departments : 
         (departmentRoles || [])
             .filter(dr => dr.role?.split(',').map((r: string) => r.trim()).includes(activeRole as string) && dr.department)
             .map(dr => dr.department) as { id: string, name: string, code: string }[]
@@ -85,18 +85,26 @@ export function Header() {
             )}
 
             <div className="w-full flex-1 flex justify-end px-4 gap-4">
-                {['qa', 'teacher', 'head_of_department', 'student'].includes(activeRole || '') && visibleDepartments.length > 0 && (
+                {activeRole === 'dean' && facultyName && (
+                    <div className="flex items-center gap-2 px-3 border rounded-md bg-muted/50 text-sm font-medium h-10">
+                        <GraduationCap className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                            Dekanat Fakultas {facultyName}
+                        </span>
+                    </div>
+                )}
+                {['qa', 'teacher', 'head_of_department', 'student', 'rector'].includes(activeRole || '') && visibleDepartments.length > 0 && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="flex gap-2">
                                 <GraduationCap className="h-4 w-4" />
                                 <span className="hidden md:inline">
-                                    {visibleDepartments.find(p => p.id === activeDepartmentId)?.code || 'Pilih Departemen'}
+                                    {visibleDepartments.find(p => p.id === activeDepartmentId)?.code || 'Pilih Program Studi'}
                                 </span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Konteks Departemen</DropdownMenuLabel>
+                            <DropdownMenuLabel>Konteks Program Studi</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {visibleDepartments.map(p => (
                                 <DropdownMenuItem 

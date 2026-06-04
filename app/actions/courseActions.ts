@@ -345,6 +345,9 @@ export async function getCourseDetails(courseId: string) {
             where: { id: courseId },
             include: {
                 subject: { include: { subjectClos: { include: { clo: true } } } },
+                curriculumYear: {
+                    include: { curriculumSubjects: true }
+                },
                 instructor: {
                     select: { id: true, name: true }
                 },

@@ -68,7 +68,7 @@ function AddTeacherDialog({ departmentId }: { departmentId: string }) {
                         <DialogHeader>
                             <DialogTitle>Tambah Dosen Baru</DialogTitle>
                             <DialogDescription>
-                                Buat akun dosen baru untuk departemen Anda. Dosen akan menerima password awal dan wajib menggantinya saat login pertama.
+                                Buat akun dosen baru untuk program studi Anda. Dosen akan menerima password awal dan wajib menggantinya saat login pertama.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -115,7 +115,7 @@ export function TeacherTableClient({ teachers, departmentId }: { teachers: any[]
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle>Daftar Dosen</CardTitle>
-                    <CardDescription>Menampilkan daftar seluruh dosen yang terdaftar di departemen ini.</CardDescription>
+                    <CardDescription>Menampilkan daftar seluruh dosen yang terdaftar di program studi ini.</CardDescription>
                 </div>
                 <AddTeacherDialog departmentId={departmentId} />
             </CardHeader>

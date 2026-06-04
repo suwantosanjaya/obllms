@@ -79,7 +79,7 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                         <DialogTitle>{qaMode ? 'Tambah Dosen Baru' : 'Tambah Pengguna Baru'}</DialogTitle>
                         <DialogDescription>
                             {qaMode 
-                                ? 'Tambahkan akun dosen baru untuk departemen Anda. Password awal akan digenerate otomatis dan dosen wajib menggantinya saat login pertama.'
+                                ? 'Tambahkan akun dosen baru untuk program studi Anda. Password awal akan digenerate otomatis dan dosen wajib menggantinya saat login pertama.'
                                 : 'Masukkan detail pengguna dan pilih peran mereka.'
                             }
                         </DialogDescription>
@@ -124,7 +124,7 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                         </div>
                                         {departments.length > 0 && (
                                             <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                                                <span className="text-sm font-medium">Departemen:</span>
+                                                <span className="text-sm font-medium">Program Studi:</span>
                                                 <span className="text-sm text-primary font-semibold">{departments[0]?.name}</span>
                                             </div>
                                         )}
@@ -167,7 +167,7 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                         
                                         {selectedRoles.includes(r) && departments && departments.length > 0 && (
                                             <div className="ml-6 mt-2 space-y-2 border-l-2 pl-4 border-muted py-1">
-                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Departemen:</Label>
+                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Program Studi:</Label>
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                                                     {departments.map(department => {
                                                         const isVisible = selectedFacultyId === 'all' || department.faculty?.id === selectedFacultyId

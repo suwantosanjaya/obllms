@@ -87,7 +87,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
                     <DialogHeader>
                         <DialogTitle>{mode === 'edit' ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</DialogTitle>
                         <DialogDescription>
-                            {isQA ? 'Pengumuman akan ditampilkan untuk mahasiswa di departemen Anda.' : 'Buat pengumuman global untuk seluruh mahasiswa.'}
+                            {isQA ? 'Pengumuman akan ditampilkan untuk mahasiswa di program studi Anda.' : 'Buat pengumuman global untuk seluruh mahasiswa.'}
                         </DialogDescription>
                     </DialogHeader>
 

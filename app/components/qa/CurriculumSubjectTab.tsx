@@ -11,9 +11,19 @@ import { useClientTable } from '@/app/hooks/useClientTable'
 import { DataTablePagination } from '../ui/data-table-pagination'
 import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 import { toggleCurriculumSubject } from '@/app/actions/curriculumSubjectActions'
+import { EditSCLDialog } from './EditSCLDialog'
+import { Badge } from '@/components/ui/badge'
 
 type Subject = { id: string, code: string, title: string, type: string, scope: string, credits: number }
-type CurriculumSubject = { id: string, subjectId: string }
+type CurriculumSubject = { 
+    id: string, 
+    subjectId: string,
+    sclMethod?: string | null,
+    isEntrepreneurshipEnabled?: boolean,
+    isLeadershipEnabled?: boolean,
+    isIndustrySkillEnabled?: boolean,
+    isEmployabilitySkillEnabled?: boolean
+}
 
 export function CurriculumSubjectTab({
     departmentId,
@@ -98,6 +108,7 @@ export function CurriculumSubjectTab({
                                 <SortableTableHead sortKey="credits" currentSort={sortConfig} onSort={handleSort} label="SKS" />
                                 <SortableTableHead sortKey="type" currentSort={sortConfig} onSort={handleSort} label="Tipe" />
                                 <SortableTableHead sortKey="scope" currentSort={sortConfig} onSort={handleSort} label="Cakupan" />
+                                <TableHead className="text-center">Pengaturan SCL</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -110,6 +121,7 @@ export function CurriculumSubjectTab({
                             ) : (
                                 paginatedData.map((subject: any) => {
                                     const isSelected = selectedIds.has(subject.id)
+                                    const curriculumSubject = initialSelected.find(s => s.subjectId === subject.id)
                                     return (
                                         <TableRow key={subject.id} className={isSelected ? 'bg-primary/5' : ''}>
                                             <TableCell className="text-center">
@@ -124,6 +136,26 @@ export function CurriculumSubjectTab({
                                             <TableCell>{subject.credits}</TableCell>
                                             <TableCell className="capitalize">{subject.type}</TableCell>
                                             <TableCell className="capitalize">{subject.scope}</TableCell>
+                                            <TableCell className="text-center">
+                                                {isSelected && curriculumSubject ? (
+                                                    <div className="flex flex-col gap-1.5 items-center">
+                                                        <EditSCLDialog 
+                                                            curriculumSubject={curriculumSubject}
+                                                            subjectTitle={subject.title}
+                                                            departmentId={departmentId}
+                                                            curriculumYearId={curriculumYearId}
+                                                            isLocked={isLocked}
+                                                        />
+                                                        {curriculumSubject.sclMethod && curriculumSubject.sclMethod !== 'NONE' && (
+                                                            <Badge variant="secondary" className="text-[10px] py-0">
+                                                                {curriculumSubject.sclMethod === 'CASE_METHOD' ? 'Case Method' : 'Project Based'}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">-</span>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     )
                                 })

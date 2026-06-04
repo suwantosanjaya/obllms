@@ -55,7 +55,7 @@ export default function TeacherStudentsClient({ courses }: { courses: any[] }) {
         return (
             <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
-                    Anda belum mengajar kelas apa pun di departemen ini.
+                    Anda belum mengajar kelas apa pun di program studi ini.
                 </CardContent>
             </Card>
         )

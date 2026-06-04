@@ -36,10 +36,11 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
     const course: any = res.course
     const isClosed = course.config?.enrollmentDeadline && new Date() > new Date(course.config.enrollmentDeadline);
 
-    // Count only CLOs matching the course's curriculum year
     const cloCount = course.curriculumYearId
         ? (course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId) ?? []).length
         : (course.subject?.subjectClos?.length ?? 0)
+
+    const curSubj = course.curriculumYear?.curriculumSubjects?.find((cs: any) => cs.subjectId === course.subjectId);
 
     return (
         <div className="flex flex-col gap-6">
@@ -204,10 +205,10 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                                     studentName={enr.student.name}
                                                     initialData={enr.skillAssessment}
                                                     enabledSkills={{
-                                                        entrepreneurship: course.subject?.isEntrepreneurshipEnabled ?? true,
-                                                        leadership: course.subject?.isLeadershipEnabled ?? true,
-                                                        industryKnowledge: course.subject?.isIndustrySkillEnabled ?? true,
-                                                        employabilitySkill: course.subject?.isEmployabilitySkillEnabled ?? true,
+                                                        entrepreneurship: curSubj?.isEntrepreneurshipEnabled ?? false,
+                                                        leadership: curSubj?.isLeadershipEnabled ?? false,
+                                                        industryKnowledge: curSubj?.isIndustrySkillEnabled ?? false,
+                                                        employabilitySkill: curSubj?.isEmployabilitySkillEnabled ?? false,
                                                     }}
                                                 />
                                                 <RemoveStudentButton studentId={enr.studentId} courseId={course.id} studentName={enr.student.name} />

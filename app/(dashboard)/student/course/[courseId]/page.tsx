@@ -49,6 +49,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
     }
 
     const course: any = res.course
+    const curSubj = course.curriculumYear?.curriculumSubjects?.find((cs: any) => cs.subjectId === course.subjectId);
 
     // Group modules by week
     const modulesByWeek: Record<number, any[]> = {}
@@ -241,7 +242,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                                 <CardDescription>Evaluasi soft skill Anda oleh Dosen.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
-                                {course.subject?.isEntrepreneurshipEnabled !== false && (
+                                {curSubj?.isEntrepreneurshipEnabled !== false && (
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-muted-foreground">Kewirausahaan (Entrepreneurship)</span>
@@ -252,7 +253,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                                         </div>
                                     </div>
                                 )}
-                                {course.subject?.isLeadershipEnabled !== false && (
+                                {curSubj?.isLeadershipEnabled !== false && (
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-muted-foreground">Kepemimpinan (Leadership)</span>
@@ -263,7 +264,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                                         </div>
                                     </div>
                                 )}
-                                {course.subject?.isIndustrySkillEnabled !== false && (
+                                {curSubj?.isIndustrySkillEnabled !== false && (
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-muted-foreground">Wawasan Industri (Industry Knowledge)</span>
@@ -274,7 +275,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                                         </div>
                                     </div>
                                 )}
-                                {course.subject?.isEmployabilitySkillEnabled !== false && (
+                                {curSubj?.isEmployabilitySkillEnabled !== false && (
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-muted-foreground">Kesiapan Kerja (Employability)</span>

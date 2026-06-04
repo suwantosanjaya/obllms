@@ -39,7 +39,7 @@ export function CurriculumRevisionRequestButton({ departmentId, yearId, userId }
         if (res.success) {
             toast({
                 title: '📨 Permintaan Revisi Terkirim',
-                description: 'Ketua Departemen akan menerima permintaan Anda dan memberikan keputusan.',
+                description: 'Ketua Program Studi akan menerima permintaan Anda dan memberikan keputusan.',
             })
             setOpen(false)
             setNote('')
@@ -61,7 +61,7 @@ export function CurriculumRevisionRequestButton({ departmentId, yearId, userId }
                 <DialogHeader>
                     <DialogTitle>Ajukan Permintaan Revisi Kurikulum</DialogTitle>
                     <DialogDescription>
-                        Kurikulum ini sudah <strong>disetujui</strong>. Permintaan Anda akan dikirimkan ke Ketua Departemen untuk diputuskan.
+                        Kurikulum ini sudah <strong>disetujui</strong>. Permintaan Anda akan dikirimkan ke Ketua Program Studi untuk diputuskan.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 py-2">
@@ -77,7 +77,7 @@ export function CurriculumRevisionRequestButton({ departmentId, yearId, userId }
                         className="resize-none"
                     />
                     <p className="text-xs text-muted-foreground">
-                        Catatan ini akan ditampilkan kepada Ketua Departemen saat mempertimbangkan permintaan Anda.
+                        Catatan ini akan ditampilkan kepada Ketua Program Studi saat mempertimbangkan permintaan Anda.
                     </p>
                 </div>
                 <DialogFooter>

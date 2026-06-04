@@ -51,7 +51,7 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
                                 <TableHead className="w-[50px] text-center">No</TableHead>
                                 <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead label="Peran / Nama" sortKey="title" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Departemen" sortKey="department.name" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead label="Program Studi" sortKey="department.name" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead label="Penyelarasan (Visi/Misi)" sortKey="visionMission.code" currentSort={sortConfig} onSort={handleSort} />
                                 <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>

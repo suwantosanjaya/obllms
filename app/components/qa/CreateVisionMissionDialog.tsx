@@ -29,7 +29,7 @@ export function CreateVisionMissionDialog({ isLocked, departmentId, curriculumYe
         const result = await createVisionMission({ ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
-            toast({ title: 'Sukses', description: 'Visi/Misi Departemen berhasil dibuat.' })
+            toast({ title: 'Sukses', description: 'Visi/Misi Program Studi berhasil dibuat.' })
             setOpen(false)
             setFormData({ code: '', description: '', type: 'vision' })
         } else {
@@ -48,7 +48,7 @@ export function CreateVisionMissionDialog({ isLocked, departmentId, curriculumYe
                     <DialogHeader>
                         <DialogTitle>Tambah Visi/Misi</DialogTitle>
                         <DialogDescription>
-                            Buat pernyataan visi atau misi departemen baru.
+                            Buat pernyataan visi atau misi program studi baru.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

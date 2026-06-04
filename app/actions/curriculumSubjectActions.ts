@@ -47,3 +47,30 @@ export async function toggleCurriculumSubject(curriculumYearId: string, subjectI
         return { success: false, error: (error as Error).message }
     }
 }
+
+export async function updateCurriculumSubjectSCL(
+    id: string,
+    departmentId: string,
+    curriculumYearId: string,
+    data: {
+        sclMethod: string;
+        isEntrepreneurshipEnabled: boolean;
+        isLeadershipEnabled: boolean;
+        isIndustrySkillEnabled: boolean;
+        isEmployabilitySkillEnabled: boolean;
+    }
+) {
+    try {
+        const lock = await checkCurriculumLock(departmentId, curriculumYearId)
+        if (lock.locked) return { success: false, error: lock.error }
+
+        const updated = await prisma.curriculumSubject.update({
+            where: { id },
+            data
+        })
+        revalidatePath('/qa/curriculum/builder')
+        return { success: true, curriculumSubject: updated }
+    } catch (error: unknown) {
+        return { success: false, error: (error as Error).message }
+    }
+}

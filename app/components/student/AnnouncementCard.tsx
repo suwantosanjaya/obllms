@@ -32,7 +32,7 @@ export function AnnouncementCard({ announcement }: { announcement: any }) {
                         </span>
                     ) : (
                         <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                            <Building2 className="w-3 h-3" /> {a.department?.name || 'Departemen'}
+                            <Building2 className="w-3 h-3" /> {a.department?.name || 'Program Studi'}
                         </span>
                     )}
                     <span className="text-[11px] text-muted-foreground ml-auto">

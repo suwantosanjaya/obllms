@@ -25,7 +25,7 @@ export default async function QASchedulesPage() {
                 </Button>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Manajemen Jadwal Mata Kuliah</h1>
-                    <p className="text-muted-foreground mt-1">Atur dan pantau jadwal kelas untuk semua dosen di departemen Anda.</p>
+                    <p className="text-muted-foreground mt-1">Atur dan pantau jadwal kelas untuk semua dosen di program studi Anda.</p>
                 </div>
             </div>
 

@@ -40,7 +40,7 @@ export function RequestAccessDialog({ universities, userId }: { universities: an
         setLoading(false)
 
         if (res.success) {
-            toast({ title: 'Berhasil', description: 'Pengajuan akses departemen telah dikirim ke QA Departemen untuk disetujui.' })
+            toast({ title: 'Berhasil', description: 'Pengajuan akses program studi telah dikirim ke QA Program Studi untuk disetujui.' })
             setOpen(false)
             setUnivId('')
             setFacId('')
@@ -55,7 +55,7 @@ export function RequestAccessDialog({ universities, userId }: { universities: an
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
-                    Ajukan Akses Departemen Baru
+                    Ajukan Akses Program Studi Baru
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -63,7 +63,7 @@ export function RequestAccessDialog({ universities, userId }: { universities: an
                     <DialogHeader>
                         <DialogTitle>Ajukan Akses Mengajar</DialogTitle>
                         <DialogDescription>
-                            Pilih departemen tempat Anda akan mengajar. Permintaan Anda akan ditinjau oleh tim QA dari departemen terkait.
+                            Pilih program studi tempat Anda akan mengajar. Permintaan Anda akan ditinjau oleh tim QA dari program studi terkait.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -92,9 +92,9 @@ export function RequestAccessDialog({ universities, userId }: { universities: an
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Program Studi / Departemen</Label>
+                            <Label>Program Studi / Program Studi</Label>
                             <Select value={deptId} onValueChange={setDeptId} disabled={!facId || loading}>
-                                <SelectTrigger><SelectValue placeholder="Pilih Departemen" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Program Studi" /></SelectTrigger>
                                 <SelectContent>
                                     {departments.map((d: any) => (
                                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>

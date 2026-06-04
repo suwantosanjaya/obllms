@@ -50,9 +50,9 @@ export default function AccessRequestTable({ initialRequests }: { initialRequest
     return (
         <Card className="mt-8 shadow-md">
             <CardHeader className="bg-blue-50/30 dark:bg-transparent border-b">
-                <CardTitle className="text-xl text-blue-800 dark:text-foreground">Permintaan Akses Lintas Departemen</CardTitle>
+                <CardTitle className="text-xl text-blue-800 dark:text-foreground">Permintaan Akses Lintas Program Studi</CardTitle>
                 <CardDescription>
-                    Daftar dosen dari luar departemen atau Dosen Luar Biasa yang meminta akses untuk mengajar di departemen Anda.
+                    Daftar dosen dari luar program studi atau Dosen Luar Biasa yang meminta akses untuk mengajar di program studi Anda.
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-4 space-y-4">

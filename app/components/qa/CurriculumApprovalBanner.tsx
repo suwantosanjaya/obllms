@@ -25,7 +25,7 @@ export function CurriculumApprovalBanner({ departmentId, curriculumYearId, statu
                 <AlertCircle className="w-5 h-5 text-slate-500" />
                 <div>
                     <h4 className="font-semibold">Pilih Program Studi</h4>
-                    <p className="text-sm">Silakan pilih Program Studi (Departemen) di pojok kanan atas untuk melihat dan mengajukan kurikulum.</p>
+                    <p className="text-sm">Silakan pilih Program Studi (Program Studi) di pojok kanan atas untuk melihat dan mengajukan kurikulum.</p>
                 </div>
             </div>
         )
@@ -81,7 +81,7 @@ export function CurriculumApprovalBanner({ departmentId, curriculumYearId, statu
                     <h4 className="font-semibold text-yellow-900">Status: {currentStatus}</h4>
                     <p className="text-sm">
                         {currentStatus === 'SUBMITTED' 
-                            ? 'Kurikulum telah diajukan dan menunggu persetujuan Ketua Departemen.'
+                            ? 'Kurikulum telah diajukan dan menunggu persetujuan Ketua Program Studi.'
                             : 'Kurikulum ini sedang dalam proses penyusunan dan belum disetujui.'}
                     </p>
                 </div>

@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.institutions.universities.toLocaleString('id-ID')}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {stats.institutions.faculties} Fakultas, {stats.institutions.departments} Departemen
+                            {stats.institutions.faculties} Fakultas, {stats.institutions.departments} Program Studi
                         </p>
                     </CardContent>
                 </Card>

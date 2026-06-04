@@ -29,9 +29,15 @@ model User {
   enrollments Enrollment[] // For Mahasiswa
   courses     Course[]     @relation("CourseInstructor") // For Dosen
   submissions Submission[] // For Mahasiswa
+  createdTickets HelpdeskTicket[] @relation("TicketCreator")
+  repliedTickets HelpdeskTicket[] @relation("TicketReplier")
   feedbacks   Feedback[] // For Mahasiswa and QA interactions
   headedDepartments Department[] @relation("ActiveHead")
+  headedFaculties   Faculty[]    @relation("ActiveDean")
+  headedUniversities University[] @relation("ActiveRector")
   headHistories DepartmentHeadHistory[]
+  deanHistories FacultyDeanHistory[]
+  rectorHistories UniversityRectorHistory[]
   homebaseDepartment Department? @relation("UserHomebase", fields: [homebaseDepartmentId], references: [id])
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
@@ -86,13 +92,32 @@ model UserDepartmentRole {
 
 // Model for University
 model University {
-  id        String    @id @default(cuid())
-  code      String    @unique
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  code           String    @unique
+  name           String
+  logo           String?   // URL or path to the university logo
+  activeRectorId String?
+  activeRector   User?     @relation("ActiveRector", fields: [activeRectorId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  faculties Faculty[]
+  faculties       Faculty[]
+  rectorHistories UniversityRectorHistory[]
+}
+
+model UniversityRectorHistory {
+  id              String   @id @default(cuid())
+  universityId    String
+  userId          String
+  startYear       Int
+  endYear         Int
+  isActive        Boolean  @default(true)
+  appointmentDate DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Global System Settings (Key-Value)
@@ -103,16 +128,34 @@ model SystemSetting {
 
 // Model for Faculty
 model Faculty {
-  id        String    @id @default(cuid())
-  code      String    @unique // e.g., "FT", "FE"
-  name      String    // e.g., "Fakultas Teknik"
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  code         String    @unique // e.g., "FT", "FE"
+  name         String    // e.g., "Fakultas Teknik"
+  activeDeanId String?
+  activeDean   User?     @relation("ActiveDean", fields: [activeDeanId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  universityId String?
-  university   University? @relation(fields: [universityId], references: [id])
-  departments Department[]
-  subjects  Subject[]
+  universityId  String?
+  university    University? @relation(fields: [universityId], references: [id])
+  departments   Department[]
+  subjects      Subject[]
+  deanHistories FacultyDeanHistory[]
+}
+
+model FacultyDeanHistory {
+  id              String   @id @default(cuid())
+  facultyId       String
+  userId          String
+  startYear       Int
+  endYear         Int
+  isActive        Boolean  @default(true)
+  appointmentDate DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Model for Prodi (Program Studi)
@@ -170,12 +213,6 @@ model Subject {
   departmentId     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  // SCL (Student Centered Learning) Features
-  isEntrepreneurshipEnabled Boolean @default(false)
-  isLeadershipEnabled       Boolean @default(false)
-  isIndustrySkillEnabled    Boolean @default(false)
-  isEmployabilitySkillEnabled Boolean @default(false)
 
   // Relations
   faculty     Faculty? @relation(fields: [facultyId], references: [id])
@@ -634,6 +671,14 @@ model CurriculumSubject {
   curriculumYearId String
   subjectId        String
   includeInAnalytics Boolean @default(true) // Toggle per-course analytics
+  
+  // SCL (Student Centered Learning) Features
+  sclMethod                 String?  @default("NONE") // 'CASE_METHOD', 'PROJECT_BASED', 'NONE'
+  isEntrepreneurshipEnabled Boolean @default(false)
+  isLeadershipEnabled       Boolean @default(false)
+  isIndustrySkillEnabled    Boolean @default(false)
+  isEmployabilitySkillEnabled Boolean @default(false)
+  
   createdAt        DateTime @default(now())
 
   curriculumYear   CurriculumYear @relation(fields: [curriculumYearId], references: [id], onDelete: Cascade)
@@ -706,4 +751,44 @@ model Announcement {
 
   author     User        @relation(fields: [authorId], references: [id])
   department Department? @relation(fields: [departmentId], references: [id])
+}
+
+// Model for Learner Support Services (Helpdesk)
+model HelpdeskTicket {
+  id          String   @id @default(cuid())
+  studentId   String
+  subject     String
+  message     String
+  status      String   @default("OPEN") // 'OPEN', 'IN_PROGRESS', 'CLOSED'
+  replyMessage String?
+  repliedById  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation("TicketCreator", fields: [studentId], references: [id], onDelete: Cascade)
+  replier     User?    @relation("TicketReplier", fields: [repliedById], references: [id], onDelete: SetNull)
+}
+
+// Model for Faculty Training Programs
+model TrainingCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  modules   TrainingModule[]
+}
+
+model TrainingModule {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  mediaUrl    String?
+  mediaType   String   @default("VIDEO") // 'VIDEO', 'PDF', 'LINK'
+  categoryId  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  category    TrainingCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }

@@ -16,7 +16,7 @@ import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 const SCOPE_LABELS: Record<string, { label: string; icon: React.ElementType; className: string }> = {
     universitas: { label: 'Universitas', icon: University, className: 'bg-purple-100 text-purple-800 border-purple-300' },
     faculty: { label: 'Fakultas', icon: Building2, className: 'bg-blue-100 text-blue-800 border-blue-300' },
-    department: { label: 'Departemen', icon: GraduationCap, className: 'bg-green-100 text-green-800 border-green-300' },
+    department: { label: 'Program Studi', icon: GraduationCap, className: 'bg-green-100 text-green-800 border-green-300' },
 }
 
 export function SubjectTableClient({ subjects, isLocked, defaultFacultyId, defaultDepartmentId }: { subjects: any[], isLocked?: boolean, defaultFacultyId?: string, defaultDepartmentId?: string }) {
@@ -67,7 +67,7 @@ export function SubjectTableClient({ subjects, isLocked, defaultFacultyId, defau
                             <SelectItem value="ALL">Semua Cakupan</SelectItem>
                             <SelectItem value="universitas">Universitas</SelectItem>
                             <SelectItem value="faculty">Fakultas</SelectItem>
-                            <SelectItem value="department">Departemen</SelectItem>
+                            <SelectItem value="department">Program Studi</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -80,7 +80,7 @@ export function SubjectTableClient({ subjects, isLocked, defaultFacultyId, defau
                                 <SortableTableHead className="w-[100px]" label="Tipe" sortKey="type" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead className="w-[80px]" label="SKS" sortKey="credits" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead className="w-[130px]" label="Cakupan" sortKey="scope" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="hidden md:table-cell">Departemen / Fakultas</TableHead>
+                                <TableHead className="hidden md:table-cell">Program Studi / Fakultas</TableHead>
                                 <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -106,7 +106,7 @@ export function SubjectTableClient({ subjects, isLocked, defaultFacultyId, defau
                                     } else if (subject.scope === 'faculty' && subject.faculty) {
                                         unitLabel = subject.faculty.name
                                     } else if (subject.scope === 'universitas') {
-                                        unitLabel = 'Semua Departemen'
+                                        unitLabel = 'Semua Program Studi'
                                     }
 
                                     return (

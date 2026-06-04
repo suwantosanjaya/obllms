@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type UserRole = 'student' | 'teacher' | 'qa' | 'admin' | 'super_admin' | 'head_of_department' | null
+export type UserRole = 'student' | 'teacher' | 'qa' | 'admin' | 'super_admin' | 'head_of_department' | 'dean' | 'rector' | null
 
 interface UserState {
     role: UserRole // Deprecated but kept for backward compatibility; represents activeRole
@@ -20,6 +20,8 @@ interface UserState {
     setDepartmentRoles: (roles: any[]) => void
     activeDepartmentId: string | null
     setActiveDepartmentId: (id: string) => void
+    facultyName: string | null
+    setFacultyName: (name: string | null) => void
     logout: () => void
     _hasHydrated: boolean
     setHasHydrated: (state: boolean) => void
@@ -46,7 +48,9 @@ export const useUserStore = create<UserState>()(
             setActiveDepartmentId: (activeDepartmentId) => set({ activeDepartmentId }),
             departmentRoles: [],
             setDepartmentRoles: (roles) => set({ departmentRoles: roles }),
-            logout: () => set({ role: null, activeRole: null, roles: [], userName: 'Guest', userId: null, departments: [], departmentRoles: [], activeDepartmentId: null }),
+            facultyName: null,
+            setFacultyName: (name) => set({ facultyName: name }),
+            logout: () => set({ role: null, activeRole: null, roles: [], userName: 'Guest', userId: null, departments: [], departmentRoles: [], activeDepartmentId: null, facultyName: null }),
             _hasHydrated: false,
             setHasHydrated: (state) => set({ _hasHydrated: state }),
             isSidebarCollapsed: false,

@@ -27,10 +27,6 @@ export async function createSubject(data: {
     credits: number
     facultyId?: string
     departmentId?: string
-    isEntrepreneurshipEnabled?: boolean
-    isLeadershipEnabled?: boolean
-    isIndustrySkillEnabled?: boolean
-    isEmployabilitySkillEnabled?: boolean
 }) {
     try {
         const subject = await prisma.subject.create({
@@ -43,10 +39,6 @@ export async function createSubject(data: {
                 credits: data.credits,
                 facultyId: data.scope === 'faculty' || data.scope === 'department' ? (data.facultyId || null) : null,
                 departmentId: data.scope === 'department' ? (data.departmentId || null) : null,
-                isEntrepreneurshipEnabled: data.isEntrepreneurshipEnabled ?? true,
-                isLeadershipEnabled: data.isLeadershipEnabled ?? true,
-                isIndustrySkillEnabled: data.isIndustrySkillEnabled ?? true,
-                isEmployabilitySkillEnabled: data.isEmployabilitySkillEnabled ?? true,
             }
         })
         revalidatePath('/qa/subjects')
@@ -68,10 +60,6 @@ export async function updateSubject(id: string, data: {
     credits: number
     facultyId?: string
     departmentId?: string
-    isEntrepreneurshipEnabled?: boolean
-    isLeadershipEnabled?: boolean
-    isIndustrySkillEnabled?: boolean
-    isEmployabilitySkillEnabled?: boolean
 }) {
     try {
         const subject = await prisma.subject.update({
@@ -85,10 +73,6 @@ export async function updateSubject(id: string, data: {
                 credits: data.credits,
                 facultyId: data.scope === 'faculty' || data.scope === 'department' ? (data.facultyId || null) : null,
                 departmentId: data.scope === 'department' ? (data.departmentId || null) : null,
-                isEntrepreneurshipEnabled: data.isEntrepreneurshipEnabled ?? true,
-                isLeadershipEnabled: data.isLeadershipEnabled ?? true,
-                isIndustrySkillEnabled: data.isIndustrySkillEnabled ?? true,
-                isEmployabilitySkillEnabled: data.isEmployabilitySkillEnabled ?? true,
             }
         })
         revalidatePath('/qa/subjects')

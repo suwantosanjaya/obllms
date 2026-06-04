@@ -105,11 +105,20 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
         const { password, ...userWithoutPassword } = user
 
         // If user is a super admin, give them access to ALL departments
-        if (roles.includes('super_admin')) {
+        if (roles.includes('super_admin') || roles.includes('rector')) {
             const allDepartments = await prisma.department.findMany({
                 orderBy: { name: 'asc' }
             })
             user.departments = allDepartments as any
+        } else if (roles.includes('dean')) {
+            const faculty = await prisma.faculty.findFirst({
+                where: { activeDeanId: user.id },
+                include: { departments: true }
+            })
+            if (faculty) {
+                user.departments = faculty.departments as any
+                ;(user as any).facultyName = faculty.name
+            }
         }
 
         // Set an HTTP-only cookie for server components to access
@@ -178,8 +187,21 @@ export async function getSessionUser() {
 
     // Determine allowed departments for the active role
     let visibleDepartments: any[] = []
-    if (activeRole === 'super_admin') {
+    let facultyName = null
+    if (activeRole === 'super_admin' || activeRole === 'rector') {
         visibleDepartments = await prisma.department.findMany({ orderBy: { name: 'asc' } })
+    } else if (activeRole === 'dean') {
+        const faculty = await prisma.faculty.findFirst({
+            where: { activeDeanId: user.id },
+            include: { departments: true }
+        });
+        if (faculty) {
+            visibleDepartments = faculty.departments;
+            facultyName = faculty.name
+        } else {
+            // Fallback if they are not explicitly an active dean, but have the role
+            visibleDepartments = user.departments;
+        }
     } else {
         visibleDepartments = user.departmentRoles
             .filter(dr => dr.role?.split(',').map((r: string) => r.trim()).includes(activeRole as string) && dr.department)
@@ -200,6 +222,7 @@ export async function getSessionUser() {
     const { password, ...userWithoutPassword } = user
     return { 
         ...userWithoutPassword, 
+        facultyName,
         departments: activeRole === 'super_admin' ? visibleDepartments : user.departments, 
         departmentRoles: user.departmentRoles, 
         activeDepartmentId, 
@@ -284,7 +307,7 @@ export async function getTeachers() {
                 nidn: t.teacherProfile?.nidn,
                 nip: t.teacherProfile?.nip,
                 departmentId: t.homebaseDepartment?.id,
-                departmentName: t.homebaseDepartment?.name || 'Tanpa Departemen',
+                departmentName: t.homebaseDepartment?.name || 'Tanpa Program Studi',
                 facultyId: t.homebaseDepartment?.faculty?.id,
                 facultyName: t.homebaseDepartment?.faculty?.name || 'Tanpa Fakultas'
             }

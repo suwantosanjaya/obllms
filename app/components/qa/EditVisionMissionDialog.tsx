@@ -29,7 +29,7 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
         const result = await updateVisionMission(vm.id, { ...formData, departmentId, curriculumYearId })
 
         if (result.success) {
-            toast({ title: 'Sukses', description: 'Visi/Misi Departemen berhasil diperbarui.' })
+            toast({ title: 'Sukses', description: 'Visi/Misi Program Studi berhasil diperbarui.' })
             setOpen(false)
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' })
@@ -47,7 +47,7 @@ export function EditVisionMissionDialog({ vm, isLocked, departmentId, curriculum
                     <DialogHeader>
                         <DialogTitle>Edit Visi/Misi</DialogTitle>
                         <DialogDescription>
-                            Perbarui pernyataan visi atau misi departemen.
+                            Perbarui pernyataan visi atau misi program studi.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

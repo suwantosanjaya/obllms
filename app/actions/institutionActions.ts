@@ -2,23 +2,61 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { writeFile, unlink } from 'fs/promises'
+import path from 'path'
 
 // ─── University ────────────────────────────────────────────────
 export async function getUniversityList() {
     try {
         const list = await prisma.university.findMany({
             orderBy: { name: 'asc' },
-            include: { faculties: { orderBy: { name: 'asc' } } }
+            include: { 
+                faculties: { orderBy: { name: 'asc' } },
+                activeRector: { 
+                    select: { 
+                        id: true, 
+                        name: true, 
+                        email: true,
+                        teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } } 
+                    } 
+                }
+            }
         })
-        return { success: true, universityList: list }
+        
+        // Format names with titles
+        const formattedList = list.map(u => {
+            if (u.activeRector && u.activeRector.teacherProfile) {
+                const { gelarDepan, gelarBelakang } = u.activeRector.teacherProfile;
+                const prefix = gelarDepan ? `${gelarDepan} ` : '';
+                const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+                (u.activeRector as any).name = `${prefix}${u.activeRector.name}${suffix}`;
+            }
+            return u;
+        });
+
+        return { success: true, universityList: formattedList }
     } catch {
         return { success: false, error: 'Failed to load Universities' }
     }
 }
 
-export async function createUniversity(data: { code: string; name: string }) {
+export async function createUniversity(formData: FormData) {
     try {
-        const university = await prisma.university.create({ data })
+        const code = formData.get('code') as string
+        const name = formData.get('name') as string
+        const logoFile = formData.get('logoFile') as File | null
+
+        let logo: string | undefined = undefined
+
+        if (logoFile && logoFile.size > 0) {
+            const buffer = Buffer.from(await logoFile.arrayBuffer())
+            const filename = `${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+            const filepath = path.join(process.cwd(), 'public', 'uploads', filename)
+            await writeFile(filepath, buffer)
+            logo = `/uploads/${filename}`
+        }
+
+        const university = await prisma.university.create({ data: { code, name, logo } })
         revalidatePath('/admin/institutions')
         return { success: true, university }
     } catch (error: any) {
@@ -29,9 +67,38 @@ export async function createUniversity(data: { code: string; name: string }) {
     }
 }
 
-export async function updateUniversity(id: string, data: { code: string; name: string }) {
+export async function updateUniversity(id: string, formData: FormData) {
     try {
-        const university = await prisma.university.update({ where: { id }, data })
+        const code = formData.get('code') as string
+        const name = formData.get('name') as string
+        const logoFile = formData.get('logoFile') as File | null
+
+        const existingUniversity = await prisma.university.findUnique({ where: { id } })
+        if (!existingUniversity) {
+            return { success: false, error: 'University not found' }
+        }
+
+        const dataToUpdate: any = { code, name }
+
+        if (logoFile && logoFile.size > 0) {
+            const buffer = Buffer.from(await logoFile.arrayBuffer())
+            const filename = `${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+            const filepath = path.join(process.cwd(), 'public', 'uploads', filename)
+            await writeFile(filepath, buffer)
+            dataToUpdate.logo = `/uploads/${filename}`
+
+            // Delete old logo
+            if (existingUniversity.logo && existingUniversity.logo.startsWith('/uploads/')) {
+                const oldFilepath = path.join(process.cwd(), 'public', existingUniversity.logo)
+                try {
+                    await unlink(oldFilepath)
+                } catch (e) {
+                    console.error('Failed to delete old logo:', e)
+                }
+            }
+        }
+
+        const university = await prisma.university.update({ where: { id }, data: dataToUpdate })
         revalidatePath('/admin/institutions')
         return { success: true, university }
     } catch (error: any) {
@@ -44,12 +111,27 @@ export async function updateUniversity(id: string, data: { code: string; name: s
 
 export async function deleteUniversity(id: string) {
     try {
+        const university = await prisma.university.findUnique({ where: { id } })
+        if (!university) {
+            return { success: false, error: 'University not found.' }
+        }
+
         const facultyCount = await prisma.faculty.count({ where: { universityId: id } })
         if (facultyCount > 0) {
             return { success: false, error: 'Cannot delete University because it still has related Faculties.' }
         }
 
         await prisma.university.delete({ where: { id } })
+
+        if (university.logo && university.logo.startsWith('/uploads/')) {
+            const oldFilepath = path.join(process.cwd(), 'public', university.logo)
+            try {
+                await unlink(oldFilepath)
+            } catch (e) {
+                console.error('Failed to delete old logo:', e)
+            }
+        }
+
         revalidatePath('/admin/institutions')
         return { success: true }
     } catch {
@@ -65,10 +147,29 @@ export async function getFacultyList(universityId?: string) {
             orderBy: { name: 'asc' },
             include: { 
                 departments: { orderBy: { name: 'asc' } },
-                university: true
+                university: true,
+                activeDean: { 
+                    select: { 
+                        id: true, 
+                        name: true, 
+                        email: true,
+                        teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+                    } 
+                }
             }
         })
-        return { success: true, facultyList: list }
+        
+        const formattedList = list.map(f => {
+            if (f.activeDean && f.activeDean.teacherProfile) {
+                const { gelarDepan, gelarBelakang } = f.activeDean.teacherProfile;
+                const prefix = gelarDepan ? `${gelarDepan} ` : '';
+                const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+                (f.activeDean as any).name = `${prefix}${f.activeDean.name}${suffix}`;
+            }
+            return f;
+        });
+
+        return { success: true, facultyList: formattedList }
     } catch {
         return { success: false, error: 'Failed to load Faculties' }
     }
@@ -125,10 +226,28 @@ export async function getDepartmentList(facultyId?: string) {
             orderBy: { name: 'asc' },
             include: { 
                 faculty: { include: { university: true } },
-                activeHead: { select: { id: true, name: true, email: true } }
+                activeHead: { 
+                    select: { 
+                        id: true, 
+                        name: true, 
+                        email: true,
+                        teacherProfile: { select: { gelarDepan: true, gelarBelakang: true } }
+                    } 
+                }
             }
         })
-        return { success: true, departmentList: list }
+        
+        const formattedList = list.map(d => {
+            if (d.activeHead && d.activeHead.teacherProfile) {
+                const { gelarDepan, gelarBelakang } = d.activeHead.teacherProfile;
+                const prefix = gelarDepan ? `${gelarDepan} ` : '';
+                const suffix = gelarBelakang ? `, ${gelarBelakang}` : '';
+                (d.activeHead as any).name = `${prefix}${d.activeHead.name}${suffix}`;
+            }
+            return d;
+        });
+
+        return { success: true, departmentList: formattedList }
     } catch {
         return { success: false, error: 'Failed to load Departments' }
     }

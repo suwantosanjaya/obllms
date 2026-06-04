@@ -67,7 +67,7 @@ export async function registerUser(data: {
 
         // Validate department if role requires it
         if (['student', 'teacher', 'qa'].includes(data.role) && !data.departmentId && !(data.role === 'teacher' && data.isDlb)) {
-            return { success: false, error: 'Departemen harus dipilih untuk role ini.' }
+            return { success: false, error: 'Program Studi harus dipilih untuk role ini.' }
         }
 
         // Prepare connect arrays based on role

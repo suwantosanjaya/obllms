@@ -212,7 +212,7 @@ export function EditClassDialog({ course, open, onOpenChange, onCourseUpdated, d
                                         <CommandList>
                                             <CommandEmpty>Dosen tidak ditemukan.</CommandEmpty>
                                             {Object.entries(teachers.reduce((acc, t: any) => {
-                                                const group = `${t.facultyName || 'Tanpa Fakultas'} - ${t.departmentName || 'Tanpa Departemen'}`;
+                                                const group = `${t.facultyName || 'Tanpa Fakultas'} - ${t.departmentName || 'Tanpa Program Studi'}`;
                                                 if (!acc[group]) acc[group] = [];
                                                 acc[group].push(t);
                                                 return acc;
