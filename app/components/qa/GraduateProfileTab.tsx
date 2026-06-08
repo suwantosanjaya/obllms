@@ -50,10 +50,10 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
                                 <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Peran / Nama" sortKey="title" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Program Studi" sortKey="department.name" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Penyelarasan (Visi/Misi)" sortKey="visionMission.code" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <SortableTableHead className="min-w-[300px]" label="Deskripsi Profil Lulusan" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead className="w-[200px]" label="Peran" sortKey="title" currentSort={sortConfig} onSort={handleSort} />
+                                <SortableTableHead className="w-[150px]" label="Penyelarasan (Visi/Misi)" sortKey="visionMission.code" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -66,10 +66,10 @@ export function GraduateProfileTab({ graduateProfiles, mappedVisionMissionsToDro
                                             {(pageIndex * pageSize) + index + 1}
                                         </TableCell>
                                         <TableCell className="font-semibold">{gp.code}</TableCell>
-                                        <TableCell>{gp.title}</TableCell>
-                                        <TableCell>{gp.department?.name || '-'}</TableCell>
+                                        <TableCell className="whitespace-normal break-words">{gp.description}</TableCell>
+                                        <TableCell className="whitespace-normal break-words">{gp.title}</TableCell>
                                         <TableCell>{gp.visionMission?.code || '-'}</TableCell>
-                                        <TableCell className="text-right space-x-2">
+                                        <TableCell className="text-right whitespace-nowrap space-x-2">
                                             {!isLocked && (
                                                 <>
                                                     <EditGraduateProfileDialog profile={gp} visionMissions={mappedVisionMissionsToDropdown} departments={departments} departmentId={departmentId} />

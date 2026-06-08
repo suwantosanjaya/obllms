@@ -104,9 +104,9 @@ export function AssessmentWeightingTab({
                             <TableRow>
                                 <TableHead className="w-[50px] text-center border-r">No</TableHead>
                                 <SortableTableHead className="w-[250px] font-bold border-r" label="Mata Kuliah" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="w-[100px] text-center font-bold border-r">Total MK %</TableHead>
-                                <TableHead className="w-[80px] text-center border-r">PLO</TableHead>
-                                <TableHead className="w-[80px] text-center border-r">CLO</TableHead>
+                                <TableHead className="w-[120px] text-center font-bold border-r">Total MK %</TableHead>
+                                <TableHead className="w-[120px] text-center border-r">PLO</TableHead>
+                                <TableHead className="w-[120px] text-center border-r">CLO</TableHead>
                                 <TableHead className="border-r min-w-[200px]">Teknik Penilaian</TableHead>
                                 <TableHead className="w-[120px] text-center">Bobot (%)</TableHead>
                             </TableRow>

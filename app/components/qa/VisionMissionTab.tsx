@@ -54,8 +54,8 @@ export function VisionMissionTab({ visionMissions, department, departmentId, sel
                                 <TableHead className="w-[50px] text-center">No</TableHead>
                                 <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead className="w-[100px]" label="Tipe" sortKey="type" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <SortableTableHead className="min-w-[400px]" label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -71,8 +71,8 @@ export function VisionMissionTab({ visionMissions, department, departmentId, sel
                                         <TableCell>
                                             <Badge variant={vm.type === 'vision' ? 'default' : 'secondary'}>{vm.type.toUpperCase()}</Badge>
                                         </TableCell>
-                                        <TableCell>{vm.description}</TableCell>
-                                        <TableCell className="text-right flex items-center justify-end gap-2">
+                                        <TableCell className="whitespace-normal break-words">{vm.description}</TableCell>
+                                        <TableCell className="text-right whitespace-nowrap space-x-2">
                                             {!isLocked && (
                                                 <>
                                                     <EditVisionMissionDialog vm={vm} isLocked={isLocked} departmentId={departmentId} curriculumYearId={selectedYearId} />

@@ -51,9 +51,9 @@ export function PLOTab({ plos, mappedGraduateProfilesToDropdown, departmentId, s
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
                                 <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead>Penyelarasan (Profil Lulusan)</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <SortableTableHead className="min-w-[300px]" label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="w-[200px]">Penyelarasan (Profil Lulusan)</TableHead>
+                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -66,7 +66,7 @@ export function PLOTab({ plos, mappedGraduateProfilesToDropdown, departmentId, s
                                             {(pageIndex * pageSize) + index + 1}
                                         </TableCell>
                                         <TableCell className="font-semibold text-primary">{plo.code}</TableCell>
-                                        <TableCell className="max-w-[400px]">{plo.description}</TableCell>
+                                        <TableCell className="whitespace-normal break-words">{plo.description}</TableCell>
                                         <TableCell>
                                             {plo.graduateProfiles && plo.graduateProfiles.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
@@ -76,7 +76,7 @@ export function PLOTab({ plos, mappedGraduateProfilesToDropdown, departmentId, s
                                                 </div>
                                             ) : '-'}
                                         </TableCell>
-                                        <TableCell className="text-right space-x-2">
+                                        <TableCell className="text-right whitespace-nowrap space-x-2">
                                             {!isLocked && (
                                                 <>
                                                     <EditPLODialog plo={plo} graduateProfiles={mappedGraduateProfilesToDropdown} />

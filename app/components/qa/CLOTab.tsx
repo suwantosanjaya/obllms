@@ -51,10 +51,10 @@ export function CLOTab({ clos, mappedPlosToDropdown, departmentId, selectedYearI
                             <TableRow>
                                 <TableHead className="w-[50px] text-center">No</TableHead>
                                 <SortableTableHead className="w-[100px]" label="Kode" sortKey="code" currentSort={sortConfig} onSort={handleSort} />
-                                <SortableTableHead label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
-                                <TableHead>Relasi PLO</TableHead>
-                                <TableHead>Dipakai di</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <SortableTableHead className="min-w-[300px]" label="Deskripsi" sortKey="description" currentSort={sortConfig} onSort={handleSort} />
+                                <TableHead className="w-[150px]">Relasi PLO</TableHead>
+                                <TableHead className="w-[150px]">Dipakai di</TableHead>
+                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -67,7 +67,7 @@ export function CLOTab({ clos, mappedPlosToDropdown, departmentId, selectedYearI
                                             {(pageIndex * pageSize) + index + 1}
                                         </TableCell>
                                         <TableCell className="font-semibold">{clo.code}</TableCell>
-                                        <TableCell className="max-w-[300px]">{clo.description}</TableCell>
+                                        <TableCell className="whitespace-normal break-words">{clo.description}</TableCell>
                                         <TableCell>
                                             {clo.plos && clo.plos.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
@@ -86,7 +86,7 @@ export function CLOTab({ clos, mappedPlosToDropdown, departmentId, selectedYearI
                                                 </div>
                                             ) : <span className="text-muted-foreground text-xs">Belum dipetakan</span>}
                                         </TableCell>
-                                        <TableCell className="text-right space-x-2">
+                                        <TableCell className="text-right whitespace-nowrap space-x-2">
                                             {!isLocked && (
                                                 <>
                                                     <EditCLODialog clo={clo} plos={mappedPlosToDropdown} />

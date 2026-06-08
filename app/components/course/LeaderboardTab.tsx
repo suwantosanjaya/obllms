@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 
-export function LeaderboardTab({ courseId }: { courseId: string }) {
+export function LeaderboardTab({ courseId, isStudent }: { courseId: string, isStudent?: boolean }) {
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [assessments, setAssessments] = useState<any[]>([]);
@@ -103,10 +103,12 @@ export function LeaderboardTab({ courseId }: { courseId: string }) {
                         Peringkat mahasiswa berdasarkan poin keaktifan dan pencapaian.
                     </CardDescription>
                 </div>
-                <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50 gap-2">
-                    <Wand2 className="w-4 h-4" />
-                    Konversi ke Nilai OBE
-                </Button>
+                {!isStudent && (
+                    <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50 gap-2">
+                        <Wand2 className="w-4 h-4" />
+                        Konversi ke Nilai OBE
+                    </Button>
+                )}
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">

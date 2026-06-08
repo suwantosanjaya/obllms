@@ -198,7 +198,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
 
                 {course.config?.isGamificationEnabled && (
                     <TabsContent value="leaderboard" className="mt-0">
-                        <LeaderboardTab courseId={course.id} />
+                        <LeaderboardTab courseId={course.id} isStudent={true} />
                     </TabsContent>
                 )}
 

@@ -92,7 +92,7 @@ export function CurriculumReportTab({
                                 <TableRow>
                                     <TableHead className="w-[100px]">Kode</TableHead>
                                     <TableHead className="w-[150px]">Tipe</TableHead>
-                                    <TableHead>Deskripsi</TableHead>
+                                    <TableHead className="min-w-[400px]">Deskripsi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -103,7 +103,7 @@ export function CurriculumReportTab({
                                         <TableRow key={vm.id}>
                                             <TableCell className="font-semibold">{vm.code}</TableCell>
                                             <TableCell className="capitalize">{vm.type.replace('_', ' ')}</TableCell>
-                                            <TableCell>{vm.description}</TableCell>
+                                            <TableCell className="whitespace-normal break-words">{vm.description}</TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -114,15 +114,15 @@ export function CurriculumReportTab({
 
                 {/* 2. Profil Lulusan */}
                 <section>
-                    <h3 className="text-lg font-bold mb-4 print:text-base">2. Profil Lulusan & Pemetaan VM</h3>
+                    <h3 className="text-lg font-bold mb-4 print:text-base">2. Profil Lulusan / Graduate Profiles (GP) & Pemetaan Visi Misi</h3>
                     <div className="border rounded-md">
                         <Table>
                             <TableHeader className="bg-muted/50">
                                 <TableRow>
                                     <TableHead className="w-[100px]">Kode</TableHead>
-                                    <TableHead className="w-[200px]">Profil Lulusan</TableHead>
-                                    <TableHead>Deskripsi</TableHead>
-                                    <TableHead className="w-[200px]">VM Terkait</TableHead>
+                                    <TableHead className="min-w-[400px]">Deskripsi Profil Lulusan</TableHead>
+                                    <TableHead className="w-[200px]">Peran</TableHead>
+                                    <TableHead className="w-[150px]">Visi/Misi Terkait</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -132,8 +132,8 @@ export function CurriculumReportTab({
                                     graduateProfiles.map(gp => (
                                         <TableRow key={gp.id}>
                                             <TableCell className="font-semibold">{gp.code}</TableCell>
-                                            <TableCell>{gp.title}</TableCell>
-                                            <TableCell>{gp.description}</TableCell>
+                                            <TableCell className="whitespace-normal break-words">{gp.description}</TableCell>
+                                            <TableCell className="whitespace-normal break-words">{gp.title}</TableCell>
                                             <TableCell>
                                                 {gp.visionMission?.code || '-'}
                                             </TableCell>
@@ -153,7 +153,7 @@ export function CurriculumReportTab({
                             <TableHeader className="bg-muted/50">
                                 <TableRow>
                                     <TableHead className="w-[100px]">Kode</TableHead>
-                                    <TableHead>Deskripsi PLO</TableHead>
+                                    <TableHead className="min-w-[400px]">Deskripsi PLO</TableHead>
                                     <TableHead className="w-[200px]">GP Terkait</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -164,7 +164,7 @@ export function CurriculumReportTab({
                                     plos.map(plo => (
                                         <TableRow key={plo.id}>
                                             <TableCell className="font-semibold">{plo.code}</TableCell>
-                                            <TableCell>{plo.description}</TableCell>
+                                            <TableCell className="whitespace-normal break-words">{plo.description}</TableCell>
                                             <TableCell>
                                                 {plo.graduateProfiles?.map((gp: any) => gp.code).join(', ') || '-'}
                                             </TableCell>
@@ -184,7 +184,7 @@ export function CurriculumReportTab({
                             <TableHeader className="bg-muted/50">
                                 <TableRow>
                                     <TableHead className="w-[100px]">Kode</TableHead>
-                                    <TableHead>Deskripsi CLO</TableHead>
+                                    <TableHead className="min-w-[400px]">Deskripsi CLO</TableHead>
                                     <TableHead className="w-[200px]">PLO Terkait</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -195,7 +195,7 @@ export function CurriculumReportTab({
                                     clos.map(clo => (
                                         <TableRow key={clo.id}>
                                             <TableCell className="font-semibold">{clo.code}</TableCell>
-                                            <TableCell>{clo.description}</TableCell>
+                                            <TableCell className="whitespace-normal break-words">{clo.description}</TableCell>
                                             <TableCell>
                                                 {clo.plos?.map((plo: any) => plo.code).join(', ') || '-'}
                                             </TableCell>
@@ -216,11 +216,11 @@ export function CurriculumReportTab({
                                 <TableRow>
                                     <TableHead className="w-[50px] border-r">No</TableHead>
                                     <TableHead className="w-[250px] border-r">Mata Kuliah</TableHead>
-                                    <TableHead className="w-[50px] text-center border-r">SKS</TableHead>
-                                    <TableHead className="w-[80px] text-center border-r">PLO</TableHead>
-                                    <TableHead className="w-[80px] text-center border-r">CLO</TableHead>
+                                    <TableHead className="w-[80px] text-center border-r">SKS</TableHead>
+                                    <TableHead className="w-[120px] text-center border-r">PLO</TableHead>
+                                    <TableHead className="w-[120px] text-center border-r">CLO</TableHead>
                                     <TableHead className="border-r">Teknik Penilaian</TableHead>
-                                    <TableHead className="w-[80px] text-center">Bobot</TableHead>
+                                    <TableHead className="w-[100px] text-center">Bobot</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -427,9 +427,12 @@ export function CurriculumReportTab({
                         table {
                             border-collapse: collapse;
                             width: 100%;
+                            table-layout: fixed;
                         }
                         th, td {
                             border: 1px solid #e5e7eb !important;
+                            word-wrap: break-word;
+                            white-space: normal !important;
                         }
                         /* Page breaks */
                         section {
