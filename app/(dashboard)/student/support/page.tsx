@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { format } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
 export default async function SupportPage() {
     const res = await getStudentTickets()
     console.log("SupportPage res:", res)
