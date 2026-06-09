@@ -17,7 +17,7 @@ interface EditUserRoleDialogProps {
         universityRoles?: any[]
     }
     allowedRoles: string[]
-    departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } } | null }[]
+    departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } | null } | null }[]
     universities?: { id: string, name: string }[]
 }
 

@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createUser } from '@/app/actions/adminActions'
 
 export function CreateUserDialog({ departments = [], universities = [], allowedRoles = ['student', 'teacher', 'qa'], qaMode = false, fixedDepartmentId }: { 
-    departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } } | null }[], 
+    departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } | null } | null }[], 
     universities?: { id: string, name: string }[],
     allowedRoles?: string[],
     qaMode?: boolean,
