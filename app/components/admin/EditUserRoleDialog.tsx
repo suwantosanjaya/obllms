@@ -38,6 +38,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
     const initialRoleDepts: Record<string, string[]> = {}
     if (user.departmentRoles) {
         user.departmentRoles.forEach((dr: any) => {
+            if (dr.role === 'admin') return // Ignore legacy admin department roles
             if (!initialRoleDepts[dr.role]) initialRoleDepts[dr.role] = []
             initialRoleDepts[dr.role].push(dr.departmentId)
         })
