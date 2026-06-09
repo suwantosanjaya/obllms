@@ -59,7 +59,8 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
     const selectedFac = faculties.find((f: any) => f.id === facId)
     const departments = selectedFac?.departments || []
 
-    const needsDepartment = ['student', 'teacher', 'qa', 'admin'].includes(role) // As per plan, all these select department (Admin might optionally, but for simplicity let's require it or just make it optional for admin. Wait, let's require for student, teacher, qa. For Admin, let's also require it since it's a "Department Admin")
+    const needsDepartment = ['student', 'teacher', 'qa'].includes(role)
+    const needsUniversity = role === 'admin'
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -86,7 +87,13 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
         }
 
         if (needsDepartment && !deptId) {
-            setError('Silakan pilih Program Studi / Program Studi Anda.')
+            setError('Silakan pilih Program Studi Anda.')
+            setLoading(false)
+            return
+        }
+
+        if (needsUniversity && !univId) {
+            setError('Silakan pilih Universitas Anda.')
             setLoading(false)
             return
         }
@@ -97,6 +104,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
             passwordPlain: password, 
             role, 
             departmentId: needsDepartment ? deptId : undefined,
+            universityId: needsUniversity ? univId : undefined,
             ...(role === 'teacher' ? { nidn, nip, gelarDepan, gelarBelakang, isDlb } : {}),
             ...(role === 'student' ? { nim, angkatan, jenisKelamin, alamat } : {})
         })
@@ -175,9 +183,9 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="student">Mahasiswa</SelectItem>
-                                <SelectItem value="teacher">Dosen (Teacher)</SelectItem>
-                                <SelectItem value="qa">Tim QA Program Studi</SelectItem>
-                                <SelectItem value="admin">Admin Program Studi</SelectItem>
+                                <SelectItem value="teacher">Dosen</SelectItem>
+                                <SelectItem value="qa">Quality Assurance</SelectItem>
+                                <SelectItem value="admin">Administrator (Universitas)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -238,7 +246,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                         </div>
                     )}
 
-                    {needsDepartment && (
+                    {(needsDepartment || needsUniversity) && (
                         <div className="space-y-4 p-4 border rounded-md bg-muted/20">
                             <div className="flex flex-col space-y-1 mb-4">
                                 <h4 className="text-sm font-semibold text-muted-foreground">{isDlb ? "Informasi Program Studi Tujuan Mengajar Pertama" : "Informasi Homebase (Unit Kerja)"}</h4>
@@ -269,8 +277,10 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Fakultas</Label>
+                            {needsDepartment && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Fakultas</Label>
                                 <Select value={facId} onValueChange={(val) => { setFacId(val); setDeptId('') }} disabled={!univId || loading}>
                                     <SelectTrigger><SelectValue placeholder="Pilih Fakultas" /></SelectTrigger>
                                     <SelectContent>
@@ -289,9 +299,11 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                                         {departments.map((d: any) => (
                                             <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                                         ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                </>
+                            )}
                         </div>
                     )}
 

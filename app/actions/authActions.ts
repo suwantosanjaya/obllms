@@ -28,6 +28,7 @@ export async function registerUser(data: {
     passwordPlain: string
     role: string
     departmentId?: string
+    universityId?: string
     nidn?: string
     nip?: string
     gelarDepan?: string
@@ -65,14 +66,18 @@ export async function registerUser(data: {
             }
         }
 
-        // Validate department if role requires it
+        // Validate department or university if role requires it
         if (['student', 'teacher', 'qa'].includes(data.role) && !data.departmentId && !(data.role === 'teacher' && data.isDlb)) {
             return { success: false, error: 'Program Studi harus dipilih untuk role ini.' }
+        }
+        if (data.role === 'admin' && !data.universityId) {
+            return { success: false, error: 'Universitas harus dipilih untuk role ini.' }
         }
 
         // Prepare connect arrays based on role
         const departmentsConnect = data.departmentId ? [{ id: data.departmentId }] : []
         const userRoles = data.departmentId ? [{ role: data.role, departmentId: data.departmentId }] : []
+        const universityRoles = data.universityId && data.role === 'admin' ? [{ role: 'admin', universityId: data.universityId }] : []
 
         // If role is teacher, prepare teacherProfile data
         const teacherProfileData = data.role === 'teacher' ? {
@@ -106,6 +111,7 @@ export async function registerUser(data: {
                 homebaseDepartmentId: (data.role === 'teacher' && data.isDlb) ? null : (data.departmentId || null),
                 departments: { connect: departmentsConnect },
                 departmentRoles: { create: userRoles },
+                universityRoles: { create: universityRoles },
                 teacherProfile: teacherProfileData,
                 studentProfile: studentProfileData
             }
