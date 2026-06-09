@@ -35,6 +35,7 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [deptSearch, setDeptSearch] = useState('')
     // In qaMode, pre-select teacher role and the fixed department
     const [selectedRoles, setSelectedRoles] = useState<string[]>(qaMode ? ['teacher'] : [])
     const [roleDepts, setRoleDepts] = useState<Record<string, string[]>>(qaMode && fixedDepartmentId ? { teacher: [fixedDepartmentId] } : {})
@@ -188,7 +189,7 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                 <Label className="text-xs text-muted-foreground block mb-2">
                                                     {r === 'admin' ? 'Pilih Universitas:' : 'Pilih Program Studi:'}
                                                 </Label>
-                                                <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                                                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
                                                     {r === 'admin' ? (
                                                         universities.map((univ: any) => {
                                                             const isSelected = roleDepts[r]?.includes(univ.id) || false
@@ -219,10 +220,19 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                         )
                                                         })
                                                     ) : (
-                                                        departments.map(department => {
-                                                            const isVisible = selectedFacultyId === 'all' || department.faculty?.id === selectedFacultyId
-                                                            return (
-                                                                <div key={department.id} className={`items-center space-x-2 ${isVisible ? 'flex' : 'hidden'}`}>
+                                                        <>
+                                                            <Input 
+                                                                placeholder="Cari program studi..." 
+                                                                value={deptSearch} 
+                                                                onChange={(e) => setDeptSearch(e.target.value)}
+                                                                className="h-7 text-xs mb-2"
+                                                            />
+                                                            {departments.filter(department => {
+                                                                const matchesFaculty = selectedFacultyId === 'all' || department.faculty?.id === selectedFacultyId
+                                                                const matchesSearch = department.name.toLowerCase().includes(deptSearch.toLowerCase())
+                                                                return matchesFaculty && matchesSearch
+                                                            }).map(department => (
+                                                                <div key={department.id} className="flex items-start space-x-2">
                                                                     <input
                                                                         type="checkbox"
                                                                         id={`role-${r}-dept-${department.id}`}
@@ -239,19 +249,19 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                                                 return next
                                                                             })
                                                                         }}
-                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                        className="h-3.5 w-3.5 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary flex-shrink-0"
                                                                     />
-                                                                    <Label htmlFor={`role-${r}-dept-${department.id}`} className="text-xs font-normal cursor-pointer">
+                                                                    <Label htmlFor={`role-${r}-dept-${department.id}`} className="text-xs font-normal cursor-pointer leading-tight">
                                                                         <span className="font-medium">{department.name}</span>
                                                                         {department.faculty && (
-                                                                            <span className="text-[10px] text-muted-foreground block">
+                                                                            <span className="text-[10px] text-muted-foreground block mt-0.5">
                                                                                 {department.faculty.name}{department.faculty.university ? ` - ${department.faculty.university.name}` : ''}
                                                                             </span>
                                                                         )}
                                                                     </Label>
                                                                 </div>
-                                                            )
-                                                        })
+                                                            ))}
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>

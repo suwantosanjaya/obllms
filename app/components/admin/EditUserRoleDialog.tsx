@@ -33,6 +33,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
     const [open, setOpen] = useState(false)
     const initialSelectedRoles = user.role.split(',').map(r => r.trim()).filter(r => allowedRoles.includes(r))
     const [selectedRoles, setSelectedRoles] = useState<string[]>(initialSelectedRoles)
+    const [deptSearch, setDeptSearch] = useState('')
     
     // Initialize roleDepts from existing departmentRoles
     const initialRoleDepts: Record<string, string[]> = {}
@@ -152,7 +153,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                                                 <Label className="text-xs text-muted-foreground block mb-2">
                                                     {r === 'admin' ? 'Pilih Universitas:' : 'Pilih Program Studi:'}
                                                 </Label>
-                                                <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                                                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
                                                     {r === 'admin' ? (
                                                         universities.map((univ: any) => {
                                                             const isSelected = roleDepts[r]?.includes(univ.id) || false
@@ -183,36 +184,44 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                                                         )
                                                         })
                                                     ) : (
-                                                        departments.map(d => (
-                                                            <div key={d.id} className="flex items-center space-x-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id={`role-${r}-dept-${d.id}`}
-                                                                    checked={roleDepts[r]?.includes(d.id) || false}
-                                                                    onChange={(e) => {
-                                                                        setRoleDepts(prev => {
-                                                                            const next = { ...prev }
-                                                                            if (!next[r]) next[r] = []
-                                                                            if (e.target.checked) {
-                                                                                next[r] = [...next[r], d.id]
-                                                                            } else {
-                                                                                next[r] = next[r].filter(id => id !== d.id)
-                                                                            }
-                                                                            return next
-                                                                        })
-                                                                    }}
-                                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                                                                />
-                                                                <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer">
-                                                                    <span className="font-medium">{d.name}</span>
-                                                                    {d.faculty && (
-                                                                        <span className="text-[10px] text-muted-foreground block">
-                                                                            {d.faculty.name}{d.faculty.university ? ` - ${d.faculty.university.name}` : ''}
-                                                                        </span>
-                                                                    )}
-                                                                </Label>
-                                                            </div>
-                                                        ))
+                                                        <>
+                                                            <Input 
+                                                                placeholder="Cari program studi..." 
+                                                                value={deptSearch} 
+                                                                onChange={(e) => setDeptSearch(e.target.value)}
+                                                                className="h-7 text-xs mb-2"
+                                                            />
+                                                            {departments.filter(d => d.name.toLowerCase().includes(deptSearch.toLowerCase())).map(d => (
+                                                                <div key={d.id} className="flex items-start space-x-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`role-${r}-dept-${d.id}`}
+                                                                        checked={roleDepts[r]?.includes(d.id) || false}
+                                                                        onChange={(e) => {
+                                                                            setRoleDepts(prev => {
+                                                                                const next = { ...prev }
+                                                                                if (!next[r]) next[r] = []
+                                                                                if (e.target.checked) {
+                                                                                    next[r] = [...next[r], d.id]
+                                                                                } else {
+                                                                                    next[r] = next[r].filter(id => id !== d.id)
+                                                                                }
+                                                                                return next
+                                                                            })
+                                                                        }}
+                                                                        className="h-3.5 w-3.5 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary flex-shrink-0"
+                                                                    />
+                                                                    <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer leading-tight">
+                                                                        <span className="font-medium">{d.name}</span>
+                                                                        {d.faculty && (
+                                                                            <span className="text-[10px] text-muted-foreground block mt-0.5">
+                                                                                {d.faculty.name}{d.faculty.university ? ` - ${d.faculty.university.name}` : ''}
+                                                                            </span>
+                                                                        )}
+                                                                    </Label>
+                                                                </div>
+                                                            ))}
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
