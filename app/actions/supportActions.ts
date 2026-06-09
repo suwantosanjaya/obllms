@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 export async function getStudentTickets() {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'student') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'student') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const tickets = await prisma.helpdeskTicket.findMany({
             where: { studentId: user.id },
@@ -28,7 +28,7 @@ export async function getStudentTickets() {
 export async function createTicket(subject: string, message: string) {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'student') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'student') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const ticket = await prisma.helpdeskTicket.create({
             data: {
@@ -50,7 +50,7 @@ export async function getAllTickets(departmentId?: string) {
     try {
         const user = await getSessionUser()
         if (!user || (user.activeRole !== 'qa' && user.activeRole !== 'admin' && user.activeRole !== 'super_admin')) {
-            return { success: false, error: 'Unauthorized' }
+            return { success: false, error: 'Akses ditolak (Unauthorized)' }
         }
 
         const whereClause: any = {}
@@ -89,7 +89,7 @@ export async function replyTicket(id: string, replyMessage: string) {
     try {
         const user = await getSessionUser()
         if (!user || (user.activeRole !== 'qa' && user.activeRole !== 'admin' && user.activeRole !== 'super_admin')) {
-            return { success: false, error: 'Unauthorized' }
+            return { success: false, error: 'Akses ditolak (Unauthorized)' }
         }
 
         const ticket = await prisma.helpdeskTicket.update({

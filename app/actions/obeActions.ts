@@ -76,7 +76,7 @@ export async function createPLO(data: { code: string, description: string, gradu
             }
         })
         if (existing) {
-            return { success: false, error: "Kode PLO sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode PLO sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const payload: any = { code: data.code, description: data.description }
@@ -112,7 +112,7 @@ export async function updatePLO(id: string, data: { code: string, description: s
             }
         })
         if (duplicate) {
-            return { success: false, error: "Kode PLO sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode PLO sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const payload: any = { code: data.code, description: data.description }
@@ -182,7 +182,7 @@ export async function createCLO(data: { code: string, description: string, ploId
             }
         })
         if (existing) {
-            return { success: false, error: "Kode CLO sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode CLO sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const payload: any = {
@@ -224,7 +224,7 @@ export async function updateCLO(id: string, data: { code: string, description: s
             }
         })
         if (duplicate) {
-            return { success: false, error: "Kode CLO sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode CLO sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const payload: any = {
@@ -556,7 +556,7 @@ export async function createGraduateProfile(data: { code: string, title: string,
             }
         })
         if (existing) {
-            return { success: false, error: "Kode Graduate Profile sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode Graduate Profile sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const profile = await prisma.graduateProfile.create({ data })
@@ -584,7 +584,7 @@ export async function updateGraduateProfile(id: string, data: { code: string, ti
             }
         })
         if (duplicate) {
-            return { success: false, error: "Kode Graduate Profile sudah digunakan pada department dan tahun kurikulum ini." }
+            return { success: false, error: "Kode Graduate Profile sudah digunakan pada Program Studi dan tahun kurikulum ini." }
         }
 
         const profile = await prisma.graduateProfile.update({

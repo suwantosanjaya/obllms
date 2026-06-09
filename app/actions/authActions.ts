@@ -164,7 +164,7 @@ export async function getPendingApprovals(activeRole: string, activeDepartmentId
 export async function processApproval(targetUserId: string, action: 'APPROVED' | 'REJECTED', approverId: string) {
     try {
         const user = await prisma.user.findUnique({ where: { id: targetUserId } })
-        if (!user) return { success: false, error: 'User tidak ditemukan' }
+        if (!user) return { success: false, error: 'Pengguna tidak ditemukan' }
         // Removed PENDING restriction to allow toggling
 
         await prisma.user.update({

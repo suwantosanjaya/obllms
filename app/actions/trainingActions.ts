@@ -6,7 +6,7 @@ import { getSessionUser } from './userActions'
 export async function getTrainingModules() {
     try {
         const user = await getSessionUser()
-        if (!user || (user.activeRole !== 'teacher' && user.activeRole !== 'qa' && user.activeRole !== 'head_of_department')) return { success: false, error: 'Unauthorized' }
+        if (!user || (user.activeRole !== 'teacher' && user.activeRole !== 'qa' && user.activeRole !== 'head_of_department')) return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const modules = await prisma.trainingModule.findMany({
             where: { isActive: true },
@@ -74,7 +74,7 @@ export async function getTrainingCategories() {
 export async function createTrainingCategory(name: string) {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const category = await prisma.trainingCategory.create({
             data: { name }
@@ -88,7 +88,7 @@ export async function createTrainingCategory(name: string) {
 export async function createTrainingModule(data: { title: string, description: string, categoryId: string, mediaUrl?: string, mediaType: string }) {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const module = await prisma.trainingModule.create({
             data: {
@@ -113,7 +113,7 @@ export async function createTrainingModule(data: { title: string, description: s
 export async function updateTrainingModule(id: string, data: { title: string, description: string, categoryId: string, mediaUrl?: string, mediaType: string, isActive?: boolean }) {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const module = await prisma.trainingModule.update({
             where: { id },
@@ -139,7 +139,7 @@ export async function updateTrainingModule(id: string, data: { title: string, de
 export async function deleteTrainingModule(id: string) {
     try {
         const user = await getSessionUser()
-        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Unauthorized' }
+        if (!user || user.activeRole !== 'qa') return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         await prisma.trainingModule.delete({ where: { id } })
         

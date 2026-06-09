@@ -102,10 +102,10 @@ import { getSessionUser } from './userActions'
 export async function toggleUserStatus(targetUserId: string) {
     try {
         const caller = await getSessionUser()
-        if (!caller) return { success: false, error: 'Unauthorized' }
+        if (!caller) return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } })
-        if (!targetUser) return { success: false, error: 'User not found' }
+        if (!targetUser) return { success: false, error: 'Pengguna tidak ditemukan' }
 
         // Hierarchy rules
         const callerRole = caller.activeRole || caller.role
@@ -127,7 +127,7 @@ export async function toggleUserStatus(targetUserId: string) {
         }
 
         if (!canToggle) {
-            return { success: false, error: 'Anda tidak memiliki izin untuk mengubah status user ini.' }
+            return { success: false, error: 'Anda tidak memiliki izin untuk mengubah status Pengguna ini.' }
         }
 
         await prisma.user.update({
@@ -149,13 +149,13 @@ export async function updateUserRole(
 ) {
     try {
         const caller = await getSessionUser()
-        if (!caller) return { success: false, error: 'Unauthorized' }
+        if (!caller) return { success: false, error: 'Akses ditolak (Unauthorized)' }
 
         const targetUser = await prisma.user.findUnique({
             where: { id: targetUserId },
             include: { departments: true, departmentRoles: true }
         })
-        if (!targetUser) return { success: false, error: 'User not found' }
+        if (!targetUser) return { success: false, error: 'Pengguna tidak ditemukan' }
 
         const callerRole = caller.activeRole || caller.role
 

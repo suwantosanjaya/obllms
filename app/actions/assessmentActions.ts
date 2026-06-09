@@ -791,7 +791,7 @@ export async function duplicateAssessment(assessmentId: string, targetCourseId: 
             }
         })
 
-        if (!assessment) return { success: false, error: 'Assessment not found' }
+        if (!assessment) return { success: false, error: 'Asesmen tidak ditemukan' }
 
         const result = await prisma.$transaction(async (tx: any) => {
             // 1. Create new Assessment

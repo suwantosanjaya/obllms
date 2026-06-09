@@ -14,7 +14,7 @@ export async function getSubjectList() {
         })
         return { success: true, subjects }
     } catch {
-        return { success: false, error: 'Failed to load Subject data' }
+        return { success: false, error: 'Gagal memuat data Mata Kuliah' }
     }
 }
 
@@ -45,9 +45,9 @@ export async function createSubject(data: {
         return { success: true, subject }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Subject code already exists' }
+            return { success: false, error: 'Kode Mata Kuliah sudah ada atau digunakan' }
         }
-        return { success: false, error: 'Failed to create Subject' }
+        return { success: false, error: 'Gagal menambahkan Mata Kuliah' }
     }
 }
 
@@ -79,9 +79,9 @@ export async function updateSubject(id: string, data: {
         return { success: true, subject }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Subject code already exists' }
+            return { success: false, error: 'Kode Mata Kuliah sudah ada atau digunakan' }
         }
-        return { success: false, error: 'Failed to update Subject' }
+        return { success: false, error: 'Gagal memperbarui Mata Kuliah' }
     }
 }
 
@@ -91,7 +91,7 @@ export async function deleteSubject(id: string) {
         revalidatePath('/qa/subjects')
         return { success: true }
     } catch {
-        return { success: false, error: 'Failed to delete Subject. It might still be in use.' }
+        return { success: false, error: 'Gagal menghapus Mata Kuliah. It might still be in use.' }
     }
 }
 

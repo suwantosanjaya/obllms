@@ -52,7 +52,7 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
         })
 
         if (!user) {
-            return { success: false, error: 'User tidak ditemukan.' }
+            return { success: false, error: 'Pengguna tidak ditemukan.' }
         }
 
         if (!user.isActive) {
@@ -352,7 +352,7 @@ export async function forceCompleteProfileAction(email: string, role: string, da
         })
 
         if (!user) {
-            return { success: false, error: 'User tidak ditemukan.' }
+            return { success: false, error: 'Pengguna tidak ditemukan.' }
         }
 
         if (role === 'teacher') {

@@ -35,7 +35,7 @@ export async function getUniversityList() {
 
         return { success: true, universityList: formattedList }
     } catch {
-        return { success: false, error: 'Failed to load Universities' }
+        return { success: false, error: 'Gagal memuat data Universitas' }
     }
 }
 
@@ -48,7 +48,10 @@ export async function createUniversity(formData: FormData) {
         let logo: string | undefined = undefined
 
         if (logoFile && logoFile.size > 0) {
-            const blob = await put(logoFile.name, logoFile, { access: 'public' })
+            const blob = await put(logoFile.name, logoFile, { 
+                access: 'public',
+                addRandomSuffix: true
+            })
             logo = blob.url
         }
 
@@ -57,9 +60,9 @@ export async function createUniversity(formData: FormData) {
         return { success: true, university }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'University code already exists' }
+            return { success: false, error: 'Kode Universitas sudah digunakan' }
         }
-        return { success: false, error: error?.message || 'Failed to create University' }
+        return { success: false, error: error?.message || 'Gagal menambahkan Universitas' }
     }
 }
 
@@ -71,13 +74,16 @@ export async function updateUniversity(id: string, formData: FormData) {
 
         const existingUniversity = await prisma.university.findUnique({ where: { id } })
         if (!existingUniversity) {
-            return { success: false, error: 'University not found' }
+            return { success: false, error: 'Universitas tidak ditemukan' }
         }
 
         const dataToUpdate: any = { code, name }
 
         if (logoFile && logoFile.size > 0) {
-            const blob = await put(logoFile.name, logoFile, { access: 'public' })
+            const blob = await put(logoFile.name, logoFile, { 
+                access: 'public',
+                addRandomSuffix: true
+            })
             dataToUpdate.logo = blob.url
 
             // Delete old logo
@@ -85,7 +91,7 @@ export async function updateUniversity(id: string, formData: FormData) {
                 try {
                     await del(existingUniversity.logo)
                 } catch (e) {
-                    console.error('Failed to delete old logo:', e)
+                    console.error('Gagal menghapus logo lama:', e)
                 }
             }
         }
@@ -95,9 +101,9 @@ export async function updateUniversity(id: string, formData: FormData) {
         return { success: true, university }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'University code already exists' }
+            return { success: false, error: 'Kode Universitas sudah digunakan' }
         }
-        return { success: false, error: error?.message || 'Failed to update University' }
+        return { success: false, error: error?.message || 'Gagal memperbarui Universitas' }
     }
 }
 
@@ -105,12 +111,12 @@ export async function deleteUniversity(id: string) {
     try {
         const university = await prisma.university.findUnique({ where: { id } })
         if (!university) {
-            return { success: false, error: 'University not found.' }
+            return { success: false, error: 'Universitas tidak ditemukan.' }
         }
 
         const facultyCount = await prisma.faculty.count({ where: { universityId: id } })
         if (facultyCount > 0) {
-            return { success: false, error: 'Cannot delete University because it still has related Faculties.' }
+            return { success: false, error: 'Tidak dapat menghapus Universitas karena masih memiliki Fakultas yang terhubung.' }
         }
 
         await prisma.university.delete({ where: { id } })
@@ -119,14 +125,14 @@ export async function deleteUniversity(id: string) {
             try {
                 await del(university.logo)
             } catch (e) {
-                console.error('Failed to delete old logo:', e)
+                console.error('Gagal menghapus logo lama:', e)
             }
         }
 
         revalidatePath('/admin/institutions')
         return { success: true }
     } catch {
-        return { success: false, error: 'Failed to delete University.' }
+        return { success: false, error: 'Gagal menghapus Universitas.' }
     }
 }
 
@@ -162,7 +168,7 @@ export async function getFacultyList(universityId?: string) {
 
         return { success: true, facultyList: formattedList }
     } catch {
-        return { success: false, error: 'Failed to load Faculties' }
+        return { success: false, error: 'Gagal memuat data Fakultas' }
     }
 }
 
@@ -173,9 +179,9 @@ export async function createFaculty(data: { code: string; name: string; universi
         return { success: true, faculty }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Faculty code already exists' }
+            return { success: false, error: 'Kode Fakultas sudah digunakan' }
         }
-        return { success: false, error: 'Failed to create Faculty' }
+        return { success: false, error: 'Gagal menambahkan Fakultas' }
     }
 }
 
@@ -186,9 +192,9 @@ export async function updateFaculty(id: string, data: { code: string; name: stri
         return { success: true, faculty }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Faculty code already exists' }
+            return { success: false, error: 'Kode Fakultas sudah digunakan' }
         }
-        return { success: false, error: 'Failed to update Faculty' }
+        return { success: false, error: 'Gagal memperbarui Fakultas' }
     }
 }
 
@@ -198,14 +204,14 @@ export async function deleteFaculty(id: string) {
         const subjectCount = await prisma.subject.count({ where: { facultyId: id } })
         
         if (departmentCount > 0 || subjectCount > 0) {
-            return { success: false, error: 'Cannot delete Faculty because it still has related Departments or Subjects.' }
+            return { success: false, error: 'Tidak dapat menghapus Fakultas karena masih memiliki Program Studi atau Mata Kuliah yang terhubung.' }
         }
 
         await prisma.faculty.delete({ where: { id } })
         revalidatePath('/admin/institutions')
         return { success: true }
     } catch {
-        return { success: false, error: 'Failed to delete Faculty.' }
+        return { success: false, error: 'Gagal menghapus Fakultas.' }
     }
 }
 
@@ -240,7 +246,7 @@ export async function getDepartmentList(facultyId?: string) {
 
         return { success: true, departmentList: formattedList }
     } catch {
-        return { success: false, error: 'Failed to load Departments' }
+        return { success: false, error: 'Gagal memuat data Program Studi' }
     }
 }
 
@@ -251,9 +257,9 @@ export async function createDepartment(data: { code: string; name: string; facul
         return { success: true, department }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Department code already exists' }
+            return { success: false, error: 'Kode Program Studi sudah digunakan' }
         }
-        return { success: false, error: 'Failed to create Department' }
+        return { success: false, error: 'Gagal menambahkan Program Studi' }
     }
 }
 
@@ -264,9 +270,9 @@ export async function updateDepartment(id: string, data: { code: string; name: s
         return { success: true, department }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { success: false, error: 'Department code already exists' }
+            return { success: false, error: 'Kode Program Studi sudah digunakan' }
         }
-        return { success: false, error: 'Failed to update Department' }
+        return { success: false, error: 'Gagal memperbarui Program Studi' }
     }
 }
 
@@ -286,13 +292,13 @@ export async function deleteDepartment(id: string) {
         })
 
         if (subjectCount > 0 || userCount > 0 || courseCount > 0 || gpCount > 0 || ploCount > 0) {
-            return { success: false, error: 'Cannot delete Department because it is still used by Users, Courses, or Curriculums.' }
+            return { success: false, error: 'Tidak dapat menghapus Program Studi karena masih digunakan oleh Pengguna, Kelas, atau Kurikulum.' }
         }
 
         await prisma.department.delete({ where: { id } })
         revalidatePath('/admin/institutions')
         return { success: true }
     } catch {
-        return { success: false, error: 'Failed to delete Department.' }
+        return { success: false, error: 'Gagal menghapus Program Studi.' }
     }
 }

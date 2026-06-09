@@ -19,7 +19,7 @@ export async function getUserProfile(userId: string) {
         })
         
         if (!user) {
-            return { success: false, error: 'User tidak ditemukan' }
+            return { success: false, error: 'Pengguna tidak ditemukan' }
         }
 
         const { password, ...userWithoutPassword } = user
@@ -86,7 +86,7 @@ export async function changePassword(userId: string, oldPasswordPlain: string, n
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } })
         if (!user) {
-            return { success: false, error: 'User tidak ditemukan' }
+            return { success: false, error: 'Pengguna tidak ditemukan' }
         }
 
         const isMatch = await bcrypt.compare(oldPasswordPlain, user.password)

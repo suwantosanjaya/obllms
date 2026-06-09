@@ -24,7 +24,7 @@ export async function getSubjects(departmentId?: string | null) {
         return { success: true, subjects }
     } catch (error) {
         console.error("FAILED TO FETCH SUBJECTS:", error)
-        return { success: false, error: "Failed to fetch subjects" }
+        return { success: false, error: "Gagal memuat mata kuliah" }
     }
 }
 
@@ -53,7 +53,7 @@ export async function getSubjectsByCurriculum(departmentId: string, curriculumYe
         return { success: true, subjects }
     } catch (error) {
         console.error("FAILED TO FETCH SUBJECTS BY CURRICULUM:", error)
-        return { success: false, error: "Failed to fetch subjects by curriculum" }
+        return { success: false, error: "Gagal memuat mata kuliah berdasarkan kurikulum" }
     }
 }
 
@@ -130,7 +130,7 @@ export async function updateCourseSchedule(courseId: string, schedule: string) {
         return { success: true, course }
     } catch (error) {
         console.error("Failed to update course schedule", error)
-        return { success: false, error: "Failed to update schedule" }
+        return { success: false, error: "Gagal memperbarui jadwal" }
     }
 }
 
@@ -194,7 +194,7 @@ export async function getInstructorCourses(instructorId: string, activeProdiId?:
         })
         return { success: true, courses }
     } catch (error) {
-        return { success: false, error: "Failed to fetch courses" }
+        return { success: false, error: "Gagal memuat kelas" }
     }
 }
 
@@ -222,7 +222,7 @@ export async function getStudentCourses(studentId: string, activeProdiId?: strin
         })
         return { success: true, enrollments }
     } catch (error) {
-        return { success: false, error: "Failed to fetch student enrollments" }
+        return { success: false, error: "Gagal memuat pendaftaran mahasiswa" }
     }
 }
 
@@ -334,7 +334,7 @@ export async function getAvailableCourses(studentId: string, activeProdiId?: str
         })
         return { success: true, courses }
     } catch (error) {
-        return { success: false, error: "Failed to fetch available courses" }
+        return { success: false, error: "Gagal memuat available kelas" }
     }
 }
 
@@ -376,10 +376,10 @@ export async function getCourseDetails(courseId: string) {
                 }
             }
         })
-        if (!course) return { success: false, error: "Course not found" }
+        if (!course) return { success: false, error: "Kelas tidak ditemukan" }
         return { success: true, course }
     } catch (error) {
-        return { success: false, error: "Failed to fetch course details" }
+        return { success: false, error: "Gagal memuat Kelas details" }
     }
 }
 
@@ -410,7 +410,7 @@ export async function createCourseModule(data: {
         return { success: true, module }
     } catch (error) {
         console.error("Failed to create course module", error)
-        return { success: false, error: "Failed to create course module" }
+        return { success: false, error: "Gagal menambahkan Kelas module" }
     }
 }
 
@@ -457,7 +457,7 @@ export async function deleteCourseModule(moduleId: string, courseId: string) {
         revalidatePath(`/teacher/course/${courseId}`)
         return { success: true }
     } catch (error) {
-        return { success: false, error: "Failed to delete module" }
+        return { success: false, error: "Gagal menghapus module" }
     }
 }
 
@@ -498,7 +498,7 @@ export async function updateCourseConfig(courseId: string, data: {
         return { success: true }
     } catch (error) {
         console.error("Failed to update config", error)
-        return { success: false, error: "Failed to update configuration" }
+        return { success: false, error: "Gagal memperbarui configuration" }
     }
 }
 
@@ -601,7 +601,7 @@ export async function getStudentDashboardMetrics(studentId: string, activeProdiI
         }
     } catch (error) {
         console.error("Failed to fetch dashboard metrics", error)
-        return { success: false, error: "Failed to fetch metrics" }
+        return { success: false, error: "Gagal memuat metrics" }
     }
 }
 
@@ -733,6 +733,6 @@ export async function getInstructorDashboardMetrics(instructorId: string, active
         }
     } catch (error) {
         console.error("Failed to fetch instructor dashboard metrics", error)
-        return { success: false, error: "Failed to fetch metrics" }
+        return { success: false, error: "Gagal memuat metrics" }
     }
 }
