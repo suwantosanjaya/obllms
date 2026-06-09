@@ -25,8 +25,8 @@ async function main() {
     await prisma.course.deleteMany()
     await prisma.subject.deleteMany()
     await prisma.curriculumYear.deleteMany()
-    await prisma.prodi.deleteMany()
-    await prisma.fakultas.deleteMany()
+    await prisma.department.deleteMany()
+    await prisma.faculty.deleteMany()
     await prisma.user.deleteMany()
 
     console.log('Database cleared.')
@@ -55,19 +55,19 @@ async function main() {
     const qaUser = users.find(u => u.role === 'qa')
 
     // 1.5 Create Fakultas and Prodi
-    const ft = await prisma.fakultas.create({ data: { code: 'FT', name: 'Fakultas Teknik' } })
-    const fe = await prisma.fakultas.create({ data: { code: 'FE', name: 'Fakultas Ekonomi' } })
-    const fi = await prisma.fakultas.create({ data: { code: 'FI', name: 'Fakultas Ilmu Komputer' } })
+    const ft = await prisma.faculty.create({ data: { code: 'FT', name: 'Fakultas Teknik' } })
+    const fe = await prisma.faculty.create({ data: { code: 'FE', name: 'Fakultas Ekonomi' } })
+    const fi = await prisma.faculty.create({ data: { code: 'FI', name: 'Fakultas Ilmu Komputer' } })
 
-    const prodiTI = await prisma.prodi.create({ data: { code: 'TI', name: 'Teknik Informatika', fakultasId: ft.id } })
-    const prodiSI = await prisma.prodi.create({ data: { code: 'SI', name: 'Sistem Informasi', fakultasId: fi.id } })
-    const prodiMNJ = await prisma.prodi.create({ data: { code: 'MNJ', name: 'Manajemen', fakultasId: fe.id } })
+    const prodiTI = await prisma.department.create({ data: { code: 'TI', name: 'Teknik Informatika', facultyId: ft.id } })
+    const prodiSI = await prisma.department.create({ data: { code: 'SI', name: 'Sistem Informasi', facultyId: fi.id } })
+    const prodiMNJ = await prisma.department.create({ data: { code: 'MNJ', name: 'Manajemen', facultyId: fe.id } })
 
     // Update QA user to be in Prodi TI and SI
     if (qaUser) {
         await prisma.user.update({
             where: { id: qaUser.id },
-            data: { prodis: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
+            data: { departments: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
         })
     }
 
@@ -75,7 +75,7 @@ async function main() {
     if (dosens.length > 0) {
         await prisma.user.update({
             where: { id: dosens[0].id },
-            data: { prodis: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
+            data: { departments: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
         })
     }
 
@@ -91,7 +91,7 @@ async function main() {
                 code: `GP-${i}`,
                 title: `Profil Lulusan ${i}`,
                 description: `Deskripsi untuk Profil Lulusan ke-${i}`,
-                prodiId: i <= 5 ? prodiTI.id : prodiSI.id,
+                departmentId: i <= 5 ? prodiTI.id : prodiSI.id,
                 curriculumYearId: curr2024.id
             }
         }))
@@ -104,7 +104,7 @@ async function main() {
             data: {
                 code: `PLO-${i}`,
                 description: `Deskripsi Program Learning Outcome ke-${i}`,
-                prodiId: i <= 5 ? prodiTI.id : prodiSI.id,
+                departmentId: i <= 5 ? prodiTI.id : prodiSI.id,
                 curriculumYearId: curr2024.id,
                 graduateProfiles: {
                     connect: [{ id: gps[i - 1].id }]
@@ -117,16 +117,16 @@ async function main() {
 
     // 4. Create 10 Master Subjects (Katalog Mata Kuliah)
     const subjectData = [
-        { code: 'MKU101', title: 'Pendidikan Pancasila', type: 'wajib', scope: 'universitas' },
-        { code: 'MKU102', title: 'Bahasa Indonesia', type: 'wajib', scope: 'universitas' },
-        { code: 'FT101', title: 'Kalkulus', type: 'wajib', scope: 'fakultas', fakultasId: ft.id },
-        { code: 'FT102', title: 'Fisika Dasar', type: 'wajib', scope: 'fakultas', fakultasId: ft.id },
-        { code: 'TI101', title: 'Pemrograman Dasar', type: 'wajib', scope: 'prodi', prodiId: prodiTI.id, fakultasId: ft.id },
-        { code: 'TI201', title: 'Struktur Data', type: 'wajib', scope: 'prodi', prodiId: prodiTI.id, fakultasId: ft.id },
-        { code: 'TI301', title: 'Kecerdasan Buatan', type: 'pilihan', scope: 'prodi', prodiId: prodiTI.id, fakultasId: ft.id },
-        { code: 'SI101', title: 'Analisis Sistem Informasi', type: 'wajib', scope: 'prodi', prodiId: prodiSI.id, fakultasId: fi.id },
-        { code: 'SI201', title: 'Basis Data', type: 'wajib', scope: 'prodi', prodiId: prodiSI.id, fakultasId: fi.id },
-        { code: 'MNJ101', title: 'Pengantar Manajemen', type: 'wajib', scope: 'prodi', prodiId: prodiMNJ.id, fakultasId: fe.id },
+        { code: 'MKU101', title: 'Pendidikan Pancasila', type: 'wajib', scope: 'university' },
+        { code: 'MKU102', title: 'Bahasa Indonesia', type: 'wajib', scope: 'university' },
+        { code: 'FT101', title: 'Kalkulus', type: 'wajib', scope: 'faculty', facultyId: ft.id },
+        { code: 'FT102', title: 'Fisika Dasar', type: 'wajib', scope: 'faculty', facultyId: ft.id },
+        { code: 'TI101', title: 'Pemrograman Dasar', type: 'wajib', scope: 'department', departmentId: prodiTI.id, facultyId: ft.id },
+        { code: 'TI201', title: 'Struktur Data', type: 'wajib', scope: 'department', departmentId: prodiTI.id, facultyId: ft.id },
+        { code: 'TI301', title: 'Kecerdasan Buatan', type: 'pilihan', scope: 'department', departmentId: prodiTI.id, facultyId: ft.id },
+        { code: 'SI101', title: 'Analisis Sistem Informasi', type: 'wajib', scope: 'department', departmentId: prodiSI.id, facultyId: fi.id },
+        { code: 'SI201', title: 'Basis Data', type: 'wajib', scope: 'department', departmentId: prodiSI.id, facultyId: fi.id },
+        { code: 'MNJ101', title: 'Pengantar Manajemen', type: 'wajib', scope: 'department', departmentId: prodiMNJ.id, facultyId: fe.id },
     ]
     const subjects = []
     for (const s of subjectData) {
