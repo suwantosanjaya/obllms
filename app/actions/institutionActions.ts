@@ -3,11 +3,20 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { put, del } from '@vercel/blob'
+import { getSessionUser } from './userActions'
 
 // ─── University ────────────────────────────────────────────────
 export async function getUniversityList() {
     try {
+        const session = await getSessionUser()
+        const whereClause: any = {}
+        if (session && session.activeRole === 'admin') {
+            const managedUnivIds = session.universityRoles?.filter((ur: any) => ur.role === 'admin').map((ur: any) => ur.universityId) || []
+            whereClause.id = { in: managedUnivIds }
+        }
+
         const list = await prisma.university.findMany({
+            where: whereClause,
             orderBy: { name: 'asc' },
             include: { 
                 faculties: { orderBy: { name: 'asc' } },
@@ -139,8 +148,19 @@ export async function deleteUniversity(id: string) {
 // ─── Faculty ────────────────────────────────────────────────
 export async function getFacultyList(universityId?: string) {
     try {
+        const session = await getSessionUser()
+        const whereClause: any = universityId ? { universityId } : {}
+        if (session && session.activeRole === 'admin') {
+            const managedUnivIds = session.universityRoles?.filter((ur: any) => ur.role === 'admin').map((ur: any) => ur.universityId) || []
+            if (universityId) {
+                if (!managedUnivIds.includes(universityId)) return { success: true, facultyList: [] }
+            } else {
+                whereClause.universityId = { in: managedUnivIds }
+            }
+        }
+
         const list = await prisma.faculty.findMany({
-            where: universityId ? { universityId } : undefined,
+            where: whereClause,
             orderBy: { name: 'asc' },
             include: { 
                 departments: { orderBy: { name: 'asc' } },
@@ -218,8 +238,18 @@ export async function deleteFaculty(id: string) {
 // ─── Department ───────────────────────────────────────────────────
 export async function getDepartmentList(facultyId?: string) {
     try {
+        const session = await getSessionUser()
+        const whereClause: any = facultyId ? { facultyId } : {}
+        if (session && session.activeRole === 'admin') {
+            const managedUnivIds = session.universityRoles?.filter((ur: any) => ur.role === 'admin').map((ur: any) => ur.universityId) || []
+            whereClause.faculty = {
+                ...whereClause.faculty,
+                universityId: { in: managedUnivIds }
+            }
+        }
+
         const list = await prisma.department.findMany({
-            where: facultyId ? { facultyId } : undefined,
+            where: whereClause,
             orderBy: { name: 'asc' },
             include: { 
                 faculty: { include: { university: true } },
