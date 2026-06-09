@@ -188,22 +188,20 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                                 <div key={univ.id} className="flex flex-col space-y-1">
                                                                     <div className="flex items-center space-x-2">
                                                                         <input
-                                                                            type="checkbox"
+                                                                            type="radio"
+                                                                            name={`role-${r}-univ-group`}
                                                                             id={`role-${r}-univ-${univ.id}`}
                                                                             checked={isSelected}
                                                                         onChange={(e) => {
                                                                             setRoleDepts(prev => {
                                                                                 const next = { ...prev }
-                                                                                if (!next[r]) next[r] = []
                                                                                 if (e.target.checked) {
-                                                                                    next[r] = [...new Set([...next[r], univ.id])]
-                                                                                } else {
-                                                                                    next[r] = next[r].filter(id => id !== univ.id)
+                                                                                    next[r] = [univ.id]
                                                                                 }
                                                                                 return next
                                                                             })
                                                                         }}
-                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                        className="h-3.5 w-3.5 border-gray-300 text-primary focus:ring-primary"
                                                                     />
                                                                     <Label htmlFor={`role-${r}-univ-${univ.id}`} className="text-xs font-normal cursor-pointer">
                                                                         {univ.name}
