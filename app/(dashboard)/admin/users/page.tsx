@@ -39,7 +39,8 @@ export default async function AdminUsersPage() {
         return roles.some((r: string) => ['student', 'teacher', 'qa'].includes(r))
     })
 
-    const departments = await prisma.department.findMany({ include: { faculty: true }, orderBy: { code: 'asc' } })
+    const departments = await prisma.department.findMany({ include: { faculty: { include: { university: true } } }, orderBy: { code: 'asc' } })
+    const universities = await prisma.university.findMany({ orderBy: { name: 'asc' } })
 
     const inactiveUsersCount = users.filter((u: any) => !u.isActive).length
 
@@ -61,7 +62,7 @@ export default async function AdminUsersPage() {
                     <p className="text-muted-foreground mt-1">Kelola data pengguna, persetujuan akun, dan hak akses sistem.</p>
                 </div>
                 {activeRole === 'admin' && (
-                    <CreateUserDialog departments={departments} allowedRoles={['student', 'teacher', 'qa']} />
+                    <CreateUserDialog departments={departments} universities={universities} allowedRoles={['student', 'teacher', 'qa']} />
                 )}
             </div>
 
@@ -99,6 +100,7 @@ export default async function AdminUsersPage() {
                     <UserTableClient 
                         users={users} 
                         departments={departments} 
+                        universities={universities}
                         allowedRoles={['student', 'teacher', 'qa']}
                         title="Daftar Pengguna Sistem"
                         description={activeRole === 'qa' ? "Menampilkan daftar pengguna di program studi Anda." : "Menampilkan daftar Student, Teacher, dan QA/Department."}

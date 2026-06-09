@@ -17,8 +17,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createUser } from '@/app/actions/adminActions'
 
-export function CreateUserDialog({ departments = [], allowedRoles = ['student', 'teacher', 'qa'], qaMode = false, fixedDepartmentId }: { 
-    departments?: { id: string, name: string, faculty?: { id: string, name: string } | null }[], 
+export function CreateUserDialog({ departments = [], universities = [], allowedRoles = ['student', 'teacher', 'qa'], qaMode = false, fixedDepartmentId }: { 
+    departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } } | null }[], 
+    universities?: { id: string, name: string }[],
     allowedRoles?: string[],
     qaMode?: boolean,
     fixedDepartmentId?: string,
@@ -172,15 +173,18 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                                 </Label>
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                                                     {r === 'admin' ? (
-                                                        Array.from(new Map(departments.filter(d => d.faculty?.university).map(d => [d.faculty!.university!.id, d.faculty!.university])).values()).map((univ: any) => {
+                                                        universities.map((univ: any) => {
                                                             const univDeptIds = departments.filter(d => d.faculty?.university?.id === univ.id).map(d => d.id)
                                                             const isSelected = univDeptIds.length > 0 && univDeptIds.every(id => roleDepts[r]?.includes(id))
+                                                            const isDisabled = univDeptIds.length === 0
                                                             return (
-                                                                <div key={univ.id} className="flex items-center space-x-2">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        id={`role-${r}-univ-${univ.id}`}
-                                                                        checked={isSelected}
+                                                                <div key={univ.id} className="flex flex-col space-y-1">
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            id={`role-${r}-univ-${univ.id}`}
+                                                                            checked={isSelected}
+                                                                            disabled={isDisabled}
                                                                         onChange={(e) => {
                                                                             setRoleDepts(prev => {
                                                                                 const next = { ...prev }
@@ -193,13 +197,17 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                                                                 return next
                                                                             })
                                                                         }}
-                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                        className={`h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     />
-                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className="text-xs font-normal cursor-pointer">
+                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className={`text-xs font-normal ${isDisabled ? 'text-muted-foreground cursor-not-allowed' : 'cursor-pointer'}`}>
                                                                         {univ.name}
                                                                     </Label>
                                                                 </div>
-                                                            )
+                                                                {isDisabled && (
+                                                                    <p className="text-[10px] text-destructive ml-6 mt-0">Belum ada Program Studi di Universitas ini.</p>
+                                                                )}
+                                                            </div>
+                                                        )
                                                         })
                                                     ) : (
                                                         departments.map(department => {

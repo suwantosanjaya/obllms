@@ -13,7 +13,7 @@ import { EditUserRoleDialog } from '@/app/components/admin/EditUserRoleDialog'
 import { ResetPasswordButton } from '@/app/components/admin/ResetPasswordButton'
 import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 
-export function UserTableClient({ users, departments, allowedRoles, title, description, hideEditRole }: { users: any[], departments: any[], allowedRoles: string[], title: string, description: string, hideEditRole?: boolean }) {
+export function UserTableClient({ users, departments, universities = [], allowedRoles, title, description, hideEditRole }: { users: any[], departments: any[], universities?: any[], allowedRoles: string[], title: string, description: string, hideEditRole?: boolean }) {
     const {
         searchQuery,
         setSearchQuery,
@@ -112,7 +112,7 @@ export function UserTableClient({ users, departments, allowedRoles, title, descr
                                         <TableCell>{new Date(user.createdAt).toLocaleDateString('id-ID')}</TableCell>
                                         <TableCell className="text-right flex items-center justify-end gap-2">
                                             <ResetPasswordButton id={user.id} userName={user.name} />
-                                            {!hideEditRole && <EditUserRoleDialog user={user} allowedRoles={allowedRoles} departments={departments} />}
+                                            {!hideEditRole && <EditUserRoleDialog user={user} allowedRoles={allowedRoles} departments={departments} universities={universities} />}
                                             <ToggleUserStatusButton id={user.id} isActive={user.isActive} userName={user.name} />
                                             <DeleteUserButton id={user.id} userName={user.name} />
                                         </TableCell>

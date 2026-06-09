@@ -18,7 +18,8 @@ export default async function SuperAdminUsersPage() {
     const allUsers = await getAllUsers()
     // Super admin only sees and manages "admin"
     const users = allUsers.filter((u: any) => u.role === 'admin')
-    const departments = await prisma.department.findMany({ include: { faculty: true }, orderBy: { code: 'asc' } })
+    const departments = await prisma.department.findMany({ include: { faculty: { include: { university: true } } }, orderBy: { code: 'asc' } })
+    const universities = await prisma.university.findMany({ orderBy: { name: 'asc' } })
 
     const res = await getPendingApprovals('super_admin')
     const pendingUsers = res.success ? (res.pendingUsers || []) : []
@@ -30,7 +31,7 @@ export default async function SuperAdminUsersPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Manajemen Administrator Global</h1>
                     <p className="text-muted-foreground mt-1">Kelola data Administrator Global tingkat universitas dan persetujuan akun.</p>
                 </div>
-                <CreateUserDialog departments={departments} allowedRoles={['admin']} />
+                <CreateUserDialog departments={departments} universities={universities} allowedRoles={['admin']} />
             </div>
 
             <Tabs defaultValue="users" className="w-full">
@@ -50,6 +51,7 @@ export default async function SuperAdminUsersPage() {
                     <UserTableClient 
                         users={users} 
                         departments={departments} 
+                        universities={universities}
                         allowedRoles={['admin']}
                         title="Daftar Administrator Global"
                         description="Menampilkan daftar Administrator Global yang aktif di sistem."
