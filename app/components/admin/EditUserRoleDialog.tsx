@@ -21,7 +21,7 @@ interface EditUserRoleDialogProps {
 
 const roleMap: Record<string, string> = {
     super_admin: 'Super Administrator',
-    admin: 'Administrator (Program Studi)',
+    admin: 'Administrator (Universitas)',
     qa: 'Quality Assurance (QA)',
     teacher: 'Dosen (Teacher)',
     student: 'Mahasiswa (Student)'
@@ -131,33 +131,67 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [] }: Edi
                                         
                                         {selectedRoles.includes(r) && departments && departments.length > 0 && (
                                             <div className="ml-6 mt-2 space-y-2 border-l-2 pl-4 border-muted py-1">
-                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Program Studi:</Label>
+                                                <Label className="text-xs text-muted-foreground block mb-2">
+                                                    {r === 'admin' ? 'Pilih Universitas:' : 'Pilih Program Studi:'}
+                                                </Label>
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
-                                                    {departments.map(d => (
-                                                        <div key={d.id} className="flex items-center space-x-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                id={`role-${r}-dept-${d.id}`}
-                                                                checked={roleDepts[r]?.includes(d.id) || false}
-                                                                onChange={(e) => {
-                                                                    setRoleDepts(prev => {
-                                                                        const next = { ...prev }
-                                                                        if (!next[r]) next[r] = []
-                                                                        if (e.target.checked) {
-                                                                            next[r] = [...next[r], d.id]
-                                                                        } else {
-                                                                            next[r] = next[r].filter(id => id !== d.id)
-                                                                        }
-                                                                        return next
-                                                                    })
-                                                                }}
-                                                                className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                                                            />
-                                                            <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer">
-                                                                {d.name}
-                                                            </Label>
-                                                        </div>
-                                                    ))}
+                                                    {r === 'admin' ? (
+                                                        Array.from(new Map(departments.filter((d: any) => d.faculty?.university).map((d: any) => [d.faculty!.university!.id, d.faculty!.university])).values()).map((univ: any) => {
+                                                            const univDeptIds = departments.filter((d: any) => d.faculty?.university?.id === univ.id).map(d => d.id)
+                                                            const isSelected = univDeptIds.length > 0 && univDeptIds.every(id => roleDepts[r]?.includes(id))
+                                                            return (
+                                                                <div key={univ.id} className="flex items-center space-x-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`role-${r}-univ-${univ.id}`}
+                                                                        checked={isSelected}
+                                                                        onChange={(e) => {
+                                                                            setRoleDepts(prev => {
+                                                                                const next = { ...prev }
+                                                                                if (!next[r]) next[r] = []
+                                                                                if (e.target.checked) {
+                                                                                    next[r] = [...new Set([...next[r], ...univDeptIds])]
+                                                                                } else {
+                                                                                    next[r] = next[r].filter(id => !univDeptIds.includes(id))
+                                                                                }
+                                                                                return next
+                                                                            })
+                                                                        }}
+                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                    />
+                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className="text-xs font-normal cursor-pointer">
+                                                                        {univ.name}
+                                                                    </Label>
+                                                                </div>
+                                                            )
+                                                        })
+                                                    ) : (
+                                                        departments.map(d => (
+                                                            <div key={d.id} className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`role-${r}-dept-${d.id}`}
+                                                                    checked={roleDepts[r]?.includes(d.id) || false}
+                                                                    onChange={(e) => {
+                                                                        setRoleDepts(prev => {
+                                                                            const next = { ...prev }
+                                                                            if (!next[r]) next[r] = []
+                                                                            if (e.target.checked) {
+                                                                                next[r] = [...next[r], d.id]
+                                                                            } else {
+                                                                                next[r] = next[r].filter(id => id !== d.id)
+                                                                            }
+                                                                            return next
+                                                                        })
+                                                                    }}
+                                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                />
+                                                                <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer">
+                                                                    {d.name}
+                                                                </Label>
+                                                            </div>
+                                                        ))
+                                                    )}
                                                 </div>
                                             </div>
                                         )}

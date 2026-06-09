@@ -67,8 +67,37 @@ export function UserTableClient({ users, departments, allowedRoles, title, descr
                                     <TableRow key={user.id} className={!user.isActive ? 'opacity-50 grayscale' : ''}>
                                         <TableCell className="font-medium">{(pageIndex * pageSize) + index + 1}</TableCell>
                                         <TableCell className="font-medium">
-                                            {user.name}
-                                            {!user.isActive && <span className="ml-2 text-xs text-destructive">(Nonaktif)</span>}
+                                            <div className="flex flex-col">
+                                                <span>
+                                                    {user.name}
+                                                    {!user.isActive && <span className="ml-2 text-xs text-destructive">(Nonaktif)</span>}
+                                                </span>
+                                                {user.departments && user.departments.length > 0 && (
+                                                    <span className="text-[10px] text-muted-foreground font-normal mt-1 leading-tight break-words whitespace-normal max-w-[250px] sm:max-w-xs">
+                                                        {(() => {
+                                                            const isAdmin = user.role.split(',').map((r: string) => r.trim()).includes('admin');
+                                                            const fullDepts = user.departments.map((d: any) => departments.find((dept: any) => dept.id === d.id)).filter(Boolean);
+                                                            
+                                                            if (isAdmin) {
+                                                                const uniqueUnivs = Array.from(new Set(fullDepts.map((fd: any) => fd.faculty?.university?.name).filter(Boolean)));
+                                                                return uniqueUnivs.length > 0 ? uniqueUnivs.join(', ') : 'Administrator Global';
+                                                            } else {
+                                                                const byUniv: Record<string, string[]> = {};
+                                                                fullDepts.forEach((fd: any) => {
+                                                                    const univName = fd.faculty?.university?.name || fd.faculty?.name || '';
+                                                                    const key = univName || 'Lainnya';
+                                                                    if (!byUniv[key]) byUniv[key] = [];
+                                                                    byUniv[key].push(fd.name);
+                                                                });
+                                                                return Object.keys(byUniv).map(univ => {
+                                                                    const depts = byUniv[univ].join(', ');
+                                                                    return univ !== 'Lainnya' ? `${depts} (${univ})` : depts;
+                                                                }).join(' • ');
+                                                            }
+                                                        })()}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>{user.email}</TableCell>
                                         <TableCell>

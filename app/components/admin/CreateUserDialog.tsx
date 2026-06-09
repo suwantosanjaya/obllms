@@ -131,7 +131,7 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                     </div>
                                 ) : (
                                     <>
-                                        {uniqueFaculty.length > 0 && (
+                                        {uniqueFaculty.length > 0 && allowedRoles.some(r => r !== 'admin') && (
                                     <Select value={selectedFacultyId} onValueChange={setSelectedFacultyId}>
                                         <SelectTrigger className="mb-2 h-8 text-xs">
                                             <SelectValue placeholder="Filter by Faculty" />
@@ -161,42 +161,76 @@ export function CreateUserDialog({ departments = [], allowedRoles = ['student', 
                                                 }}
                                             />
                                             <Label htmlFor={`role-${r}`} className="font-normal cursor-pointer capitalize font-medium">
-                                                {r === 'admin' ? 'Administrator' : r.replace('_', ' ')}
+                                                {r === 'admin' ? 'Administrator (Universitas)' : r.replace('_', ' ')}
                                             </Label>
                                         </div>
                                         
                                         {selectedRoles.includes(r) && departments && departments.length > 0 && (
                                             <div className="ml-6 mt-2 space-y-2 border-l-2 pl-4 border-muted py-1">
-                                                <Label className="text-xs text-muted-foreground block mb-2">Pilih Program Studi:</Label>
+                                                <Label className="text-xs text-muted-foreground block mb-2">
+                                                    {r === 'admin' ? 'Pilih Universitas:' : 'Pilih Program Studi:'}
+                                                </Label>
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
-                                                    {departments.map(department => {
-                                                        const isVisible = selectedFacultyId === 'all' || department.faculty?.id === selectedFacultyId
-                                                        return (
-                                                            <div key={department.id} className={`items-center space-x-2 ${isVisible ? 'flex' : 'hidden'}`}>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id={`role-${r}-dept-${department.id}`}
-                                                                    checked={roleDepts[r]?.includes(department.id) || false}
-                                                                    onChange={(e) => {
-                                                                        setRoleDepts(prev => {
-                                                                            const next = { ...prev }
-                                                                            if (!next[r]) next[r] = []
-                                                                            if (e.target.checked) {
-                                                                                next[r] = [...next[r], department.id]
-                                                                            } else {
-                                                                                next[r] = next[r].filter(id => id !== department.id)
-                                                                            }
-                                                                            return next
-                                                                        })
-                                                                    }}
-                                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                                                                />
-                                                                <Label htmlFor={`role-${r}-dept-${department.id}`} className="text-xs font-normal cursor-pointer">
-                                                                    {department.name}
-                                                                </Label>
-                                                            </div>
-                                                        )
-                                                    })}
+                                                    {r === 'admin' ? (
+                                                        Array.from(new Map(departments.filter(d => d.faculty?.university).map(d => [d.faculty!.university!.id, d.faculty!.university])).values()).map((univ: any) => {
+                                                            const univDeptIds = departments.filter(d => d.faculty?.university?.id === univ.id).map(d => d.id)
+                                                            const isSelected = univDeptIds.length > 0 && univDeptIds.every(id => roleDepts[r]?.includes(id))
+                                                            return (
+                                                                <div key={univ.id} className="flex items-center space-x-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`role-${r}-univ-${univ.id}`}
+                                                                        checked={isSelected}
+                                                                        onChange={(e) => {
+                                                                            setRoleDepts(prev => {
+                                                                                const next = { ...prev }
+                                                                                if (!next[r]) next[r] = []
+                                                                                if (e.target.checked) {
+                                                                                    next[r] = [...new Set([...next[r], ...univDeptIds])]
+                                                                                } else {
+                                                                                    next[r] = next[r].filter(id => !univDeptIds.includes(id))
+                                                                                }
+                                                                                return next
+                                                                            })
+                                                                        }}
+                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                    />
+                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className="text-xs font-normal cursor-pointer">
+                                                                        {univ.name}
+                                                                    </Label>
+                                                                </div>
+                                                            )
+                                                        })
+                                                    ) : (
+                                                        departments.map(department => {
+                                                            const isVisible = selectedFacultyId === 'all' || department.faculty?.id === selectedFacultyId
+                                                            return (
+                                                                <div key={department.id} className={`items-center space-x-2 ${isVisible ? 'flex' : 'hidden'}`}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`role-${r}-dept-${department.id}`}
+                                                                        checked={roleDepts[r]?.includes(department.id) || false}
+                                                                        onChange={(e) => {
+                                                                            setRoleDepts(prev => {
+                                                                                const next = { ...prev }
+                                                                                if (!next[r]) next[r] = []
+                                                                                if (e.target.checked) {
+                                                                                    next[r] = [...next[r], department.id]
+                                                                                } else {
+                                                                                    next[r] = next[r].filter(id => id !== department.id)
+                                                                                }
+                                                                                return next
+                                                                            })
+                                                                        }}
+                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                                    />
+                                                                    <Label htmlFor={`role-${r}-dept-${department.id}`} className="text-xs font-normal cursor-pointer">
+                                                                        {department.name}
+                                                                    </Label>
+                                                                </div>
+                                                            )
+                                                        })
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
