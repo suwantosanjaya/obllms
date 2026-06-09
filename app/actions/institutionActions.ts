@@ -59,7 +59,7 @@ export async function createUniversity(formData: FormData) {
         if (error.code === 'P2002') {
             return { success: false, error: 'University code already exists' }
         }
-        return { success: false, error: 'Failed to create University' }
+        return { success: false, error: error?.message || 'Failed to create University' }
     }
 }
 
@@ -97,7 +97,7 @@ export async function updateUniversity(id: string, formData: FormData) {
         if (error.code === 'P2002') {
             return { success: false, error: 'University code already exists' }
         }
-        return { success: false, error: 'Failed to update University' }
+        return { success: false, error: error?.message || 'Failed to update University' }
     }
 }
 
