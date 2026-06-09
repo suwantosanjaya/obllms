@@ -68,7 +68,7 @@ export function PrintTranscriptClient({
     ];
 
     return (
-        <div className="font-serif max-w-[210mm] mx-auto p-4 print:p-0 bg-white text-black min-h-screen">
+        <div className="font-serif max-w-[210mm] mx-auto p-4 print:p-0 bg-white text-black min-h-[100vh] print:min-h-0">
             {/* Header / Kop Surat */}
             <div className="border-b-2 border-black pb-4 mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -106,29 +106,29 @@ export function PrintTranscriptClient({
             {/* Tabel PLO */}
             <div className="mb-4">
                 <h3 className="text-sm font-bold mb-2">A. Capaian Lulusan / Program Learning Outcomes (PLO)</h3>
-                <table className="w-full text-xs border-collapse border border-black">
+                <table className="w-full text-xs border-collapse border border-black leading-tight">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border border-black px-2 py-1 text-left w-20">Kode</th>
-                            <th className="border border-black px-2 py-1 text-left">Deskripsi Kompetensi</th>
-                            <th className="border border-black px-2 py-1 text-center w-24">Nilai Rata-rata</th>
-                            <th className="border border-black px-2 py-1 text-center w-20">Status</th>
+                            <th className="border border-black px-2 py-0.5 text-left w-20">Kode</th>
+                            <th className="border border-black px-2 py-0.5 text-left">Deskripsi Kompetensi</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-24">Nilai Rata-rata</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-20">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {plos.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="border border-black px-2 py-2 text-center italic">Tidak ada data capaian.</td>
+                                <td colSpan={4} className="border border-black px-2 py-1 text-center italic">Tidak ada data capaian.</td>
                             </tr>
                         ) : (
                             plos.map(plo => (
                                 <tr key={plo.id}>
-                                    <td className="border border-black px-2 py-1 font-bold text-center">{plo.code}</td>
-                                    <td className="border border-black px-2 py-1">{plo.description}</td>
-                                    <td className="border border-black px-2 py-1 text-center font-bold">
+                                    <td className="border border-black px-2 py-0.5 font-bold text-center">{plo.code}</td>
+                                    <td className="border border-black px-2 py-0.5">{plo.description}</td>
+                                    <td className="border border-black px-2 py-0.5 text-center font-bold">
                                         {plo.average !== null ? plo.average.toFixed(2) : '-'}
                                     </td>
-                                    <td className="border border-black px-2 py-1 text-center">
+                                    <td className="border border-black px-2 py-0.5 text-center">
                                         {getStatusText(plo.average)}
                                     </td>
                                 </tr>
@@ -141,29 +141,29 @@ export function PrintTranscriptClient({
             {/* Tabel CLO */}
             <div className="mb-4">
                 <h3 className="text-sm font-bold mb-2">B. Rincian Capaian Mata Kuliah / Course Learning Outcomes (CLO)</h3>
-                <table className="w-full text-xs border-collapse border border-black">
+                <table className="w-full text-xs border-collapse border border-black leading-tight">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border border-black px-2 py-1 text-left w-20">Kode</th>
-                            <th className="border border-black px-2 py-1 text-left">Deskripsi Pembelajaran</th>
-                            <th className="border border-black px-2 py-1 text-center w-24">Nilai</th>
-                            <th className="border border-black px-2 py-1 text-center w-20">Status</th>
+                            <th className="border border-black px-2 py-0.5 text-left w-20">Kode</th>
+                            <th className="border border-black px-2 py-0.5 text-left">Deskripsi Pembelajaran</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-24">Nilai</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-20">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {clos.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="border border-black px-2 py-2 text-center italic">Tidak ada rincian capaian mata kuliah.</td>
+                                <td colSpan={4} className="border border-black px-2 py-1 text-center italic">Tidak ada rincian capaian mata kuliah.</td>
                             </tr>
                         ) : (
                             clos.map(clo => (
                                 <tr key={clo.id}>
-                                    <td className="border border-black px-2 py-1 text-center">{clo.code}</td>
-                                    <td className="border border-black px-2 py-1">{clo.description}</td>
-                                    <td className="border border-black px-2 py-1 text-center">
+                                    <td className="border border-black px-2 py-0.5 font-bold text-center">{clo.code}</td>
+                                    <td className="border border-black px-2 py-0.5">{clo.description}</td>
+                                    <td className="border border-black px-2 py-0.5 text-center font-bold">
                                         {clo.average !== null ? clo.average.toFixed(2) : '-'}
                                     </td>
-                                    <td className="border border-black px-2 py-1 text-center">
+                                    <td className="border border-black px-2 py-0.5 text-center">
                                         {getStatusText(clo.average)}
                                     </td>
                                 </tr>
@@ -176,24 +176,24 @@ export function PrintTranscriptClient({
             {/* Tabel Soft Skills / SCL */}
             <div className="mb-4 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
                 <h3 className="text-sm font-bold mb-2">C. Capaian Keterampilan Non-Teknis & Penilaian Berbasis Siswa (SCL)</h3>
-                <table className="w-full text-xs border-collapse border border-black">
+                <table className="w-full text-xs border-collapse border border-black leading-tight">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border border-black px-2 py-1 text-left w-20">Kode</th>
-                            <th className="border border-black px-2 py-1 text-left">Kompetensi Soft-Skill</th>
-                            <th className="border border-black px-2 py-1 text-center w-24">Nilai Rata-rata</th>
-                            <th className="border border-black px-2 py-1 text-center w-20">Status</th>
+                            <th className="border border-black px-2 py-0.5 text-left w-20">Kode</th>
+                            <th className="border border-black px-2 py-0.5 text-left">Kompetensi Soft-Skill</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-24">Nilai Rata-rata</th>
+                            <th className="border border-black px-2 py-0.5 text-center w-20">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {aggregatedScl.map((scl, index) => (
                             <tr key={index}>
-                                <td className="border border-black px-2 py-1 text-center font-semibold">{scl.code}</td>
-                                <td className="border border-black px-2 py-1">{scl.name}</td>
-                                <td className="border border-black px-2 py-1 text-center font-medium">
+                                <td className="border border-black px-2 py-0.5 font-bold text-center">{scl.code}</td>
+                                <td className="border border-black px-2 py-0.5">{scl.name}</td>
+                                <td className="border border-black px-2 py-0.5 text-center font-bold">
                                     {scl.average !== null ? scl.average.toFixed(2) : '-'}
                                 </td>
-                                <td className="border border-black px-2 py-1 text-center">
+                                <td className="border border-black px-2 py-0.5 text-center">
                                     {getStatusText(scl.average)}
                                 </td>
                             </tr>
@@ -202,62 +202,62 @@ export function PrintTranscriptClient({
                 </table>
             </div>
 
-            {/* Keterangan Rentang Nilai */}
-            <div className="mb-8 text-[11px] border border-gray-400 p-3 bg-gray-50 w-2/3 rounded break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
-                <p className="font-bold mb-1">Keterangan Rentang Nilai Status Capaian:</p>
-                <table className="w-full text-xs">
-                    <tbody>
-                        <tr>
-                            <td className="w-24 font-semibold">Tercapai</td>
-                            <td className="w-4">:</td>
-                            <td>Nilai rata-rata &ge; {passThreshold.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td className="font-semibold">Sedang</td>
-                            <td>:</td>
-                            <td>{moderateThreshold.toFixed(2)} &le; Nilai rata-rata &lt; {passThreshold.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td className="font-semibold">Kurang</td>
-                            <td>:</td>
-                            <td>Nilai rata-rata &lt; {moderateThreshold.toFixed(2)}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            {/* Footer Row (Legend + TTD) */}
+            <div className="mt-4 flex justify-between items-end break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
+                
+                {/* Keterangan Rentang Nilai */}
+                <div className="text-[9px] border border-gray-400 p-1.5 bg-gray-50 w-auto inline-block rounded leading-tight">
+                    <p className="font-bold mb-0.5">Keterangan Rentang Nilai Status Capaian:</p>
+                    <table className="text-[9px]">
+                        <tbody>
+                            <tr>
+                                <td className="w-16 font-semibold pb-0.5">Tercapai</td>
+                                <td className="w-2 pb-0.5">:</td>
+                                <td className="pb-0.5">Nilai rata-rata &ge; {passThreshold.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td className="font-semibold pb-0.5">Sedang</td>
+                                <td className="pb-0.5">:</td>
+                                <td className="pb-0.5">{moderateThreshold.toFixed(2)} &le; Nilai rata-rata &lt; {passThreshold.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td className="font-semibold">Kurang</td>
+                                <td>:</td>
+                                <td>Nilai rata-rata &lt; {moderateThreshold.toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            {/* TTD / Keterangan */}
-            <div className="mt-8 text-sm break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
-                <div className="flex justify-end pr-16 mt-8">
-                    <div className="text-left w-64">
-                        <p className="mb-1">Dikeluarkan pada tanggal: {currentDate}</p>
-                        <p className="font-bold">Dekan {facultyName}</p>
-                        <div className="h-20"></div>
-                        
-                        {(() => {
-                            const dean = student.homebaseDepartment?.faculty?.activeDean;
-                            if (dean) {
-                                const profile = dean.teacherProfile;
-                                const prefix = profile?.gelarDepan ? `${profile.gelarDepan} ` : '';
-                                const suffix = profile?.gelarBelakang ? `, ${profile.gelarBelakang}` : '';
-                                const fullName = `${prefix}${dean.name}${suffix}`;
-                                const nip = profile?.nip || '.........................';
-                                
-                                return (
-                                    <>
-                                        <p className="font-bold underline">{fullName}</p>
-                                        <p className="text-xs">NIP. {nip}</p>
-                                    </>
-                                )
-                            }
+                {/* TTD / Keterangan */}
+                <div className="text-sm w-64 text-left">
+                    <p className="mb-1">Dikeluarkan pada tanggal: {currentDate}</p>
+                    <p className="font-bold">Dekan {facultyName}</p>
+                    <div className="h-16"></div>
+                    
+                    {(() => {
+                        const dean = student.homebaseDepartment?.faculty?.activeDean;
+                        if (dean) {
+                            const profile = dean.teacherProfile;
+                            const prefix = profile?.gelarDepan ? `${profile.gelarDepan} ` : '';
+                            const suffix = profile?.gelarBelakang ? `, ${profile.gelarBelakang}` : '';
+                            const fullName = `${prefix}${dean.name}${suffix}`;
+                            const nip = profile?.nip || '.........................';
+                            
                             return (
                                 <>
-                                    <p className="font-bold underline">___________________________</p>
-                                    <p className="text-xs">NIP. .........................</p>
+                                    <p className="font-bold underline">{fullName}</p>
+                                    <p className="text-xs">NIP. {nip}</p>
                                 </>
                             )
-                        })()}
-                    </div>
+                        }
+                        return (
+                            <>
+                                <p className="font-bold underline">___________________________</p>
+                                <p className="text-xs">NIP. .........................</p>
+                            </>
+                        )
+                    })()}
                 </div>
             </div>
 
