@@ -204,7 +204,12 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                                                                     className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
                                                                 />
                                                                 <Label htmlFor={`role-${r}-dept-${d.id}`} className="text-xs font-normal cursor-pointer">
-                                                                    {d.name}
+                                                                    <span className="font-medium">{d.name}</span>
+                                                                    {d.faculty && (
+                                                                        <span className="text-[10px] text-muted-foreground block">
+                                                                            {d.faculty.name}{d.faculty.university ? ` - ${d.faculty.university.name}` : ''}
+                                                                        </span>
+                                                                    )}
                                                                 </Label>
                                                             </div>
                                                         ))

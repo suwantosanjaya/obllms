@@ -242,7 +242,12 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                                         className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
                                                                     />
                                                                     <Label htmlFor={`role-${r}-dept-${department.id}`} className="text-xs font-normal cursor-pointer">
-                                                                        {department.name}
+                                                                        <span className="font-medium">{department.name}</span>
+                                                                        {department.faculty && (
+                                                                            <span className="text-[10px] text-muted-foreground block">
+                                                                                {department.faculty.name}{department.faculty.university ? ` - ${department.faculty.university.name}` : ''}
+                                                                            </span>
+                                                                        )}
                                                                     </Label>
                                                                 </div>
                                                             )
