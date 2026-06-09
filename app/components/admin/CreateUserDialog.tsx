@@ -91,7 +91,7 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                     {qaMode ? 'Tambah Dosen' : 'Tambah Pengguna'}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>{qaMode ? 'Tambah Dosen Baru' : 'Tambah Pengguna Baru'}</DialogTitle>

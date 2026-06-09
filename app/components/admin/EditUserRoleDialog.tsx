@@ -114,7 +114,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                     <span className="sr-only sm:not-sr-only">Edit Role</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>Edit Peran Pengguna</DialogTitle>
