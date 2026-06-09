@@ -184,7 +184,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             <SelectContent>
                                 <SelectItem value="student">Mahasiswa</SelectItem>
                                 <SelectItem value="teacher">Dosen</SelectItem>
-                                <SelectItem value="qa">Quality Assurance</SelectItem>
+                                <SelectItem value="qa">Quality Assurance (Program Studi)</SelectItem>
                                 <SelectItem value="admin">Administrator (Universitas)</SelectItem>
                             </SelectContent>
                         </Select>

@@ -20,7 +20,7 @@ import { createUser } from '@/app/actions/adminActions'
 const roleMap: Record<string, string> = {
     super_admin: 'Super Administrator',
     admin: 'Administrator (Universitas)',
-    qa: 'Quality Assurance',
+    qa: 'Quality Assurance (Program Studi)',
     teacher: 'Dosen',
     student: 'Mahasiswa'
 }
