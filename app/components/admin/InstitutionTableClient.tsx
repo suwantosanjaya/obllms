@@ -104,7 +104,7 @@ export function UniversityTableClient({ universities, candidatesMap = {} }: { un
                     <CardTitle>Universitas</CardTitle>
                     <CardDescription>Daftar semua universitas di dalam sistem.</CardDescription>
                 </div>
-                <CreateUniversityDialog />
+                {currentRole === 'super_admin' && <CreateUniversityDialog />}
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
