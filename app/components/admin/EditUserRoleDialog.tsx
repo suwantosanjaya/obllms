@@ -14,6 +14,7 @@ interface EditUserRoleDialogProps {
         name: string
         role: string
         departmentRoles: any[]
+        universityRoles?: any[]
     }
     allowedRoles: string[]
     departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } } | null }[]
@@ -41,6 +42,12 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
             initialRoleDepts[dr.role].push(dr.departmentId)
         })
     }
+    if (user.universityRoles) {
+        user.universityRoles.forEach((ur: any) => {
+            if (!initialRoleDepts[ur.role]) initialRoleDepts[ur.role] = []
+            initialRoleDepts[ur.role].push(ur.universityId)
+        })
+    }
     const [roleDepts, setRoleDepts] = useState<Record<string, string[]>>(initialRoleDepts)
     const [loading, setLoading] = useState(false)
     const { toast } = useToast()
@@ -57,10 +64,19 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
             return
         }
 
-        const managedRolesData = selectedRoles.map(role => ({
-            role,
-            departmentIds: roleDepts[role] || []
-        }))
+        const managedRolesData = selectedRoles.map(role => {
+            if (role === 'admin') {
+                return {
+                    role,
+                    universityIds: roleDepts[role] || []
+                }
+            } else {
+                return {
+                    role,
+                    departmentIds: roleDepts[role] || []
+                }
+            }
+        })
 
         setLoading(true)
         try {
@@ -138,9 +154,7 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                                                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                                                     {r === 'admin' ? (
                                                         universities.map((univ: any) => {
-                                                            const univDeptIds = departments.filter((d: any) => d.faculty?.university?.id === univ.id).map(d => d.id)
-                                                            const isSelected = univDeptIds.length > 0 && univDeptIds.every(id => roleDepts[r]?.includes(id))
-                                                            const isDisabled = univDeptIds.length === 0
+                                                            const isSelected = roleDepts[r]?.includes(univ.id) || false
                                                             return (
                                                                 <div key={univ.id} className="flex flex-col space-y-1">
                                                                     <div className="flex items-center space-x-2">
@@ -148,28 +162,24 @@ export function EditUserRoleDialog({ user, allowedRoles, departments = [], unive
                                                                             type="checkbox"
                                                                             id={`role-${r}-univ-${univ.id}`}
                                                                             checked={isSelected}
-                                                                            disabled={isDisabled}
                                                                         onChange={(e) => {
                                                                             setRoleDepts(prev => {
                                                                                 const next = { ...prev }
                                                                                 if (!next[r]) next[r] = []
                                                                                 if (e.target.checked) {
-                                                                                    next[r] = [...new Set([...next[r], ...univDeptIds])]
+                                                                                    next[r] = [...new Set([...next[r], univ.id])]
                                                                                 } else {
-                                                                                    next[r] = next[r].filter(id => !univDeptIds.includes(id))
+                                                                                    next[r] = next[r].filter(id => id !== univ.id)
                                                                                 }
                                                                                 return next
                                                                             })
                                                                         }}
-                                                                        className={`h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
                                                                     />
-                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className={`text-xs font-normal ${isDisabled ? 'text-muted-foreground cursor-not-allowed' : 'cursor-pointer'}`}>
+                                                                    <Label htmlFor={`role-${r}-univ-${univ.id}`} className="text-xs font-normal cursor-pointer">
                                                                         {univ.name}
                                                                     </Label>
                                                                 </div>
-                                                                {isDisabled && (
-                                                                    <p className="text-[10px] text-destructive ml-6 mt-0">Belum ada Program Studi di Universitas ini.</p>
-                                                                )}
                                                             </div>
                                                         )
                                                         })

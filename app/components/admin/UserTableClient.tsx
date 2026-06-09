@@ -72,16 +72,20 @@ export function UserTableClient({ users, departments, universities = [], allowed
                                                     {user.name}
                                                     {!user.isActive && <span className="ml-2 text-xs text-destructive">(Nonaktif)</span>}
                                                 </span>
-                                                {user.departments && user.departments.length > 0 && (
+                                                {( (user.departments && user.departments.length > 0) || (user.universityRoles && user.universityRoles.length > 0) ) && (
                                                     <span className="text-[10px] text-muted-foreground font-normal mt-1 leading-tight break-words whitespace-normal max-w-[250px] sm:max-w-xs">
                                                         {(() => {
                                                             const isAdmin = user.role.split(',').map((r: string) => r.trim()).includes('admin');
-                                                            const fullDepts = user.departments.map((d: any) => departments.find((dept: any) => dept.id === d.id)).filter(Boolean);
                                                             
                                                             if (isAdmin) {
-                                                                const uniqueUnivs = Array.from(new Set(fullDepts.map((fd: any) => fd.faculty?.university?.name).filter(Boolean)));
+                                                                const uniqueUnivs = (user.universityRoles || []).map((ur: any) => {
+                                                                    const u = universities?.find((univ: any) => univ.id === ur.universityId);
+                                                                    return u ? u.name : null;
+                                                                }).filter(Boolean);
+                                                                
                                                                 return uniqueUnivs.length > 0 ? uniqueUnivs.join(', ') : 'Administrator Global';
                                                             } else {
+                                                                const fullDepts = (user.departments || []).map((d: any) => departments.find((dept: any) => dept.id === d.id)).filter(Boolean);
                                                                 const byUniv: Record<string, string[]> = {};
                                                                 fullDepts.forEach((fd: any) => {
                                                                     const univName = fd.faculty?.university?.name || fd.faculty?.name || '';

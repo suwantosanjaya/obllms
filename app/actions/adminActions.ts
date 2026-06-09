@@ -7,7 +7,7 @@ import os from 'os'
 
 export async function getAllUsers() {
     return await prisma.user.findMany({
-        include: { departments: true, departmentRoles: true },
+        include: { departments: true, departmentRoles: true, universityRoles: true },
         orderBy: { createdAt: 'desc' }
     })
 }
@@ -15,7 +15,7 @@ export async function getAllUsers() {
 export async function createUser(data: {
     name: string;
     email: string;
-    managedRolesData: { role: string, departmentIds: string[] }[]
+    managedRolesData: { role: string, departmentIds?: string[], universityIds?: string[] }[]
 }) {
     try {
         const hashedPassword = await bcrypt.hash("123456", 10)
@@ -24,8 +24,15 @@ export async function createUser(data: {
         const roleString = finalRolesArray.join(',')
 
         const finalDeptRoles = data.managedRolesData.flatMap(d =>
-            d.departmentIds.map(depId => ({
+            (d.departmentIds || []).map(depId => ({
                 departmentId: depId,
+                role: d.role
+            }))
+        )
+
+        const finalUnivRoles = data.managedRolesData.flatMap(d =>
+            (d.universityIds || []).map(univId => ({
+                universityId: univId,
                 role: d.role
             }))
         )
@@ -46,6 +53,12 @@ export async function createUser(data: {
                     create: finalDeptRoles.map(dr => ({
                         departmentId: dr.departmentId,
                         role: dr.role.toLowerCase()
+                    }))
+                } : undefined,
+                universityRoles: finalUnivRoles.length > 0 ? {
+                    create: finalUnivRoles.map(ur => ({
+                        universityId: ur.universityId,
+                        role: ur.role.toLowerCase()
                     }))
                 } : undefined
             }
@@ -145,7 +158,7 @@ export async function toggleUserStatus(targetUserId: string) {
 
 export async function updateUserRole(
     targetUserId: string,
-    managedRolesData: { role: string, departmentIds: string[] }[]
+    managedRolesData: { role: string, departmentIds?: string[], universityIds?: string[] }[]
 ) {
     try {
         const caller = await getSessionUser()
@@ -153,7 +166,7 @@ export async function updateUserRole(
 
         const targetUser = await prisma.user.findUnique({
             where: { id: targetUserId },
-            include: { departments: true, departmentRoles: true }
+            include: { departments: true, departmentRoles: true, universityRoles: true }
         })
         if (!targetUser) return { success: false, error: 'Pengguna tidak ditemukan' }
 
@@ -172,6 +185,7 @@ export async function updateUserRole(
         const existingRolesArray = targetUser.role.split(',').map(r => r.trim()).filter(Boolean)
         const unmanagedRoles = existingRolesArray.filter(r => !allowedToManage.includes(r))
         const existingUnmanagedDeptRoles = targetUser.departmentRoles.filter(dr => !allowedToManage.includes(dr.role))
+        const existingUnmanagedUnivRoles = targetUser.universityRoles.filter(ur => !allowedToManage.includes(ur.role))
 
         // Process the new managed roles from the payload
         const newManagedRoles = managedRolesData.map(d => d.role)
@@ -189,12 +203,20 @@ export async function updateUserRole(
 
         // Final departmentRoles
         const newManagedDeptRoles = managedRolesData.flatMap(d =>
-            d.departmentIds.map(depId => ({
+            (d.departmentIds || []).map(depId => ({
                 departmentId: depId,
                 role: d.role
             }))
         )
         const finalDeptRoles = [...existingUnmanagedDeptRoles, ...newManagedDeptRoles]
+
+        const newManagedUnivRoles = managedRolesData.flatMap(d =>
+            (d.universityIds || []).map(univId => ({
+                universityId: univId,
+                role: d.role
+            }))
+        )
+        const finalUnivRoles = [...existingUnmanagedUnivRoles, ...newManagedUnivRoles]
 
         // Collect distinct department IDs
         const distinctDeptIds = Array.from(new Set(finalDeptRoles.map(dr => dr.departmentId)))
@@ -211,6 +233,13 @@ export async function updateUserRole(
                     create: finalDeptRoles.map(dr => ({
                         departmentId: dr.departmentId,
                         role: dr.role
+                    }))
+                },
+                universityRoles: {
+                    deleteMany: {},
+                    create: finalUnivRoles.map(ur => ({
+                        universityId: ur.universityId,
+                        role: ur.role
                     }))
                 }
             }

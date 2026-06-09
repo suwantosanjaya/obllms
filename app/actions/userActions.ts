@@ -46,6 +46,7 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
             include: { 
                 departments: true, 
                 departmentRoles: { include: { department: true } },
+                universityRoles: true,
                 teacherProfile: true,
                 studentProfile: true
             }
@@ -119,6 +120,15 @@ export async function loginWithEmail(email: string, passwordPlain: string) {
                 user.departments = faculty.departments as any
                 ;(user as any).facultyName = faculty.name
             }
+        } else if (roles.includes('admin')) {
+            const managedUnivIds = user.universityRoles.filter((ur: any) => ur.role === 'admin').map((ur: any) => ur.universityId)
+            if (managedUnivIds.length > 0) {
+                const adminDepartments = await prisma.department.findMany({
+                    where: { faculty: { universityId: { in: managedUnivIds } } },
+                    orderBy: { name: 'asc' }
+                })
+                user.departments = adminDepartments as any
+            }
         }
 
         // Set an HTTP-only cookie for server components to access
@@ -173,7 +183,7 @@ export async function getSessionUser() {
 
     const user = await prisma.user.findUnique({
         where: { id: userIdCookie.value },
-        include: { departments: true, departmentRoles: { include: { department: true } } }
+        include: { departments: true, departmentRoles: { include: { department: true } }, universityRoles: true }
     })
 
     if (!user) return null
@@ -201,6 +211,18 @@ export async function getSessionUser() {
         } else {
             // Fallback if they are not explicitly an active dean, but have the role
             visibleDepartments = user.departments;
+        }
+    } else if (activeRole === 'admin') {
+        const managedUnivIds = user.universityRoles.filter((ur: any) => ur.role === 'admin').map((ur: any) => ur.universityId)
+        if (managedUnivIds.length > 0) {
+            visibleDepartments = await prisma.department.findMany({
+                where: {
+                    faculty: {
+                        universityId: { in: managedUnivIds }
+                    }
+                },
+                orderBy: { name: 'asc' }
+            })
         }
     } else {
         visibleDepartments = user.departmentRoles

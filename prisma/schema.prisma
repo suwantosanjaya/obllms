@@ -27,6 +27,7 @@ model User {
   // Relations
   departments Department[]      @relation("UserDepartments")
   departmentRoles UserDepartmentRole[]
+  universityRoles UserUniversityRole[]
   enrollments Enrollment[] // For Mahasiswa
   courses     Course[]     @relation("CourseInstructor") // For Dosen
   submissions Submission[] // For Mahasiswa
@@ -90,6 +91,19 @@ model UserDepartmentRole {
   @@unique([userId, departmentId, role])
 }
 
+// Model for role-per-university assignments
+model UserUniversityRole {
+  id           String @id @default(cuid())
+  userId       String
+  universityId String
+  role         String // 'admin'
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, universityId, role])
+}
+
 
 // Model for University
 model University {
@@ -104,6 +118,7 @@ model University {
 
   faculties       Faculty[]
   rectorHistories UniversityRectorHistory[]
+  userRoles       UserUniversityRole[]
 }
 
 model UniversityRectorHistory {
