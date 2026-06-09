@@ -13,6 +13,16 @@ import { EditUserRoleDialog } from '@/app/components/admin/EditUserRoleDialog'
 import { ResetPasswordButton } from '@/app/components/admin/ResetPasswordButton'
 import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 
+const roleMap: Record<string, string> = {
+    super_admin: 'Super Administrator',
+    admin: 'Administrator (Universitas)',
+    qa: 'Quality Assurance',
+    teacher: 'Dosen',
+    student: 'Mahasiswa',
+    dean: 'Dekan',
+    rector: 'Rektor'
+}
+
 export function UserTableClient({ users, departments, universities = [], allowedRoles, title, description, hideEditRole }: { users: any[], departments: any[], universities?: any[], allowedRoles: string[], title: string, description: string, hideEditRole?: boolean }) {
     const {
         searchQuery,
@@ -108,7 +118,7 @@ export function UserTableClient({ users, departments, universities = [], allowed
                                             <div className="flex flex-wrap gap-1">
                                                 {user.role.split(',').map((r: string) => (
                                                     <Badge key={r} variant="outline" className="capitalize">
-                                                        {r}
+                                                        {roleMap[r.trim()] || r.trim()}
                                                     </Badge>
                                                 ))}
                                             </div>

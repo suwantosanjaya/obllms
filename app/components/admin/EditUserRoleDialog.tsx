@@ -24,9 +24,9 @@ interface EditUserRoleDialogProps {
 const roleMap: Record<string, string> = {
     super_admin: 'Super Administrator',
     admin: 'Administrator (Universitas)',
-    qa: 'Quality Assurance (QA)',
-    teacher: 'Dosen (Teacher)',
-    student: 'Mahasiswa (Student)'
+    qa: 'Quality Assurance',
+    teacher: 'Dosen',
+    student: 'Mahasiswa'
 }
 
 export function EditUserRoleDialog({ user, allowedRoles, departments = [], universities = [] }: EditUserRoleDialogProps) {

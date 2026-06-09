@@ -17,6 +17,14 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createUser } from '@/app/actions/adminActions'
 
+const roleMap: Record<string, string> = {
+    super_admin: 'Super Administrator',
+    admin: 'Administrator (Universitas)',
+    qa: 'Quality Assurance',
+    teacher: 'Dosen',
+    student: 'Mahasiswa'
+}
+
 export function CreateUserDialog({ departments = [], universities = [], allowedRoles = ['student', 'teacher', 'qa'], qaMode = false, fixedDepartmentId }: { 
     departments?: { id: string, name: string, faculty?: { id: string, name: string, university?: { id: string, name: string } | null } | null }[], 
     universities?: { id: string, name: string }[],
@@ -130,7 +138,7 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
                                             <span className="text-sm font-medium">Peran:</span>
-                                            <span className="text-sm text-primary font-semibold">Dosen (Teacher)</span>
+                                            <span className="text-sm text-primary font-semibold">Dosen</span>
                                         </div>
                                         {departments.length > 0 && (
                                             <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
@@ -144,10 +152,10 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                         {uniqueFaculty.length > 0 && allowedRoles.some(r => r !== 'admin') && (
                                     <Select value={selectedFacultyId} onValueChange={setSelectedFacultyId}>
                                         <SelectTrigger className="mb-2 h-8 text-xs">
-                                            <SelectValue placeholder="Filter by Faculty" />
+                                            <SelectValue placeholder="Filter berdasarkan Fakultas" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">Semua Faculty</SelectItem>
+                                            <SelectItem value="all">Semua Fakultas</SelectItem>
                                             {uniqueFaculty.map(f => (
                                                 <SelectItem key={f!.id} value={f!.id}>{f!.name}</SelectItem>
                                             ))}
@@ -171,7 +179,7 @@ export function CreateUserDialog({ departments = [], universities = [], allowedR
                                                 }}
                                             />
                                             <Label htmlFor={`role-${r}`} className="font-normal cursor-pointer capitalize font-medium">
-                                                {r === 'admin' ? 'Administrator (Universitas)' : r.replace('_', ' ')}
+                                                {roleMap[r] || r.replace('_', ' ')}
                                             </Label>
                                         </div>
                                         
