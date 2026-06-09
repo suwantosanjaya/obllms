@@ -2,8 +2,7 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { writeFile, unlink } from 'fs/promises'
-import path from 'path'
+import { put, del } from '@vercel/blob'
 
 // ─── University ────────────────────────────────────────────────
 export async function getUniversityList() {
@@ -49,11 +48,8 @@ export async function createUniversity(formData: FormData) {
         let logo: string | undefined = undefined
 
         if (logoFile && logoFile.size > 0) {
-            const buffer = Buffer.from(await logoFile.arrayBuffer())
-            const filename = `${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-            const filepath = path.join(process.cwd(), 'public', 'uploads', filename)
-            await writeFile(filepath, buffer)
-            logo = `/uploads/${filename}`
+            const blob = await put(logoFile.name, logoFile, { access: 'public' })
+            logo = blob.url
         }
 
         const university = await prisma.university.create({ data: { code, name, logo } })
@@ -81,17 +77,13 @@ export async function updateUniversity(id: string, formData: FormData) {
         const dataToUpdate: any = { code, name }
 
         if (logoFile && logoFile.size > 0) {
-            const buffer = Buffer.from(await logoFile.arrayBuffer())
-            const filename = `${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-            const filepath = path.join(process.cwd(), 'public', 'uploads', filename)
-            await writeFile(filepath, buffer)
-            dataToUpdate.logo = `/uploads/${filename}`
+            const blob = await put(logoFile.name, logoFile, { access: 'public' })
+            dataToUpdate.logo = blob.url
 
             // Delete old logo
-            if (existingUniversity.logo && existingUniversity.logo.startsWith('/uploads/')) {
-                const oldFilepath = path.join(process.cwd(), 'public', existingUniversity.logo)
+            if (existingUniversity.logo && existingUniversity.logo.startsWith('http')) {
                 try {
-                    await unlink(oldFilepath)
+                    await del(existingUniversity.logo)
                 } catch (e) {
                     console.error('Failed to delete old logo:', e)
                 }
@@ -123,10 +115,9 @@ export async function deleteUniversity(id: string) {
 
         await prisma.university.delete({ where: { id } })
 
-        if (university.logo && university.logo.startsWith('/uploads/')) {
-            const oldFilepath = path.join(process.cwd(), 'public', university.logo)
+        if (university.logo && university.logo.startsWith('http')) {
             try {
-                await unlink(oldFilepath)
+                await del(university.logo)
             } catch (e) {
                 console.error('Failed to delete old logo:', e)
             }
