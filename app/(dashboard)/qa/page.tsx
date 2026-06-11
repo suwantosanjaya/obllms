@@ -35,6 +35,10 @@ export default async function QADashboard() {
     const cyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined, true)
     const curriculumYears = cyRes || []
 
+    // Check if any curriculum exists at all (regardless of approval status)
+    const allCyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined)
+    const hasAnyCurriculum = (allCyRes || []).length > 0
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
@@ -88,7 +92,7 @@ export default async function QADashboard() {
             </div>
 
             {/* Alignment Review Table */}
-            <QAAlignmentTableClient metrics={metrics!} curriculumYears={curriculumYears} />
+            <QAAlignmentTableClient metrics={metrics!} curriculumYears={curriculumYears} hasAnyCurriculum={hasAnyCurriculum} />
         </div>
     )
 }

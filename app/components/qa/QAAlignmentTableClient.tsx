@@ -24,13 +24,15 @@ import { Switch } from '@/components/ui/switch'
 import { toggleSubjectAnalytics } from '@/app/actions/obeActions'
 import { useToast } from '@/hooks/use-toast'
 
-export function QAAlignmentTableClient({ metrics, curriculumYears }: { metrics: any, curriculumYears: any[] }) {
+export function QAAlignmentTableClient({ metrics, curriculumYears, hasAnyCurriculum = false }: { metrics: any, curriculumYears: any[], hasAnyCurriculum?: boolean }) {
     const { toast } = useToast()
     const activeCy = curriculumYears.find((cy: any) => cy.isActive) || curriculumYears[0]
     const [selectedCurriculumId, setSelectedCurriculumId] = useState(activeCy ? activeCy.id : '')
 
-    const curriculumFilteredData = (metrics?.reviewTableData || []).filter((row: any) => {
-        if (!selectedCurriculumId) return true
+    // If no curriculum is selected (or no curriculum exists), don't show any data
+    const hasCurriculum = curriculumYears.length > 0 && selectedCurriculumId
+
+    const curriculumFilteredData = !hasCurriculum ? [] : (metrics?.reviewTableData || []).filter((row: any) => {
         return row.curriculumYearIds && row.curriculumYearIds.includes(selectedCurriculumId)
     }).map((row: any) => {
         if (!selectedCurriculumId) return row;
@@ -99,6 +101,32 @@ export function QAAlignmentTableClient({ metrics, curriculumYears }: { metrics: 
             toast({ title: 'Error', description: 'Gagal mengubah status analitik', variant: 'destructive' });
         }
     };
+
+    // Show empty state when no approved curriculum exists
+    if (curriculumYears.length === 0) {
+        return (
+            <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                    <BookOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                        {hasAnyCurriculum ? 'Belum Ada Kurikulum yang Disetujui' : 'Belum Ada Kurikulum'}
+                    </h3>
+                    <p className="text-muted-foreground max-w-md mb-4">
+                        {hasAnyCurriculum 
+                            ? 'Kurikulum telah dibuat tetapi belum disetujui (Approved) oleh Ketua Program Studi. Data pemetaan CLO vs PLO hanya ditampilkan untuk kurikulum yang sudah berstatus Approved.'
+                            : 'Anda belum membuat kurikulum untuk program studi ini. Silakan buat kurikulum terlebih dahulu di menu Tinjauan Kurikulum agar data pemetaan CLO vs PLO dapat ditampilkan.'
+                        }
+                    </p>
+                    <Link href="/qa/curriculum">
+                        <Button>
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            {hasAnyCurriculum ? 'Lihat Kurikulum' : 'Buat Kurikulum'}
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <div className="flex flex-col gap-6">
