@@ -1,6 +1,6 @@
-# Buku Panduan Penggunaan OBLMS (Outcome-Based Learning Management System)
+# Buku Panduan Penggunaan OLIMS (Outcome-Based Learning Management System)
 
-Selamat datang di OBLMS! Dokumen ini adalah panduan lengkap dan detail untuk menggunakan seluruh fitur yang ada di dalam aplikasi OBLMS, yang dirancang khusus untuk mendukung siklus pendidikan berbasis luaran (Outcome-Based Education). Panduan ini dibagi berdasarkan peran (role) pengguna.
+Selamat datang di OLIMS! Dokumen ini adalah panduan lengkap dan detail untuk menggunakan seluruh fitur yang ada di dalam aplikasi OLIMS, yang dirancang khusus untuk mendukung siklus pendidikan berbasis luaran (Outcome-Based Education). Panduan ini dibagi berdasarkan peran (role) pengguna.
 
 ---
 
@@ -34,7 +34,7 @@ Selamat datang di OBLMS! Dokumen ini adalah panduan lengkap dan detail untuk men
 
 ### 1.3 Mengganti Peran (Switch Role) & Konteks Program Studi
 **Proses Penggunaan:**
-1. OBLMS mendukung peran ganda. Jika Anda adalah seorang Dosen yang juga menjabat sebagai Ketua Departemen atau staf QA, Anda bisa berpindah dashboard tanpa perlu relogin.
+1. OLIMS mendukung peran ganda. Jika Anda adalah seorang Dosen yang juga menjabat sebagai Ketua Departemen atau staf QA, Anda bisa berpindah dashboard tanpa perlu relogin.
 2. Klik pada ikon/nama **Profil Anda** di pojok kanan atas (Header navigasi).
 3. Akan muncul dropdown menu. Pada bagian **Ganti Peran / Program Studi**, pilih kombinasi role dan prodi yang ingin Anda kelola saat ini (Misal: `QA - Teknik Informatika`).
 4. Halaman akan dimuat ulang (*refresh*) dan seluruh menu sidebar serta data yang ditampilkan akan menyesuaikan dengan otoritas peran tersebut.

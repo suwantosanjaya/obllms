@@ -145,7 +145,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
             <CardHeader className="space-y-1 text-center">
                 <CardTitle className="text-2xl">Daftar Akun Baru</CardTitle>
                 <CardDescription>
-                    Lengkapi form di bawah ini untuk mendaftar ke sistem OBLMS
+                    Lengkapi form di bawah ini untuk mendaftar ke sistem OLIMS
                 </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>

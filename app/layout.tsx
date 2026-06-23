@@ -8,8 +8,8 @@ import { Toaster } from '@/components/ui/toaster'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'OBLMS',
-  description: 'Outcome Based Learning Management System',
+  title: 'OLIMS',
+  description: 'Outcome Learning Integrated Management System',
 }
 
 export default function RootLayout({

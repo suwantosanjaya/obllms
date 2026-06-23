@@ -256,11 +256,11 @@ export default function Home() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center space-y-8 bg-muted/10 py-12 px-4">
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-4">
-          <Image src="/logo-icon.png" alt="OBLMS Logo Light" width={80} height={80} className="object-contain drop-shadow-md dark:hidden" />
-          <Image src="/logo-dark-v2.png" alt="OBLMS Logo Dark" width={80} height={80} className="object-contain drop-shadow-md hidden dark:block" />
-          <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OBLMS</h1>
+          <Image src="/logo-icon.png" alt="OLIMS Logo Light" width={80} height={80} className="object-contain drop-shadow-md dark:hidden" />
+          <Image src="/logo-dark-v2.png" alt="OLIMS Logo Dark" width={80} height={80} className="object-contain drop-shadow-md hidden dark:block" />
+          <h1 className="text-5xl font-extrabold tracking-tight lg:text-6xl text-primary">OLIMS</h1>
         </div>
-        <p className="text-xl text-muted-foreground">Outcome Based Learning Management System</p>
+        <p className="text-xl text-muted-foreground">Outcome Learning Integrated Management System</p>
       </div>
 
       {forceProfileEmail ? (

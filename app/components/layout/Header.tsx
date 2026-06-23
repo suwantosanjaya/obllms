@@ -73,7 +73,7 @@ export function Header() {
                         <div className="flex h-14 items-center border-b px-4 mb-4">
                             <div className="flex items-center gap-2 font-semibold">
                                 <GraduationCap className="h-6 w-6" />
-                                <span className="text-xl">OBLMS</span>
+                                <span className="text-xl">OLIMS</span>
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto">

@@ -152,7 +152,7 @@ export function Sidebar() {
                 <div className={cn("flex h-14 items-center border-b px-4 lg:h-[60px]", isSidebarCollapsed ? "justify-center px-0" : "lg:px-6")}>
                     <Link href="/" className="flex items-center gap-2 font-semibold">
                         <GraduationCap className="h-6 w-6 shrink-0" />
-                        {!isSidebarCollapsed && <span className="">OBLMS</span>}
+                        {!isSidebarCollapsed && <span className="">OLIMS</span>}
                     </Link>
                 </div>
                 <div className="flex-1 overflow-auto py-2">

@@ -25,7 +25,7 @@ export function ExportExcelButton({ course, enrollments, clos, plos, assessments
         setIsExporting(true)
         try {
             const workbook = new ExcelJS.Workbook()
-            workbook.creator = 'OBLMS System'
+            workbook.creator = 'OLIMS System'
             workbook.created = new Date()
 
             const sheet = workbook.addWorksheet('Rekap Nilai & OBE', {

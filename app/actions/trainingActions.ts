@@ -29,7 +29,7 @@ export async function getTrainingModules() {
                     mediaType: 'VIDEO'
                 },
                 {
-                    title: 'Cara Menggunakan OBLMS untuk Grading',
+                    title: 'Cara Menggunakan OLIMS untuk Grading',
                     description: 'Tutorial komprehensif cara melakukan penilaian multi-dimensi per CLO, serta menggunakan fitur SCL (Student-Centered Learning) Assessment.',
                     categoryId: sysCat.id,
                     mediaUrl: 'https://www.youtube.com/embed/ScMzIvxBSi4',
