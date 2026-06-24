@@ -6,11 +6,10 @@ import { AchievementThresholdClient } from '@/app/components/admin/SystemSetting
 import { AcademicYearSettingsClient } from '@/app/components/admin/AcademicYearSettingsClient'
 import { getAcademicYearsList } from '@/app/actions/systemSettingActions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import { getSessionUser } from '@/app/actions/userActions'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { InfoIcon } from 'lucide-react'
+import { GlobalFeaturesClient } from '@/app/components/admin/GlobalFeaturesClient'
 
 export default async function AdminSettingsPage() {
     const user = await getSessionUser();
@@ -22,6 +21,10 @@ export default async function AdminSettingsPage() {
     const passThreshold = await getSystemSetting('PASS_THRESHOLD', '70', activeUniversityId)
     const moderateThreshold = await getSystemSetting('MODERATE_THRESHOLD', '50', activeUniversityId)
     const academicYears = await getAcademicYearsList(activeUniversityId)
+
+    const featureSrl = await getSystemSetting('FEATURE_SRL', 'true', activeUniversityId) === 'true'
+    const featureGamification = await getSystemSetting('FEATURE_GAMIFICATION', 'true', activeUniversityId) === 'true'
+    const featureEws = await getSystemSetting('FEATURE_EWS', 'true', activeUniversityId) === 'true'
 
     return (
         <div className="flex flex-col gap-6">
@@ -71,35 +74,12 @@ export default async function AdminSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="features" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Konfigurasi Fitur Global</CardTitle>
-                            <CardDescription>Mengaktifkan atau menonaktifkan elemen LMS secara global berdasarkan 30 elemen OBL.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Modul Self-Regulated Learning (SRL)</Label>
-                                    <p className="text-sm text-muted-foreground">Aktifkan fitur penetapan tujuan & refleksi mandiri.</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Gamifikasi & Progress Analytics</Label>
-                                    <p className="text-sm text-muted-foreground">Tampilkan lencana dan leaderboard.</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Sistem Peringatan Dini (Intervensi)</Label>
-                                    <p className="text-sm text-muted-foreground">Analitik untuk mahasiswa berisiko (At-Risk).</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <GlobalFeaturesClient 
+                        universityId={activeUniversityId} 
+                        initialSrl={featureSrl} 
+                        initialGamification={featureGamification} 
+                        initialEws={featureEws} 
+                    />
                 </TabsContent>
             </Tabs>
         </div>
