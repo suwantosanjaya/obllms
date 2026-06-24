@@ -306,6 +306,23 @@ export async function getTeachers() {
                             }
                         }
                     }
+                },
+                departmentRoles: {
+                    where: { role: 'teacher' },
+                    select: {
+                        department: {
+                            select: {
+                                id: true,
+                                name: true,
+                                faculty: {
+                                    select: {
+                                        id: true,
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             orderBy: [
@@ -317,6 +334,17 @@ export async function getTeachers() {
         
         // Format the name and group
         const formattedTeachers = teachers.map(t => {
+            let facultyName = 'Tanpa Fakultas'
+            let departmentName = 'Tanpa Program Studi'
+            
+            if (t.homebaseDepartment) {
+                facultyName = t.homebaseDepartment.faculty?.name || 'Tanpa Fakultas'
+                departmentName = t.homebaseDepartment.name || 'Tanpa Program Studi'
+            } else if (t.departmentRoles && t.departmentRoles.length > 0 && t.departmentRoles[0].department) {
+                facultyName = t.departmentRoles[0].department.faculty?.name || 'Tanpa Fakultas'
+                departmentName = t.departmentRoles[0].department.name || 'Tanpa Program Studi'
+            }
+
             const gelarDepan = t.teacherProfile?.gelarDepan ? `${t.teacherProfile.gelarDepan} ` : ''
             const gelarBelakang = t.teacherProfile?.gelarBelakang ? `, ${t.teacherProfile.gelarBelakang}` : ''
             const fullName = `${gelarDepan}${t.name}${gelarBelakang}`
@@ -328,10 +356,10 @@ export async function getTeachers() {
                 email: t.email,
                 nidn: t.teacherProfile?.nidn,
                 nip: t.teacherProfile?.nip,
-                departmentId: t.homebaseDepartment?.id,
-                departmentName: t.homebaseDepartment?.name || 'Tanpa Program Studi',
-                facultyId: t.homebaseDepartment?.faculty?.id,
-                facultyName: t.homebaseDepartment?.faculty?.name || 'Tanpa Fakultas'
+                departmentId: t.homebaseDepartment?.id || t.departmentRoles?.[0]?.department?.id,
+                departmentName: departmentName,
+                facultyId: t.homebaseDepartment?.faculty?.id || t.departmentRoles?.[0]?.department?.faculty?.id,
+                facultyName: facultyName
             }
         })
         return { success: true, teachers: formattedTeachers }

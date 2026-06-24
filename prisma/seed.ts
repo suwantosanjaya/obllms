@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
 const prisma = new PrismaClient()
@@ -92,6 +93,18 @@ async function main() {
         await prisma.user.update({
             where: { id: qaUser.id },
             data: { departments: { connect: [{ id: prodiTI.id }, { id: prodiSI.id }] } }
+        })
+    }
+
+    // Assign user6 (admin) to UIN Suska
+    const adminUser = users.find(u => u.role === 'admin')
+    if (adminUser) {
+        await prisma.userUniversityRole.create({
+            data: {
+                userId: adminUser.id,
+                universityId: uinSuska.id,
+                role: 'admin'
+            }
         })
     }
 
