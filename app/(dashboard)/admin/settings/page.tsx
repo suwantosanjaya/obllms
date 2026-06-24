@@ -8,14 +8,20 @@ import { getAcademicYearsList } from '@/app/actions/systemSettingActions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { getSessionUser } from '@/app/actions/userActions'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { InfoIcon } from 'lucide-react'
 
 export default async function AdminSettingsPage() {
-    const res = await getGradeScales()
+    const user = await getSessionUser();
+    const activeUniversityId = user?.activeUniversityId || null;
+
+    const res = await getGradeScales(activeUniversityId)
     const scales = res.success ? (res.data ?? []) : []
 
-    const passThreshold = await getSystemSetting('PASS_THRESHOLD', '70')
-    const moderateThreshold = await getSystemSetting('MODERATE_THRESHOLD', '50')
-    const academicYears = await getAcademicYearsList()
+    const passThreshold = await getSystemSetting('PASS_THRESHOLD', '70', activeUniversityId)
+    const moderateThreshold = await getSystemSetting('MODERATE_THRESHOLD', '50', activeUniversityId)
+    const academicYears = await getAcademicYearsList(activeUniversityId)
 
     return (
         <div className="flex flex-col gap-6">
@@ -25,6 +31,16 @@ export default async function AdminSettingsPage() {
                     <p className="text-muted-foreground mt-1">Konfigurasi global LMS.</p>
                 </div>
             </div>
+
+            {!activeUniversityId && (
+                <Alert>
+                    <InfoIcon className="h-4 w-4" />
+                    <AlertDescription>
+                        Anda saat ini mengedit pengaturan <strong>Global (Bawaan Sistem)</strong>. 
+                        Pengaturan ini akan digunakan oleh universitas yang belum melakukan penyesuaian khusus.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <Tabs defaultValue="grades" className="w-full">
                 <TabsList className="mb-4">
@@ -37,6 +53,7 @@ export default async function AdminSettingsPage() {
                     <AchievementThresholdClient 
                         initialPass={passThreshold} 
                         initialModerate={moderateThreshold} 
+                        universityId={activeUniversityId}
                     />
                     <Card>
                         <CardHeader>
@@ -44,13 +61,13 @@ export default async function AdminSettingsPage() {
                             <CardDescription>Atur batas konversi skor numerik menjadi nilai huruf (A, B, C, dll) serta bobot point (GPA). Pengaturan ini berlaku untuk seluruh program studi di universitas.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <GradeScaleClient initialScales={scales} />
+                            <GradeScaleClient initialScales={scales} universityId={activeUniversityId} />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 <TabsContent value="academic-years" className="space-y-4">
-                    <AcademicYearSettingsClient initialYears={academicYears} />
+                    <AcademicYearSettingsClient initialYears={academicYears} universityId={activeUniversityId} />
                 </TabsContent>
 
                 <TabsContent value="features" className="space-y-4">

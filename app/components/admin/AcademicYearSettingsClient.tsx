@@ -9,7 +9,7 @@ import { Plus, X, Loader2, Save } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { setSystemSetting } from '@/app/actions/systemSettingActions'
 
-export function AcademicYearSettingsClient({ initialYears }: { initialYears: string[] }) {
+export function AcademicYearSettingsClient({ initialYears, universityId }: { initialYears: string[], universityId?: string | null }) {
     const [years, setYears] = useState<string[]>(initialYears)
     const [newYear, setNewYear] = useState('')
     const [loading, setLoading] = useState(false)
@@ -38,7 +38,7 @@ export function AcademicYearSettingsClient({ initialYears }: { initialYears: str
 
     const handleSave = async () => {
         setLoading(true)
-        const res = await setSystemSetting('ACADEMIC_YEARS', JSON.stringify(years))
+        const res = await setSystemSetting('ACADEMIC_YEARS', JSON.stringify(years), universityId)
         setLoading(false)
 
         if (res.success) {

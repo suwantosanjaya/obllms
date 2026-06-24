@@ -242,12 +242,28 @@ export async function getSessionUser() {
     }
 
     const { password, ...userWithoutPassword } = user
+    
+    // Calculate activeUniversityId
+    let activeUniversityId = null;
+    if (activeRole === 'admin' && user.universityRoles.length > 0) {
+        activeUniversityId = user.universityRoles.find(r => r.role === 'admin')?.universityId || user.universityRoles[0]?.universityId;
+    } else if (activeDepartmentId) {
+        const activeDeptInfo = await prisma.department.findUnique({
+            where: { id: activeDepartmentId },
+            include: { faculty: true }
+        });
+        if (activeDeptInfo?.faculty?.universityId) {
+            activeUniversityId = activeDeptInfo.faculty.universityId;
+        }
+    }
+
     return { 
         ...userWithoutPassword, 
         facultyName,
         departments: activeRole === 'super_admin' ? visibleDepartments : user.departments, 
         departmentRoles: user.departmentRoles, 
         activeDepartmentId, 
+        activeUniversityId,
         activeRole, 
         roles 
     }

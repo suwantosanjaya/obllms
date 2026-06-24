@@ -119,6 +119,8 @@ model University {
   faculties       Faculty[]
   rectorHistories UniversityRectorHistory[]
   userRoles       UserUniversityRole[]
+  systemSettings  SystemSetting[]
+  gradeScales     GradeScale[]
 }
 
 model UniversityRectorHistory {
@@ -136,10 +138,15 @@ model UniversityRectorHistory {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Global System Settings (Key-Value)
+// Global & University-specific System Settings (Key-Value)
 model SystemSetting {
-  key   String @id
-  value String
+  id           String      @id @default(cuid())
+  universityId String?     // null = global default
+  key          String
+  value        String
+  university   University? @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, key])
 }
 
 // Model for Faculty
@@ -743,13 +750,15 @@ model DepartmentHeadHistory {
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Global Grade Scale Settings
+// Global & University-specific Grade Scale Settings
 model GradeScale {
-  id       String @id @default(cuid())
-  grade    String // A, A-, B+, etc.
-  minScore Float  // e.g., 85
-  maxScore Float  // e.g., 100
-  point    Float  // GPA point, e.g., 4.0
+  id           String      @id @default(cuid())
+  universityId String?
+  grade        String // A, A-, B+, etc.
+  minScore     Float  // e.g., 85
+  maxScore     Float  // e.g., 100
+  point        Float  // GPA point, e.g., 4.0
+  university   University? @relation(fields: [universityId], references: [id], onDelete: Cascade)
 }
 
 // System & Departmental Announcements

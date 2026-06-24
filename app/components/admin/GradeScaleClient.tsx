@@ -17,7 +17,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-export function GradeScaleClient({ initialScales }: { initialScales: any[] }) {
+export function GradeScaleClient({ initialScales, universityId }: { initialScales: any[], universityId?: string | null }) {
     const [scales, setScales] = useState(initialScales)
     const [loading, setLoading] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -39,7 +39,7 @@ export function GradeScaleClient({ initialScales }: { initialScales: any[] }) {
             maxScore: scale.maxScore,
             point: scale.point
         }
-        const res = await upsertGradeScale(payload)
+        const res = await upsertGradeScale(payload, universityId)
         if (res.success) {
             setScales(scales.map(s => s.id === scale.id ? { ...res.data, isNew: false } : s).sort((a, b) => b.minScore - a.minScore))
         } else {

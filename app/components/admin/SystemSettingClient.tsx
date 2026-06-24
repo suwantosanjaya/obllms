@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { setSystemSetting } from '@/app/actions/systemSettingActions'
 
-export function AchievementThresholdClient({ initialPass, initialModerate }: { initialPass: string, initialModerate: string }) {
+export function AchievementThresholdClient({ initialPass, initialModerate, universityId }: { initialPass: string, initialModerate: string, universityId?: string | null }) {
     const { toast } = useToast()
     const [passThreshold, setPassThreshold] = useState(initialPass)
     const [moderateThreshold, setModerateThreshold] = useState(initialModerate)
@@ -16,8 +16,8 @@ export function AchievementThresholdClient({ initialPass, initialModerate }: { i
 
     async function handleSave() {
         setLoading(true)
-        const res1 = await setSystemSetting('PASS_THRESHOLD', passThreshold)
-        const res2 = await setSystemSetting('MODERATE_THRESHOLD', moderateThreshold)
+        const res1 = await setSystemSetting('PASS_THRESHOLD', passThreshold, universityId)
+        const res2 = await setSystemSetting('MODERATE_THRESHOLD', moderateThreshold, universityId)
         setLoading(false)
 
         if (res1.success && res2.success) {
