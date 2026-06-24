@@ -3,6 +3,8 @@ import { getGradeScales } from '@/app/actions/gradeScaleActions'
 import { getSystemSetting } from '@/app/actions/systemSettingActions'
 import { GradeScaleClient } from '@/app/components/admin/GradeScaleClient'
 import { AchievementThresholdClient } from '@/app/components/admin/SystemSettingClient'
+import { AcademicYearSettingsClient } from '@/app/components/admin/AcademicYearSettingsClient'
+import { getAcademicYearsList } from '@/app/actions/systemSettingActions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -13,6 +15,7 @@ export default async function AdminSettingsPage() {
 
     const passThreshold = await getSystemSetting('PASS_THRESHOLD', '70')
     const moderateThreshold = await getSystemSetting('MODERATE_THRESHOLD', '50')
+    const academicYears = await getAcademicYearsList()
 
     return (
         <div className="flex flex-col gap-6">
@@ -27,6 +30,7 @@ export default async function AdminSettingsPage() {
                 <TabsList className="mb-4">
                     <TabsTrigger value="grades">Rentang Nilai</TabsTrigger>
                     <TabsTrigger value="features">Fitur Global</TabsTrigger>
+                    <TabsTrigger value="academic-years">Tahun Ajaran</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="grades" className="space-y-4">
@@ -43,6 +47,10 @@ export default async function AdminSettingsPage() {
                             <GradeScaleClient initialScales={scales} />
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                <TabsContent value="academic-years" className="space-y-4">
+                    <AcademicYearSettingsClient initialYears={academicYears} />
                 </TabsContent>
 
                 <TabsContent value="features" className="space-y-4">

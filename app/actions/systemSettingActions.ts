@@ -28,3 +28,17 @@ export async function setSystemSetting(key: string, value: string) {
         return { success: false, error: error.message }
     }
 }
+
+export async function getAcademicYearsList() {
+    try {
+        const setting = await prisma.systemSetting.findUnique({
+            where: { key: 'ACADEMIC_YEARS' }
+        })
+        if (setting && setting.value) {
+            return JSON.parse(setting.value) as string[]
+        }
+    } catch {}
+    
+    // Default fallback if not found
+    return ["2023/2024", "2024/2025", "2025/2026", "2026/2027", "2027/2028"]
+}

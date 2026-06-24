@@ -40,6 +40,7 @@ import {
 import { createCourse, getSubjectsByCurriculum } from '@/app/actions/courseActions'
 import { getTeachers } from '@/app/actions/userActions'
 import { getCurriculumYears } from '@/app/actions/obeActions'
+import { getAcademicYearsList } from '@/app/actions/systemSettingActions'
 import { useRouter } from 'next/navigation'
 
 export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseCreated?: () => void, departmentId?: string | null }) {
@@ -60,6 +61,7 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
     const [classCode, setClassCode] = useState("Kelas Reguler")
     const [schedule, setSchedule] = useState("")
     const [semester, setSemester] = useState("Ganjil")
+    const [academicYearsOptions, setAcademicYearsOptions] = useState<string[]>(["2025/2026"])
     const [academicYear, setAcademicYear] = useState("2025/2026")
 
     useEffect(() => {
@@ -71,6 +73,11 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
             const resTeach = await getTeachers()
             if (resTeach.success && resTeach.teachers) {
                 setTeachers(resTeach.teachers)
+            }
+            const yearsOptions = await getAcademicYearsList()
+            setAcademicYearsOptions(yearsOptions)
+            if (yearsOptions.length > 0 && !yearsOptions.includes(academicYear)) {
+                setAcademicYear(yearsOptions[0])
             }
         }
         if (open) fetchData()
@@ -283,9 +290,9 @@ export function CreateClassDialog({ onCourseCreated, departmentId }: { onCourseC
                                         <SelectValue placeholder="Tahun Ajaran" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="2024/2025">2024/2025</SelectItem>
-                                        <SelectItem value="2025/2026">2025/2026</SelectItem>
-                                        <SelectItem value="2026/2027">2026/2027</SelectItem>
+                                        {academicYearsOptions.map((year) => (
+                                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
