@@ -137,7 +137,7 @@ export function TeacherTableClient({ teachers, departmentId }: { teachers: any[]
                                 <SortableTableHead label="Nama" sortKey="name" currentSort={sortConfig} onSort={handleSort} />
                                 <SortableTableHead label="Email" sortKey="email" currentSort={sortConfig} onSort={handleSort} />
                                 <TableHead>NIDN</TableHead>
-                                <TableHead>Total Kelas</TableHead>
+                                <TableHead>NIP</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
@@ -159,9 +159,7 @@ export function TeacherTableClient({ teachers, departmentId }: { teachers: any[]
                                         <TableCell className="font-medium">{teacher.name}</TableCell>
                                         <TableCell className="text-muted-foreground">{teacher.email}</TableCell>
                                         <TableCell className="font-mono text-sm">{teacher.teacherProfile?.nidn || '-'}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{teacher._count?.courses ?? 0} kelas</Badge>
-                                        </TableCell>
+                                        <TableCell className="font-mono text-sm">{teacher.teacherProfile?.nip || '-'}</TableCell>
                                         <TableCell>
                                             <Badge variant={teacher.isActive ? 'default' : 'secondary'} className={teacher.isActive ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
                                                 {teacher.isActive ? 'Aktif' : 'Nonaktif'}
