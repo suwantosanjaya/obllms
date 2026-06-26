@@ -42,10 +42,16 @@ export function CurriculumReportTab({
         }>
     }> = {}
 
-    mappings.forEach(m => {
+    // Only process mappings for subjects that are actually selected for this curriculum
+    const validMappings = mappings.filter(m => subjects.some(s => s.id === m.subjectId));
+
+    validMappings.forEach(m => {
         if (!m.plo || !m.clo) return;
+        const subject = subjects.find(s => s.id === m.subjectId);
+        if (!subject) return; // double check
+
         const ploCode = m.plo.code;
-        const subjectCode = subjects.find(s => s.id === m.subjectId)?.code || '-';
+        const subjectCode = subject.code;
         const cloCode = m.clo.code;
 
         if (!ploGroups[ploCode]) {
@@ -367,7 +373,7 @@ export function CurriculumReportTab({
                                                 const isFirstRowForSubject = cloIndex === 0;
 
                                                 return (
-                                                    <TableRow key={`${ploGroup.ploCode}-${subject.subjectCode}-${clo.cloCode}`} className={ploIndex % 2 === 0 ? "!bg-background" : "!bg-muted/50"}>
+                                                    <TableRow key={`${ploGroup.ploCode}-${subject.subjectCode}-${clo.cloCode}-${cloIndex}`} className={ploIndex % 2 === 0 ? "!bg-background" : "!bg-muted/50"}>
                                                         {isFirstRowForPLO && (
                                                             <>
                                                                 <TableCell rowSpan={ploRowSpan} className="align-middle text-center border-r border-b font-medium text-muted-foreground">
