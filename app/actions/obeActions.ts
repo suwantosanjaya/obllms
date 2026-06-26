@@ -18,6 +18,7 @@ export async function getCurriculumYears(departmentId?: string, onlyApproved?: b
     
     return await prisma.curriculumYear.findMany({
         where,
+        include: { departmentCurriculums: true },
         orderBy: { name: 'desc' }
     })
 }

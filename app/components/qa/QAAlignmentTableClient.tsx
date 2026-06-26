@@ -189,9 +189,19 @@ export function QAAlignmentTableClient({ metrics, curriculumYears, hasAnyCurricu
                             <SelectValue placeholder="Pilih Kurikulum" />
                         </SelectTrigger>
                         <SelectContent>
-                            {curriculumYears.map(cy => (
-                                <SelectItem key={cy.id} value={cy.id}>{cy.name}</SelectItem>
-                            ))}
+                            {curriculumYears.map(cy => {
+                                const deptCurriculum = cy.departmentCurriculums?.find((dc: any) => dc.departmentId === cy.departmentId || !cy.departmentId)
+                                const status = deptCurriculum?.status || 'DRAFT'
+                                const isActive = cy.isActive
+                                
+                                let label = cy.name
+                                if (isActive) label += ' (Aktif)'
+                                else if (status === 'APPROVED') label += ' (Approved)'
+                                else if (status === 'SUBMITTED') label += ' (Menunggu Review)'
+                                else label += ' (Draft)'
+
+                                return <SelectItem key={cy.id} value={cy.id}>{label}</SelectItem>
+                            })}
                         </SelectContent>
                     </Select>
                 </div>
