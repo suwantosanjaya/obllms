@@ -696,6 +696,9 @@ export async function getQADashboardMetrics(departmentId?: string | null) {
             subject.courses.forEach(c => {
                 if (c.curriculumYearId) curriculumYearIds.add(c.curriculumYearId)
             })
+            subject.curriculumYears.forEach(cy => {
+                if (cy.curriculumYearId) curriculumYearIds.add(cy.curriculumYearId)
+            })
 
             return {
                 id: subject.id,

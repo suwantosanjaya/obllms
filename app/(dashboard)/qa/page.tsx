@@ -32,7 +32,8 @@ export default async function QADashboard() {
         reviewTableData: []
     }
 
-    const cyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined, true)
+    // Fetch all curriculums so QA can review active ones even if they are not approved yet
+    const cyRes = await getCurriculumYears(qaUser.activeDepartmentId || undefined, false)
     const curriculumYears = cyRes || []
 
     // Check if any curriculum exists at all (regardless of approval status)
