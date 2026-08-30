@@ -60,8 +60,10 @@ export default function Home() {
 
   useEffect(() => {
     // Seed DB if it's empty on first load
-    seedSimulatedUsers().then(() => setIsInitializing(false))
-    generateCaptcha()
+    seedSimulatedUsers().then(() => {
+      setIsInitializing(false)
+      generateCaptcha()
+    })
   }, [])
 
   useEffect(() => {
@@ -450,6 +452,7 @@ export default function Home() {
                 </div>
               )}
 
+{/*               
               <div className="pt-2 text-xs text-muted-foreground space-y-1 bg-muted/30 p-3 rounded-md">
                 <p className="font-semibold text-foreground/80">Akun Simulasi (Password: password123):</p>
                 <ul className="list-disc list-inside">
@@ -458,9 +461,9 @@ export default function Home() {
                   <li><span className="font-medium text-rose-600">Super Admin / Admin:</span> user5@kampus.edu / user6@kampus.edu</li>
                   <li><span className="font-medium text-emerald-600">Student:</span> user7@kampus.edu s.d. user10@kampus.edu</li>
                 </ul>
-              </div>
+              </div> */}
             </CardContent>
-            <CardFooter className="flex flex-col gap-4">
+            <CardFooter className="flex flex-col gap-4 pt-4">
               <Button className="w-full text-md py-6" type="submit" disabled={loading}>
                 {loading ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
