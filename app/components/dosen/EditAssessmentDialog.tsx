@@ -44,6 +44,7 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
     const [selectedTechnique, setSelectedTechnique] = useState(assessment.type)
     const [format, setFormat] = useState(assessment.format || 'upload') // 'upload' or 'quiz'
     const [allowReview, setAllowReview] = useState(assessment.allowReview ?? false)
+    const [isScorePublished, setIsScorePublished] = useState(assessment.isScorePublished ?? true)
     const [shuffleQuestions, setShuffleQuestions] = useState(assessment.shuffleQuestions ?? false)
     const [cloLoading, setCloLoading] = useState(false)
 
@@ -184,6 +185,7 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
             courseId: selectedCourseId,
             clos: selectedClos,
             allowReview,
+            isScorePublished,
             shuffleQuestions,
         })
 
@@ -252,6 +254,21 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                                     <SelectItem value="quiz">Kuis Interaktif (CBT)</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        {/* Is Score Published */}
+                        <div className="grid gap-2 p-3 bg-muted/10 border rounded-lg">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="editIsScorePublished">Tampilkan Nilai ke Mahasiswa</Label>
+                                <Switch
+                                    id="editIsScorePublished"
+                                    checked={isScorePublished}
+                                    onCheckedChange={setIsScorePublished}
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {isScorePublished ? 'Mahasiswa dapat melihat nilai mereka.' : 'Nilai disembunyikan sampai Anda mempublikasikannya.'}
+                            </p>
                         </div>
 
                         {/* Allow Review & Shuffle switches (only for quiz) */}

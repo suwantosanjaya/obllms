@@ -96,6 +96,7 @@ export function CreateSubjectDialog({ defaultFacultyId, defaultDepartmentId, isL
             scope,
             credits: parseInt(credits) || 3,
             facultyId: facultyId || undefined,
+            departmentId: departmentId || undefined,
         })
 
         setIsLoading(false)

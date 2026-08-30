@@ -13,6 +13,7 @@ export async function createAssessment(data: {
     clos: { cloId: string; weight: number }[]; // Multi-CLO with weights (must sum to 100)
     format?: string; // 'upload' or 'quiz'
     allowReview?: boolean;
+    isScorePublished?: boolean;
     shuffleQuestions?: boolean;
     timeLimit?: number | null;
 }) {
@@ -24,6 +25,7 @@ export async function createAssessment(data: {
                 type: data.type,
                 format: data.format || 'upload',
                 allowReview: data.allowReview ?? false,
+                isScorePublished: data.isScorePublished ?? true,
                 shuffleQuestions: data.shuffleQuestions ?? false,
                 timeLimit: data.timeLimit || null,
                 dueDate: data.dueDate,
@@ -52,6 +54,7 @@ export async function updateAssessment(data: {
     courseId: string;
     clos?: { cloId: string; weight: number }[]; // Optional if not allowed to change
     allowReview?: boolean;
+    isScorePublished?: boolean;
     shuffleQuestions?: boolean;
     timeLimit?: number | null;
 }) {
@@ -79,6 +82,7 @@ export async function updateAssessment(data: {
                     description: data.description,
                     dueDate: data.dueDate,
                     allowReview: data.allowReview ?? false,
+                    ...(data.isScorePublished !== undefined ? { isScorePublished: data.isScorePublished } : {}),
                     ...(data.shuffleQuestions !== undefined ? { shuffleQuestions: data.shuffleQuestions } : {}),
                     ...(data.timeLimit !== undefined ? { timeLimit: data.timeLimit } : {}),
                     // Only update type if not graded
@@ -186,7 +190,16 @@ export async function getCourseGradebookData(courseId: string) {
         const course = await prisma.course.findUnique({
             where: { id: courseId },
             include: {
-                subject: true,
+                subject: {
+                    include: {
+                        faculty: true,
+                        department: {
+                            include: {
+                                faculty: true
+                            }
+                        }
+                    }
+                },
                 enrollments: {
                     include: {
                         student: {
@@ -806,6 +819,7 @@ export async function duplicateAssessment(assessmentId: string, targetCourseId: 
                     dueDate: assessment.dueDate,
                     maxScore: assessment.maxScore,
                     allowReview: assessment.allowReview,
+                    isScorePublished: assessment.isScorePublished,
                     timeLimit: assessment.timeLimit,
                 }
             })

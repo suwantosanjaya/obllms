@@ -115,7 +115,7 @@ export default async function DosenDashboard() {
                                             <span className="text-sm text-muted-foreground">{course.subject.code} • {course.classCode || 'Kelas Reguler'} • {course._count?.enrollments || 0} Mahasiswa</span>
                                         </div>
                                         <Button variant="outline" size="sm" asChild>
-                                            <Link href={`/dosen/course/${course.id}`}>Kelola</Link>
+                                            <Link href={`/teacher/course/${course.id}`}>Kelola</Link>
                                         </Button>
                                     </div>
                                 ))

@@ -1,9 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { getCourseGradebookData } from '@/app/actions/assessmentActions'
-import { Badge } from '@/components/ui/badge'
 import { calculateStudentOBEGrade } from '@/app/utils/obeCalculator'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+interface CLOType { id: string; code: string; description: string; [key: string]: unknown }
+interface SubjectCLOType { clo: CLOType; [key: string]: unknown }
+interface AssessmentType { id: string; title: string; isScorePublished: boolean; [key: string]: unknown }
+interface SubmissionType { studentId: string; assessmentId: string; score: number | null; [key: string]: unknown }
+interface CloAvgType { cloId: string; code: string; description: string; avg: string | null; }
 export async function StudentGradebookTab({ courseId, studentId }: { courseId: string, studentId: string }) {
     const dataRes = await getCourseGradebookData(courseId)
     if (!dataRes.success || !dataRes.course) {
@@ -15,17 +19,18 @@ export async function StudentGradebookTab({ courseId, studentId }: { courseId: s
 
     // Map CLOs associated with the subject
     const uniqueCLOs = new Map()
-    subjectClos?.forEach((sc: any) => {
+    subjectClos?.forEach((sc: SubjectCLOType) => {
         if (!uniqueCLOs.has(sc.clo.id)) {
             uniqueCLOs.set(sc.clo.id, sc.clo)
         }
     })
     const clos = Array.from(uniqueCLOs.values())
 
-    const obeResult = calculateStudentOBEGrade(studentId, assessments, submissions, subjectClos)
+    const publishedScoreAssessments = assessments.filter((a: AssessmentType) => a.isScorePublished !== false)
+    const obeResult = calculateStudentOBEGrade(studentId, publishedScoreAssessments, submissions, subjectClos)
 
     // Calculate student's average score per CLO
-    const studentCloAverages = clos.map((clo: any) => {
+    const studentCloAverages = clos.map((clo: CLOType) => {
         const cloData = obeResult.cloResults.get(clo.id)
         return {
             cloId: clo.id,
@@ -36,10 +41,12 @@ export async function StudentGradebookTab({ courseId, studentId }: { courseId: s
     })
 
     let gradedCount = 0
-    assessments.forEach((a: any) => {
-        const sub = submissions?.find((s: any) => s.studentId === studentId && s.assessmentId === a.id)
-        if (sub?.score !== null && sub?.score !== undefined) {
-            gradedCount++
+    assessments.forEach((a: AssessmentType) => {
+        if (a.isScorePublished !== false) {
+            const sub = submissions?.find((s: SubmissionType) => s.studentId === studentId && s.assessmentId === a.id)
+            if (sub?.score !== null && sub?.score !== undefined) {
+                gradedCount++
+            }
         }
     })
     
@@ -73,15 +80,17 @@ export async function StudentGradebookTab({ courseId, studentId }: { courseId: s
                                     {assessments.length === 0 ? (
                                         <p className="text-xs text-muted-foreground italic">Belum ada tugas.</p>
                                     ) : (
-                                        assessments.map((a: any) => {
-                                            const sub = submissions?.find((s: any) => s.studentId === studentId && s.assessmentId === a.id)
+                                        assessments.map((a: AssessmentType) => {
+                                            const sub = submissions?.find((s: SubmissionType) => s.studentId === studentId && s.assessmentId === a.id)
                                             return (
                                                 <div key={a.id} className="flex justify-between items-center text-sm border-b pb-2 last:border-0 last:pb-0">
                                                     <span className="text-muted-foreground truncate pr-2" title={a.title}>{a.title}</span>
-                                                    {sub?.score !== null && sub?.score !== undefined ? (
+                                                    {!a.isScorePublished ? (
+                                                        <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-700 px-1 py-0 h-4 border-none">Sudah Dinilai</Badge>
+                                                    ) : sub?.score !== null && sub?.score !== undefined ? (
                                                         <span className="font-bold text-primary">{sub.score}</span>
                                                     ) : sub ? (
-                                                        <Badge variant="outline" className="text-[10px] text-orange-500 border-orange-200 px-1 py-0 h-4">Menunggu</Badge>
+                                                        <Badge variant="outline" className="text-[10px] text-orange-500 border-orange-200 px-1 py-0 h-4">Menunggu Penilaian</Badge>
                                                     ) : (
                                                         <span className="text-muted-foreground text-xs italic">Belum buat</span>
                                                     )}
@@ -97,7 +106,7 @@ export async function StudentGradebookTab({ courseId, studentId }: { courseId: s
                         <div className="md:w-2/3">
                             <h3 className="text-lg font-bold mb-4">Penguasaan CLO (Course Learning Outcome)</h3>
                             <div className="grid gap-4">
-                                {studentCloAverages.map((c: any) => {
+                                {studentCloAverages.map((c: CloAvgType) => {
                                     let bgColor = "bg-muted"
                                     let barColor = "bg-slate-200"
                                     let textColor = "text-muted-foreground"

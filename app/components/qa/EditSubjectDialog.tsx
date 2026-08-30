@@ -104,6 +104,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
             scope,
             credits: parseInt(credits) || 3,
             facultyId: facultyId || undefined,
+            departmentId: departmentId || undefined,
         })
 
         setIsLoading(false)

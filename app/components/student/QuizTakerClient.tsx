@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { submitQuizAnswers } from '@/app/actions/assessmentActions'
 import { RichTextEditor } from '@/app/components/ui/RichTextEditor'
@@ -26,7 +25,7 @@ import {
 export function QuizTakerClient({ assessment, courseId, studentId, existingSubmission }: { assessment: any, courseId: string, studentId: string, existingSubmission: any }) {
     const router = useRouter()
     
-    const [answers, setAnswers] = useState<Record<string, any>>({})
+    const [answers, setAnswers] = useState<Record<string, { selectedOptionId?: string; textResponse?: string }>>({})
     const [loading, setLoading] = useState(false)
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
     const [alertMessage, setAlertMessage] = useState<{ title: string, description: string, type: 'success' | 'error' } | null>(null)
@@ -45,7 +44,18 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
         }
     }, [assessment, existingSubmission, timeLeft])
 
-    const [displayQuestions, setDisplayQuestions] = useState<any[]>([])
+    type DisplayQuestion = {
+        id: string;
+        text: string;
+        type: string;
+        points: number;
+        options?: {
+            id: string;
+            text: string;
+            isCorrect?: boolean;
+        }[];
+    };
+    const [displayQuestions, setDisplayQuestions] = useState<DisplayQuestion[]>([])
 
     useEffect(() => {
         if (!assessment) return
@@ -76,30 +86,12 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
         setDisplayQuestions(questionsToDisplay)
     }, [assessment, existingSubmission])
 
-    useEffect(() => {
-        if (timeLeft === null || isConfirmOpen || isSubmittingRef.current || existingSubmission) return
-
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev === null) return null
-                if (prev <= 1) {
-                    clearInterval(timer)
-                    autoSubmit()
-                    return 0
-                }
-                return prev - 1
-            })
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [timeLeft, isConfirmOpen, existingSubmission])
-
     const autoSubmit = async () => {
         if (isSubmittingRef.current) return
         isSubmittingRef.current = true
         setLoading(true)
         
-        const formattedAnswers = Object.entries(answersRef.current).map(([questionId, ans]: any) => ({
+        const formattedAnswers = Object.entries(answersRef.current).map(([questionId, ans]) => ({
             questionId,
             selectedOptionId: ans.selectedOptionId,
             textResponse: ans.textResponse
@@ -120,6 +112,24 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
         }
     }
 
+    useEffect(() => {
+        if (timeLeft === null || isConfirmOpen || isSubmittingRef.current || existingSubmission) return
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev === null) return null
+                if (prev <= 1) {
+                    clearInterval(timer)
+                    autoSubmit()
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [timeLeft, isConfirmOpen, existingSubmission])
+
     if (existingSubmission) {
         return (
             <div className="space-y-6">
@@ -138,15 +148,24 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
                         <CardTitle className="text-green-700 dark:text-green-400 text-center">Skor Anda</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 flex flex-col items-center">
-                        <span className="text-5xl font-black text-green-600">{existingSubmission.score !== null ? existingSubmission.score.toFixed(1) : '?'}</span>
-                        <span className="text-sm text-muted-foreground mt-2">dari 100</span>
-                        {existingSubmission.score === null && (
-                            <Badge variant="outline" className="mt-4 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30">Menunggu Penilaian Esai</Badge>
+                        {assessment.isScorePublished ? (
+                            <>
+                                <span className="text-5xl font-black text-green-600">{existingSubmission.score !== null ? existingSubmission.score.toFixed(1) : '?'}</span>
+                                <span className="text-sm text-muted-foreground mt-2">dari 100</span>
+                                {existingSubmission.score === null && (
+                                    <Badge variant="outline" className="mt-4 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30">Menunggu Penilaian Esai</Badge>
+                                )}
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-medium text-muted-foreground">Menunggu Publikasi</span>
+                                <Badge variant="secondary" className="mt-2 bg-slate-100 text-slate-700 border-none">Nilai Belum Dipublikasi</Badge>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
 
-                {assessment.allowReview ? (
+                {assessment.allowReview && assessment.isScorePublished ? (
                     <div className="space-y-4">
                         <h3 className="font-bold text-lg border-b pb-2">Review Jawaban</h3>
                         {assessment.questions.map((q: any, index: number) => {
@@ -194,7 +213,11 @@ export function QuizTakerClient({ assessment, courseId, studentId, existingSubmi
                     </div>
                 ) : (
                     <div className="mt-8 text-center p-8 bg-muted/30 rounded-lg border border-dashed">
-                        <p className="text-muted-foreground">Dosen menonaktifkan fitur review jawaban untuk kuis ini.</p>
+                        <p className="text-muted-foreground">
+                            {!assessment.isScorePublished 
+                                ? 'Review jawaban tidak tersedia karena nilai belum dipublikasikan.'
+                                : 'Dosen menonaktifkan fitur review jawaban untuk kuis ini.'}
+                        </p>
                     </div>
                 )}
             </div>

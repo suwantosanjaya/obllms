@@ -13,7 +13,10 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
         return <div className="p-4 text-red-500">Gagal memuat data rekapitulasi.</div>
     }
 
-    const scaleRes = await getGradeScales()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const subject = dataRes.course?.subject as any
+    const universityId = subject?.department?.faculty?.universityId || subject?.faculty?.universityId || null
+    const scaleRes = await getGradeScales(universityId)
     const gradeScales = scaleRes.success ? (scaleRes.data ?? []) : []
 
     const { course, submissions, subjectClos } = dataRes

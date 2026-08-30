@@ -101,23 +101,31 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                                 <h4 className="font-bold text-base text-primary">{assessment.title}</h4>
                                                 <div className="flex flex-wrap gap-1 mt-2">
                                                     {submission.cloScores.length > 0 ? (
-                                                        submission.cloScores.map((cs: any) => (
-                                                            <Badge key={cs.cloId} variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                                                                {cs.clo.code}: {Number(cs.score.toFixed(2))}
-                                                            </Badge>
-                                                        ))
+                                                        assessment.isScorePublished ? (
+                                                            submission.cloScores.map((cs: any) => (
+                                                                <Badge key={cs.cloId} variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                                                                    {cs.clo.code}: {Number(cs.score.toFixed(2))}
+                                                                </Badge>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground italic">Nilai CLO disembunyikan</span>
+                                                        )
                                                     ) : (
                                                         <span className="text-xs text-muted-foreground italic">Menunggu penilaian dosen</span>
                                                     )}
                                                 </div>
                                             </div>
-                                            {submission.score !== null ? (
-                                                <div className="flex flex-col sm:items-end mt-2 sm:mt-0 bg-green-50/50 dark:bg-green-950/20 p-2 rounded-md border border-green-100 dark:border-green-900/50 min-w-fit">
-                                                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">Nilai Akhir</span>
-                                                    <span className="font-black text-2xl text-green-600 dark:text-green-500 leading-none">{Number(submission.score.toFixed(2))}</span>
-                                                </div>
-                                            ) : submission.content === 'DITOLAK' ? (
+                                            {submission.content === 'DITOLAK' ? (
                                                 <Badge variant="destructive" className="bg-red-100 text-red-800 border-none dark:bg-red-900/40 dark:text-red-400">Ditolak / Dikembalikan</Badge>
+                                            ) : submission.score !== null ? (
+                                                assessment.isScorePublished ? (
+                                                    <div className="flex flex-col sm:items-end mt-2 sm:mt-0 bg-green-50/50 dark:bg-green-950/20 p-2 rounded-md border border-green-100 dark:border-green-900/50 min-w-fit">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Nilai Akhir</span>
+                                                        <span className="font-black text-2xl text-green-600 dark:text-green-500 leading-none">{Number(submission.score.toFixed(2))}</span>
+                                                    </div>
+                                                ) : (
+                                                    <Badge variant="secondary" className="mt-2 sm:mt-0 bg-slate-100 text-slate-700 border-none">Sudah Dinilai</Badge>
+                                                )
                                             ) : (
                                                 <Badge variant="outline" className="bg-green-100 text-green-800 border-none dark:bg-green-900/40 dark:text-green-400">Terkumpul</Badge>
                                             )}

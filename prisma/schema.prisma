@@ -411,6 +411,7 @@ model Assessment {
   dueDate     DateTime?
   maxScore    Int       @default(100)
   allowReview      Boolean   @default(false)
+  isScorePublished Boolean   @default(false)
   shuffleQuestions Boolean   @default(false)
   timeLimit        Int?      // Optional time limit for CBT quizzes in minutes
 
