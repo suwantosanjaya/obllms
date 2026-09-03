@@ -17,18 +17,19 @@ import {
 import { createAnnouncement, updateAnnouncement } from '@/app/actions/announcementActions'
 import { Plus, Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { Announcement, Department } from '@prisma/client'
 
 const TAGS = ['Info', 'Fitur Baru', 'Pengumuman', 'Penting']
 
 interface Props {
     mode?: 'create' | 'edit'
-    announcement?: any
-    departments?: any[]
+    announcement?: Announcement
+    departments?: Department[]
     activeRole?: string
     activeDepartmentId?: string | null
 }
 
-export function AnnouncementDialog({ mode = 'create', announcement, departments = [], activeRole, activeDepartmentId }: Props) {
+export function AnnouncementDialog({ mode = 'create', announcement, activeRole, activeDepartmentId }: Props) {
     const router = useRouter()
     const { toast } = useToast()
     const [open, setOpen] = useState(false)
@@ -37,8 +38,8 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
     const [title, setTitle] = useState(announcement?.title || '')
     const [content, setContent] = useState(announcement?.content || '')
     const [tag, setTag] = useState(announcement?.tag || 'Info')
-    const [scope, setScope] = useState(announcement?.scope || (activeRole === 'qa' ? 'department' : 'global'))
-    const [departmentId, setDepartmentId] = useState(announcement?.departmentId || activeDepartmentId || '')
+    const [scope] = useState(announcement?.scope || (activeRole === 'qa' ? 'department' : 'global'))
+    const [departmentId] = useState(announcement?.departmentId || activeDepartmentId || '')
     const [isActive, setIsActive] = useState(announcement?.isActive ?? true)
 
     const isQA = activeRole === 'qa'
@@ -69,7 +70,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
             setOpen(false)
             router.refresh()
         } else {
-            toast({ title: 'Gagal', description: (res as any).error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: res && typeof res === 'object' && 'error' in res ? String(res.error) : 'Terjadi kesalahan', variant: 'destructive' })
         }
     }
 
@@ -82,7 +83,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
                     <Button><Plus className="mr-2 w-4 h-4" />Buat Pengumuman</Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-175 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>{mode === 'edit' ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</DialogTitle>
@@ -99,7 +100,7 @@ export function AnnouncementDialog({ mode = 'create', announcement, departments 
 
                         <div className="space-y-2">
                             <Label htmlFor="content">Isi / Konten</Label>
-                            <RichTextEditor value={content} onChange={setContent} placeholder="Tulis isi pengumuman..." className="min-h-[200px]" />
+                            <RichTextEditor value={content} onChange={setContent} placeholder="Tulis isi pengumuman..." className="min-h-50" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

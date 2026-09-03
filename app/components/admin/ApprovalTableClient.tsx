@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { processApproval } from '@/app/actions/authActions'
-import { CheckCircle2, XCircle, Loader2, Search } from 'lucide-react'
+import { CheckCircle2, Loader2, Search } from 'lucide-react'
 import { ResetPasswordButton } from '@/app/components/admin/ResetPasswordButton'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -22,16 +21,13 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+import { Prisma } from '@prisma/client'
 
-export default function ApprovalTableClient({ initialUsers, currentUserId, activeRole }: { initialUsers: any[], currentUserId: string, activeRole: string }) {
+type ApprovalUser = Prisma.UserGetPayload<{
+    include: { homebaseDepartment: true, teacherProfile: true, studentProfile: true }
+}>
+
+export default function ApprovalTableClient({ initialUsers, currentUserId }: { initialUsers: ApprovalUser[], currentUserId: string, activeRole: string }) {
     const { toast } = useToast()
     const [users, setUsers] = useState(initialUsers)
     const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -47,7 +43,7 @@ export default function ApprovalTableClient({ initialUsers, currentUserId, activ
         totalItems,
         sortConfig,
         handleSort
-    } = useClientTable(users, (u: any) => `${u.name} ${u.email} ${u.role}`)
+    } = useClientTable(users, (u: ApprovalUser) => `${u.name} ${u.email} ${u.role}`)
 
     async function handleApproveReject(targetId: string, action: 'APPROVED' | 'REJECTED') {
         setLoadingId(targetId)
@@ -103,7 +99,7 @@ export default function ApprovalTableClient({ initialUsers, currentUserId, activ
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[50px]">No</TableHead>
+                            <TableHead className="w-12.5">No</TableHead>
                             <SortableTableHead label="Nama Pengguna" sortKey="name" currentSort={sortConfig} onSort={handleSort} />
                             <SortableTableHead label="Email" sortKey="email" currentSort={sortConfig} onSort={handleSort} />
                             <SortableTableHead label="Role Diajukan" sortKey="role" currentSort={sortConfig} onSort={handleSort} />
@@ -119,7 +115,7 @@ export default function ApprovalTableClient({ initialUsers, currentUserId, activ
                                 </TableCell>
                             </TableRow>
                         ) : (
-                        paginatedData.map((u: any, i: number) => (
+                        paginatedData.map((u: ApprovalUser, i: number) => (
                             <TableRow key={u.id}>
                                 <TableCell className="font-medium">{(pageIndex * pageSize) + i + 1}</TableCell>
                                 <TableCell>
@@ -165,7 +161,7 @@ export default function ApprovalTableClient({ initialUsers, currentUserId, activ
                                                 handleApproveReject(u.id, checked ? 'APPROVED' : 'REJECTED')
                                             }}
                                         />
-                                        <Label htmlFor={`switch-${u.id}`} className={`min-w-[70px] text-left ${u.approvalStatus === 'APPROVED' ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                        <Label htmlFor={`switch-${u.id}`} className={`min-w-17.5 text-left ${u.approvalStatus === 'APPROVED' ? 'text-green-600' : 'text-muted-foreground'}`}>
                                             {loadingId === u.id ? <Loader2 className="w-4 h-4 animate-spin inline" /> : (u.approvalStatus === 'APPROVED' ? 'Aktif' : 'Nonaktif')}
                                         </Label>
                                     </div>

@@ -7,14 +7,24 @@ import { calculateStudentOBEGrade } from '@/app/utils/obeCalculator'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { ExportExcelButton } from './ExportExcelButton'
 
+type CourseGradebookResponse = Exclude<Awaited<ReturnType<typeof getCourseGradebookData>>, { success: false }>
+type GradebookCourse = NonNullable<CourseGradebookResponse['course']>
+type GradebookSubjectCLO = NonNullable<CourseGradebookResponse['subjectClos']>[number]
+type GradebookPLO = GradebookSubjectCLO['plo']
+type GradebookTechnique = GradebookSubjectCLO['techniques'][number]
+type GradebookEnrollment = GradebookCourse['enrollments'][number]
+type GradebookAssessment = GradebookCourse['assessments'][number]
+type GradebookSubmission = NonNullable<CourseGradebookResponse['submissions']>[number]
+type GradebookCLOScore = GradebookSubmission['cloScores'][number]
+
+
 export async function CourseGradebookTab({ courseId }: { courseId: string }) {
     const dataRes = await getCourseGradebookData(courseId)
     if (!dataRes.success || !dataRes.course) {
         return <div className="p-4 text-red-500">Gagal memuat data rekapitulasi.</div>
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subject = dataRes.course?.subject as any
+    const subject = dataRes.course?.subject
     const universityId = subject?.department?.faculty?.universityId || subject?.faculty?.universityId || null
     const scaleRes = await getGradeScales(universityId)
     const gradeScales = scaleRes.success ? (scaleRes.data ?? []) : []
@@ -27,7 +37,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
     const uniqueCLOs = new Map()
     const ploMap = new Map() // ploId -> count or something to track PLOs
     
-    subjectClos?.forEach((sc: any) => {
+    subjectClos?.forEach((sc) => {
         if (!uniqueCLOs.has(sc.clo.id)) {
             uniqueCLOs.set(sc.clo.id, sc)
         }
@@ -44,7 +54,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
         plo: new Map<string, { totalPoints: number, totalMastery: number, count: number }>(),
     }
 
-    enrollments.forEach((enr: any) => {
+    enrollments.forEach((enr) => {
         const obeResult = calculateStudentOBEGrade(enr.studentId, assessments, submissions, subjectClos, gradeScales)
         
         obeResult.cloResults.forEach((val, key) => {
@@ -95,12 +105,12 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                     <Table className="border-collapse">
                         <TableHeader>
                             <TableRow className="bg-muted/20 border-b">
-                                <TableHead rowSpan={2} className="w-[50px] text-center border-r font-bold align-middle">No</TableHead>
-                                <TableHead rowSpan={2} className="min-w-[120px] border-r font-bold align-middle">NIM</TableHead>
-                                <TableHead rowSpan={2} className="min-w-[200px] border-r font-bold align-middle">Nama Mahasiswa</TableHead>
+                                <TableHead rowSpan={2} className="w-12.5 text-center border-r font-bold align-middle">No</TableHead>
+                                <TableHead rowSpan={2} className="min-w-30 border-r font-bold align-middle">NIM</TableHead>
+                                <TableHead rowSpan={2} className="min-w-50 border-r font-bold align-middle">Nama Mahasiswa</TableHead>
                                 
                                 {/* CLO Headers */}
-                                {clos.map((sc: any) => {
+                                {clos.map((sc: GradebookSubjectCLO) => {
                                     // Group by techniques defined in curriculum
                                     const techniques = sc.techniques || []
                                     const colSpan = Math.max(1, techniques.length)
@@ -116,43 +126,43 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                 })}
 
                                 {/* CLO Accumulations */}
-                                {clos.map((sc: any) => (
-                                    <TableHead key={`acc_${sc.id}`} rowSpan={2} className="text-center min-w-[100px] border-r font-bold align-middle bg-blue-50/30 dark:bg-blue-900/10">
+                                {clos.map((sc: GradebookSubjectCLO) => (
+                                    <TableHead key={`acc_${sc.id}`} rowSpan={2} className="text-center min-w-25 border-r font-bold align-middle bg-blue-50/30 dark:bg-blue-900/10">
                                         Akumulasi<br/>{sc.clo.code}
                                     </TableHead>
                                 ))}
 
                                 {/* PLO Accumulations */}
-                                {plos.map(([id, plo]: any) => (
-                                    <TableHead key={id} rowSpan={2} className="text-center min-w-[100px] border-r font-bold align-middle bg-purple-50/50 dark:bg-purple-900/20">
+                                {plos.map(([id, plo]: [string, GradebookPLO]) => (
+                                    <TableHead key={id} rowSpan={2} className="text-center min-w-25 border-r font-bold align-middle bg-purple-50/50 dark:bg-purple-900/20">
                                         Akumulasi<br/>{plo?.code || id}
                                     </TableHead>
                                 ))}
 
                                 {/* Final Grade */}
-                                <TableHead rowSpan={2} className="text-center min-w-[100px] border-r font-bold align-middle bg-primary/10 dark:bg-primary/5">
+                                <TableHead rowSpan={2} className="text-center min-w-25 border-r font-bold align-middle bg-primary/10 dark:bg-primary/5">
                                     Nilai Akhir<br/>Angka
                                 </TableHead>
-                                <TableHead rowSpan={2} className="text-center min-w-[80px] font-bold align-middle bg-primary/10 dark:bg-primary/5">
+                                <TableHead rowSpan={2} className="text-center min-w-20 font-bold align-middle bg-primary/10 dark:bg-primary/5">
                                     Nilai Akhir<br/>Huruf
                                 </TableHead>
                             </TableRow>
                             
                             {/* Technique Headers (Row 2) */}
                             <TableRow className="bg-muted/10">
-                                {clos.map((sc: any) => {
+                                {clos.map((sc: GradebookSubjectCLO) => {
                                     const techniques = sc.techniques || []
                                     
                                     if (techniques.length === 0) {
                                         return <TableHead key={`${sc.id}_none`} className="text-center border-r text-xs italic font-normal text-muted-foreground">Tanpa Teknik</TableHead>
                                     }
 
-                                    return techniques.map((t: any, idx: number) => {
+                                    return techniques.map((t: GradebookTechnique, idx: number) => {
                                         const isLast = idx === techniques.length - 1;
                                         return (
-                                            <TableHead key={`${sc.id}_${t.id}`} className={`text-center text-xs font-medium min-w-[100px] ${isLast ? 'border-r' : 'border-r'}`} title={t.technique}>
+                                            <TableHead key={`${sc.id}_${t.id}`} className={`text-center text-xs font-medium min-w-25 ${isLast ? 'border-r' : 'border-r'}`} title={t.technique}>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                    <span className="truncate block max-w-[120px] mx-auto">{t.technique}</span>
+                                                    <span className="truncate block max-w-30 mx-auto">{t.technique}</span>
                                                     <span className="text-[9px] text-muted-foreground">{t.weight}%</span>
                                                 </div>
                                             </TableHead>
@@ -168,7 +178,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                     <TableCell colSpan={5 + clos.length + plos.length} className="text-center py-8 text-muted-foreground">Belum ada mahasiswa terdaftar.</TableCell>
                                 </TableRow>
                             ) : (
-                                enrollments.map((enr: any, idx: number) => {
+                                enrollments.map((enr: GradebookEnrollment, idx: number) => {
                                     const obeResult = calculateStudentOBEGrade(enr.studentId, assessments, submissions, subjectClos, gradeScales)
 
                                     return (
@@ -178,7 +188,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                             <TableCell className="font-medium border-r">{enr.student.name}</TableCell>
                                             
                                             {/* CLO Columns (Techniques) */}
-                                            {clos.map((sc: any) => {
+                                            {clos.map((sc: GradebookSubjectCLO) => {
                                                 const techniques = sc.techniques || []
                                                 
                                                 if (techniques.length === 0) {
@@ -190,19 +200,19 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                                     )
                                                 }
 
-                                                return techniques.map((t: any, idx: number) => {
-                                                    const techAssessments = assessments.filter((a: any) => 
+                                                return techniques.map((t: GradebookTechnique, idx: number) => {
+                                                    const techAssessments = assessments.filter((a: GradebookAssessment) => 
                                                         a.type === t.technique && 
-                                                        a.assessmentClos.some((ac: any) => ac.cloId === sc.clo.id)
+                                                        a.assessmentClos.some((ac: NonNullable<GradebookAssessment['assessmentClos']>[number]) => ac.cloId === sc.clo.id)
                                                     )
                                                     
                                                     let techScoreSum = 0;
                                                     let techCount = 0;
 
-                                                    techAssessments.forEach((a: any) => {
-                                                        const sub = submissions?.find((s: any) => s.studentId === enr.studentId && s.assessmentId === a.id);
+                                                    techAssessments.forEach((a: GradebookAssessment) => {
+                                                        const sub = submissions?.find((s: GradebookSubmission) => s.studentId === enr.studentId && s.assessmentId === a.id);
                                                         if (sub && sub.score !== null) {
-                                                            const cloScore = sub.cloScores?.find((cs: any) => cs.cloId === sc.clo.id);
+                                                            const cloScore = sub.cloScores?.find((cs: GradebookCLOScore) => cs.cloId === sc.clo.id);
                                                             if (cloScore && cloScore.score !== null) {
                                                                 techScoreSum += cloScore.score;
                                                                 techCount++;
@@ -229,7 +239,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                             })}
 
                                             {/* CLO Accumulations */}
-                                            {clos.map((sc: any) => {
+                                            {clos.map((sc: GradebookSubjectCLO) => {
                                                 const cloData = obeResult.cloResults.get(sc.clo.id)
                                                 return (
                                                     <TableCell key={`acc_${sc.id}`} className="text-center border-r bg-blue-50/10 dark:bg-blue-900/5 font-medium">
@@ -244,7 +254,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                             })}
 
                                             {/* PLO Accumulations */}
-                                            {plos.map(([id, _]) => {
+                                            {plos.map(([id]) => {
                                                 const ploData = obeResult.ploResults.get(id)
                                                 return (
                                                     <TableCell key={id} className="text-center border-r bg-purple-50/30 dark:bg-purple-900/10 font-medium">
@@ -286,7 +296,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                             <div>
                                 <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Course Learning Outcomes (CLO)</h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {clos.map((sc: any) => {
+                                    {clos.map((sc: GradebookSubjectCLO) => {
                                         const avg = classAverages.clo.get(sc.clo.id)
                                         const points = avg && avg.count > 0 ? (avg.totalPoints / avg.count).toFixed(2) : '-'
                                         const mastery = avg && avg.count > 0 ? (avg.totalMastery / avg.count).toFixed(2) : '-'
@@ -305,7 +315,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                             <div>
                                 <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Program Learning Outcomes (PLO)</h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {plos.map(([id, plo]: any) => {
+                                    {plos.map(([id, plo]: [string, GradebookPLO]) => {
                                         const avg = classAverages.plo.get(id)
                                         const points = avg && avg.count > 0 ? (avg.totalPoints / avg.count).toFixed(2) : '-'
                                         const mastery = avg && avg.count > 0 ? (avg.totalMastery / avg.count).toFixed(2) : '-'
@@ -333,8 +343,8 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                     </CardHeader>
                     <CardContent className="pt-6">
                         <div className="space-y-4">
-                            {plos.map(([ploId, plo]: any) => {
-                                const relatedClos = clos.filter((sc: any) => sc.ploId === ploId)
+                            {plos.map(([ploId, plo]: [string, GradebookPLO]) => {
+                                const relatedClos = clos.filter((sc: GradebookSubjectCLO) => sc.ploId === ploId)
                                 return (
                                     <div key={`legend_plo_${ploId}`} className="border rounded-lg p-4 bg-card">
                                         <div className="mb-3">
@@ -342,7 +352,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                             {plo?.description && <p className="text-sm text-muted-foreground mt-0.5">{plo.description}</p>}
                                         </div>
                                         <div className="space-y-3 pl-4 border-l-2 border-muted ml-2">
-                                            {relatedClos.map((sc: any) => (
+                                            {relatedClos.map((sc: GradebookSubjectCLO) => (
                                                 <div key={`legend_clo_${sc.id}`} className="bg-muted/30 p-2 rounded-md">
                                                     <div className="flex flex-col gap-1 sm:flex-row sm:items-start justify-between text-sm">
                                                         <div>
@@ -353,7 +363,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                                     </div>
                                                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                                                         {sc.techniques && sc.techniques.length > 0 ? (
-                                                            sc.techniques.map((t: any) => (
+                                                            sc.techniques.map((t: GradebookTechnique) => (
                                                                 <span key={`legend_tech_${t.id}`} className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground">
                                                                     {t.technique}: <span className="font-medium text-foreground">{t.weight}%</span>
                                                                 </span>
@@ -377,15 +387,15 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
             <div>
                 <h3 className="text-lg font-semibold mb-4">Progres Pelaksanaan Teknik Penilaian per CLO</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {clos.map((sc: any) => {
+                    {clos.map((sc: GradebookSubjectCLO) => {
                         const techniques = sc.techniques || []
-                        const totalWeight = techniques.reduce((acc: number, t: any) => acc + t.weight, 0)
+                        const totalWeight = techniques.reduce((acc: number, t: GradebookTechnique) => acc + t.weight, 0)
                         
                         let executedWeight = 0;
-                        const techStatus = techniques.map((t: any) => {
-                            const isExecuted = assessments.some((a: any) => 
+                        const techStatus = techniques.map((t: GradebookTechnique) => {
+                            const isExecuted = assessments.some((a: GradebookAssessment) => 
                                 a.type === t.technique && 
-                                a.assessmentClos.some((ac: any) => ac.cloId === sc.clo.id)
+                                a.assessmentClos.some((ac: NonNullable<GradebookAssessment['assessmentClos']>[number]) => ac.cloId === sc.clo.id)
                             )
                             if (isExecuted) executedWeight += t.weight;
                             return { ...t, isExecuted }
@@ -405,7 +415,7 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                     <div className="space-y-2">
                                         {techStatus.length === 0 ? (
                                             <p className="text-xs text-muted-foreground italic">Belum ada teknik penilaian yang dipetakan di kurikulum.</p>
-                                        ) : techStatus.map((t: any) => (
+                                        ) : techStatus.map((t: GradebookTechnique & { isExecuted: boolean }) => (
                                             <div key={t.id} className="flex justify-between items-center text-xs">
                                                 <div className="flex items-center gap-1.5">
                                                     {t.isExecuted ? (

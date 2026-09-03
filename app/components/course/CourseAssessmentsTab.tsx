@@ -18,7 +18,7 @@ const isValidUrl = (string: string) => {
     try {
         new URL(string);
         return true;
-    } catch (_) {
+    } catch {
         return false;
     }
 }
@@ -41,6 +41,11 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
         title: `${course.subject.code} - ${course.subject.title}`,
         curriculumYearId: course.curriculumYearId
     }]
+
+    type AssessmentType = NonNullable<Awaited<ReturnType<typeof getAssessmentsForCourse>>['assessments']>[number]
+    type AssessmentCloType = AssessmentType['assessmentClos'][number]
+    type SubmissionType = NonNullable<AssessmentType['submissions']>[number]
+    type SubmissionCloScoreType = NonNullable<SubmissionType['cloScores']>[number]
 
     return (
         <Card>
@@ -74,7 +79,7 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            assessments.map((assessment: any) => (
+                            assessments.map((assessment: AssessmentType) => (
                                 <React.Fragment key={assessment.id}>
                                     <TableRow className="bg-background hover:bg-muted/20">
                                         <TableCell className="font-medium pl-6">
@@ -88,14 +93,14 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                 )}
                                             </div>
                                             {assessment.description && (
-                                                <p className="text-xs text-muted-foreground max-w-[250px] truncate">
+                                                <p className="text-xs text-muted-foreground max-w-62.5 truncate">
                                                     {assessment.description}
                                                 </p>
                                             )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1.5">
-                                                {assessment.assessmentClos.map((ac: any) => (
+                                                {assessment.assessmentClos.map((ac: AssessmentCloType) => (
                                                     <Badge
                                                         key={ac.cloId}
                                                         variant="outline"
@@ -113,12 +118,16 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                             <TogglePublishAssessmentButton assessmentId={assessment.id} initialStatus={assessment.isPublished} />
                                         </TableCell>
                                         <TableCell>
-                                            <span className={new Date(assessment.dueDate) < new Date() ? 'text-red-600 font-medium text-xs' : 'text-xs'}>
-                                                {new Date(assessment.dueDate).toLocaleString('id-ID', {
-                                                    dateStyle: 'medium',
-                                                    timeStyle: 'short'
-                                                })}
-                                            </span>
+                                            {assessment.dueDate ? (
+                                                <span className={new Date(assessment.dueDate!) < new Date() ? 'text-red-600 font-medium text-xs' : 'text-xs'}>
+                                                    {new Date(assessment.dueDate!).toLocaleString('id-ID', {
+                                                        dateStyle: 'medium',
+                                                        timeStyle: 'short'
+                                                    })}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">—</span>
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-sm">
                                             <Badge variant="secondary" className="font-semibold">
@@ -137,7 +146,7 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                 <EditAssessmentDialog 
                                                     courses={[{ id: courseId, subjectId: assessments[0]?.course?.subjectId || '', title: 'Current Course', curriculumYearId: assessments[0]?.course?.curriculumYearId }]} 
                                                     assessment={assessment} 
-                                                    hasGradedSubmissions={assessment.submissions?.some((s: any) => s.score !== null)}
+                                                    hasGradedSubmissions={assessment.submissions?.some((s: SubmissionType) => s.score !== null)}
                                                 />
                                                 <DeleteAssessmentButton assessmentId={assessment.id} assessmentTitle={assessment.title} isPublished={assessment.isPublished} />
                                             </div>
@@ -151,9 +160,9 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                 <div className="bg-muted/10 px-6 py-4 border-l-4 border-l-primary/50">
                                                     <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Lembar Pengumpulan Mahasiswa</h4>
                                                     <div className="grid gap-2">
-                                                        {assessment.submissions.map((sub: any) => (
+                                                        {assessment.submissions.map((sub: SubmissionType) => (
                                                             <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-background p-3 rounded-lg border shadow-sm text-sm gap-4">
-                                                                <div className="flex flex-col gap-1 min-w-[200px]">
+                                                                <div className="flex flex-col gap-1 min-w-50">
                                                                     <span className="font-semibold text-primary">{sub.student.name}</span>
                                                                     {assessment.format === 'quiz' ? (
                                                                             <GradeSubmissionDialog
@@ -212,7 +221,7 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                                 <div className="flex-1">
                                                                     {sub.cloScores && sub.cloScores.length > 0 ? (
                                                                         <div className="flex flex-wrap gap-2">
-                                                                            {sub.cloScores.map((cs: any) => (
+                                                                            {sub.cloScores.map((cs: SubmissionCloScoreType) => (
                                                                                 <div key={cs.cloId} className="flex flex-col items-center bg-green-50 border border-green-100 rounded px-2 py-1">
                                                                                     <span className="text-[10px] text-green-600 font-semibold uppercase">{cs.clo.code}</span>
                                                                                     <span className="text-xs font-bold text-green-700">{Math.round(cs.score * 100) / 100}</span>

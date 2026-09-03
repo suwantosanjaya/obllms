@@ -14,10 +14,23 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 
+interface LeaderboardEntry {
+    id: string;
+    name: string;
+    level: number;
+    points: number;
+}
+
+interface AssessmentEntry {
+    id: string;
+    title: string;
+    type: string;
+}
+
 export function LeaderboardTab({ courseId, isStudent }: { courseId: string, isStudent?: boolean }) {
-    const [leaderboard, setLeaderboard] = useState<any[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
-    const [assessments, setAssessments] = useState<any[]>([]);
+    const [assessments, setAssessments] = useState<AssessmentEntry[]>([]);
     
     // Dialog state
     const [isDialogOpen, setIsDialogOpen] = useState(false);

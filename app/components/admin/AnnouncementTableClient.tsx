@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Announcement, Department } from '@prisma/client'
 import { deleteAnnouncement, updateAnnouncement } from '@/app/actions/announcementActions'
 import { AnnouncementDialog } from './AnnouncementDialog'
-import { Trash2, Globe, Building2, ChevronDown, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trash2, Globe, Building2, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 const TAG_COLORS: Record<string, string> = {
@@ -19,14 +19,19 @@ const TAG_COLORS: Record<string, string> = {
     'Info': 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 }
 
+type ExtendedAnnouncement = Announcement & {
+    department?: { code: string } | null
+    author?: { name: string } | null
+}
+
 export function AnnouncementTableClient({
     announcements: initial,
     departments,
     activeRole,
     activeDepartmentId,
 }: {
-    announcements: any[]
-    departments: any[]
+    announcements: ExtendedAnnouncement[]
+    departments: Department[]
     activeRole: string
     activeDepartmentId?: string | null
 }) {
@@ -59,7 +64,7 @@ export function AnnouncementTableClient({
             setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, isActive: !current } : a))
             router.refresh()
         } else {
-            toast({ title: 'Gagal', description: (res as any).error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: (res as { error?: string }).error || 'Terjadi kesalahan', variant: 'destructive' })
         }
     }
 
@@ -71,7 +76,7 @@ export function AnnouncementTableClient({
             toast({ title: 'Dihapus', description: 'Pengumuman telah dihapus.' })
             router.refresh()
         } else {
-            toast({ title: 'Gagal', description: (res as any).error, variant: 'destructive' })
+            toast({ title: 'Gagal', description: (res as { error?: string }).error || 'Terjadi kesalahan', variant: 'destructive' })
         }
     }
 
@@ -97,7 +102,7 @@ export function AnnouncementTableClient({
                     />
                 </div>
                 <Select value={filterTag} onValueChange={(val) => { setFilterTag(val); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectTrigger className="w-full sm:w-45">
                         <SelectValue placeholder="Semua Kategori" />
                     </SelectTrigger>
                     <SelectContent>

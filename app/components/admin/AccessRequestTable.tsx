@@ -12,9 +12,21 @@ import { Input } from '@/components/ui/input'
 import { useClientTable } from '@/app/hooks/useClientTable'
 import { DataTablePagination } from '@/app/components/ui/data-table-pagination'
 import { Search } from 'lucide-react'
+import { Prisma } from '@prisma/client'
 import { SortableTableHead } from '@/app/components/ui/sortable-table-head'
 
-export default function AccessRequestTable({ initialRequests }: { initialRequests: any[] }) {
+type AccessRequestWithUser = Prisma.DepartmentAccessRequestGetPayload<{
+    include: {
+        user: {
+            include: {
+                teacherProfile: true
+                homebaseDepartment: true
+            }
+        }
+    }
+}>
+
+export default function AccessRequestTable({ initialRequests }: { initialRequests: AccessRequestWithUser[] }) {
     const [requests, setRequests] = useState(initialRequests)
     const [loadingId, setLoadingId] = useState<string | null>(null)
     const { toast } = useToast()
@@ -30,7 +42,7 @@ export default function AccessRequestTable({ initialRequests }: { initialRequest
         totalItems,
         sortConfig,
         handleSort
-    } = useClientTable(requests, (r: any) => `${r.user?.name} ${r.user?.email} ${r.user?.homebaseDepartment?.name || ''}`)
+    } = useClientTable(requests, (r: AccessRequestWithUser) => `${r.user?.name} ${r.user?.email} ${r.user?.homebaseDepartment?.name || ''}`)
 
     const handleAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
         setLoadingId(id)
@@ -83,7 +95,7 @@ export default function AccessRequestTable({ initialRequests }: { initialRequest
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                            paginatedData.map((req: any) => (
+                            paginatedData.map((req: AccessRequestWithUser) => (
                                 <TableRow key={req.id}>
                                     <TableCell>
                                         <div className="font-medium">{req.user.name}</div>

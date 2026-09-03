@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getThreadsByCourse, createThread, createReply } from '@/app/actions/forumActions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,8 +19,25 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?: boolean }) {
-    const [threads, setThreads] = useState<any[]>([]);
+interface ForumReplyType {
+    id: string;
+    content: string;
+    createdAt: Date | string;
+    author: { name: string; role: string; } | null;
+}
+
+interface ForumThreadType {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: Date | string;
+    clo?: { id: string; code: string; description: string; } | null;
+    author: { name: string; role: string; } | null;
+    replies: ForumReplyType[];
+}
+
+export function ForumTab({ courseId }: { courseId: string, isStudent?: boolean }) {
+    const [threads, setThreads] = useState<ForumThreadType[]>([]);
     const [loading, setLoading] = useState(true);
     
     // New Thread State
@@ -35,18 +52,27 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
 
     const { toast } = useToast();
 
-    useEffect(() => {
-        fetchThreads();
-    }, [courseId]);
-
-    async function fetchThreads() {
-        setLoading(true);
+    async function refreshThreads() {
         const res = await getThreadsByCourse(courseId);
         if (res.success && res.threads) {
             setThreads(res.threads);
         }
-        setLoading(false);
     }
+
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            const res = await getThreadsByCourse(courseId);
+            if (isMounted) {
+                if (res.success && res.threads) {
+                    setThreads(res.threads);
+                }
+                setLoading(false);
+            }
+        };
+        load();
+        return () => { isMounted = false; };
+    }, [courseId]);
 
     async function handleCreateThread(e: React.FormEvent) {
         e.preventDefault();
@@ -59,7 +85,7 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
             setOpenNew(false);
             setTitle('');
             setContent('');
-            fetchThreads();
+            refreshThreads();
         } else {
             toast({ title: 'Gagal', description: res.error, variant: 'destructive' });
         }
@@ -75,7 +101,7 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
             toast({ title: 'Berhasil', description: 'Balasan terkirim.' });
             setReplyingTo(null);
             setReplyContent('');
-            fetchThreads();
+            refreshThreads();
         } else {
             toast({ title: 'Gagal', description: res.error, variant: 'destructive' });
         }
@@ -120,7 +146,7 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Isi Diskusi</label>
-                                    <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Jelaskan pertanyaan atau topik diskusi Anda secara detail..." className="min-h-[150px]" required />
+                                    <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Jelaskan pertanyaan atau topik diskusi Anda secara detail..." className="min-h-37.5" required />
                                 </div>
                             </div>
                             <DialogFooter>
@@ -175,7 +201,7 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
                                 {thread.replies && thread.replies.length > 0 && (
                                     <div className="mt-6 space-y-3 pl-4 border-l-2 border-primary/20">
                                         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Balasan ({thread.replies.length})</h4>
-                                        {thread.replies.map((reply: any) => (
+                                        {thread.replies.map((reply: ForumReplyType) => (
                                             <div key={reply.id} className="bg-muted/30 p-3 rounded-md">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-xs font-semibold flex items-center gap-1">
@@ -199,7 +225,7 @@ export function ForumTab({ courseId, isStudent }: { courseId: string, isStudent?
                                             placeholder="Tulis balasan Anda..." 
                                             value={replyContent}
                                             onChange={e => setReplyContent(e.target.value)}
-                                            className="min-h-[80px]"
+                                            className="min-h-20"
                                             autoFocus
                                         />
                                         <div className="flex justify-end gap-2">
