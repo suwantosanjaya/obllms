@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,8 +24,18 @@ import { useToast } from '@/hooks/use-toast'
 import { createAssessment, duplicateAssessment, getAssessmentsBySubject } from '@/app/actions/assessmentActions'
 import { getCLOsBySubject } from '@/app/actions/obeActions'
 
-type CLO = { id: string; code: string; description: string }
+type CLO = { id: string; code: string; description: string; curriculumYearId?: string | null }
 type SelectedCLO = { cloId: string; weight: number }
+type AssessmentTechnique = { technique: string }
+type SubjectCLOMapping = { clo: CLO; techniques?: AssessmentTechnique[] }
+type DuplicationAssessment = {
+    id: string;
+    title: string;
+    type: string;
+    format: string;
+    course?: { classCode?: string | null } | null;
+    questions?: { id: string }[];
+}
 
 export function CreateAssessmentDialog({ courses }: { courses: { id: string, subjectId: string, title: string, curriculumYearId?: string | null }[] }) {
     const router = useRouter()
@@ -34,9 +44,8 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const [selectedCourseId, setSelectedCourseId] = useState('')
-    const [allMappings, setAllMappings] = useState<any[]>([])
-    const [availableClos, setAvailableClos] = useState<CLO[]>([])
+    const [selectedCourseId, setSelectedCourseId] = useState(courses.length === 1 ? courses[0].id : '')
+    const [allMappings, setAllMappings] = useState<SubjectCLOMapping[]>([])
     const [selectedClos, setSelectedClos] = useState<SelectedCLO[]>([])
     const [availableTechniques, setAvailableTechniques] = useState<string[]>([])
     const [selectedTechnique, setSelectedTechnique] = useState('')
@@ -49,7 +58,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
     const { toast } = useToast()
 
     // Duplication state
-    const [duplicationAssessments, setDuplicationAssessments] = useState<any[]>([])
+    const [duplicationAssessments, setDuplicationAssessments] = useState<DuplicationAssessment[]>([])
     const [selectedDuplicateId, setSelectedDuplicateId] = useState('')
     const [dupLoading, setDupLoading] = useState(false)
 
@@ -62,94 +71,101 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
 
     const totalWeight = selectedClos.reduce((s, c) => s + (c.weight || 0), 0)
 
-    useEffect(() => {
-        if (courses.length === 1 && !selectedCourseId) {
-            setSelectedCourseId(courses[0].id)
-        }
-    }, [courses])
-
-    useEffect(() => {
-        if (!selectedCourseId) {
-            setAvailableClos([])
-            setSelectedClos([])
-            return
-        }
-        const selectedCourse = courses.find(c => c.id === selectedCourseId)
-        if (!selectedCourse?.subjectId) {
-            setAvailableClos([])
-            setSelectedClos([])
-            return
-        }
-
-        setCloLoading(true)
-        getCLOsBySubject(selectedCourse.subjectId).then(res => {
-            if (res.success) {
-                setAllMappings(res.mappings)
-                const uniqueTechniques = new Set<string>()
-                res.mappings.forEach((m: any) => {
-                    const isMatchingYear = selectedCourse.curriculumYearId
-                        ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
-                        : true;
-                    if (isMatchingYear && m.techniques) {
-                        m.techniques.forEach((t: any) => uniqueTechniques.add(t.technique))
-                    }
-                })
-                
-                const techArray = Array.from(uniqueTechniques)
-                if (techArray.length > 0) {
-                    setAvailableTechniques(techArray)
-                    setSelectedTechnique(techArray[0])
-                } else {
-                    const fallback = ['Tugas', 'Kuis', 'Ujian Tulis']
-                    setAvailableTechniques(fallback)
-                    setSelectedTechnique(fallback[0])
-                }
-            } else {
-                setAllMappings([])
-                setAvailableTechniques(['Tugas', 'Kuis', 'Ujian Tulis'])
-                setSelectedTechnique('Tugas')
-            }
-            setSelectedClos([])
-            setCloLoading(false)
-        })
-        
-        // Fetch assessments for duplication
-        getAssessmentsBySubject(selectedCourse.subjectId, selectedCourse.id).then(res => {
-            if (res.success && res.assessments) {
-                setDuplicationAssessments(res.assessments)
-            } else {
-                setDuplicationAssessments([])
-            }
-        })
-    }, [selectedCourseId, courses])
-
-    useEffect(() => {
+    const availableClos = useMemo(() => {
         if (!selectedCourseId || allMappings.length === 0) {
-            setAvailableClos([])
-            return
+            return []
         }
         const selectedCourse = courses.find(c => c.id === selectedCourseId)
-        if (!selectedCourse) return
+        if (!selectedCourse) return []
 
         const uniqueClosMap = new Map()
-        allMappings.forEach((m: any) => {
+        allMappings.forEach((m: SubjectCLOMapping) => {
             const isMatchingYear = selectedCourse.curriculumYearId
                 ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
                 : true;
             
             // Check if this mapping supports the selected technique
             const hasTechnique = m.techniques && m.techniques.length > 0
-                ? m.techniques.some((t: any) => t.technique === selectedTechnique)
+                ? m.techniques.some((t: AssessmentTechnique) => t.technique === selectedTechnique)
                 : true; // fallback if no techniques defined in mapping
 
             if (isMatchingYear && hasTechnique && !uniqueClosMap.has(m.clo.id)) {
                 uniqueClosMap.set(m.clo.id, m.clo)
             }
         })
-        setAvailableClos(Array.from(uniqueClosMap.values()))
-        // Clear selected CLOs if they are no longer available in this technique
-        setSelectedClos(prev => prev.filter(c => uniqueClosMap.has(c.cloId)))
+        return Array.from(uniqueClosMap.values())
     }, [selectedCourseId, allMappings, selectedTechnique, courses])
+
+    const [prevAvailableClos, setPrevAvailableClos] = useState<CLO[]>(availableClos)
+    if (availableClos !== prevAvailableClos) {
+        setPrevAvailableClos(availableClos)
+        const availableIds = new Set(availableClos.map(c => c.id))
+        setSelectedClos(prev => prev.filter(c => availableIds.has(c.cloId)))
+    }
+
+    useEffect(() => {
+        const fetchCourseData = async () => {
+            if (!selectedCourseId) {
+                setAllMappings([])
+                setSelectedClos([])
+                return
+            }
+            const selectedCourse = courses.find(c => c.id === selectedCourseId)
+            if (!selectedCourse?.subjectId) {
+                setAllMappings([])
+                setSelectedClos([])
+                return
+            }
+
+            setCloLoading(true)
+            try {
+                const res = await getCLOsBySubject(selectedCourse.subjectId)
+                if (res.success) {
+                    setAllMappings(res.mappings)
+                    const uniqueTechniques = new Set<string>()
+                    res.mappings.forEach((m: SubjectCLOMapping) => {
+                        const isMatchingYear = selectedCourse.curriculumYearId
+                            ? m.clo.curriculumYearId === selectedCourse.curriculumYearId
+                            : true;
+                        if (isMatchingYear && m.techniques) {
+                            m.techniques.forEach((t: AssessmentTechnique) => uniqueTechniques.add(t.technique))
+                        }
+                    })
+                    
+                    const techArray = Array.from(uniqueTechniques)
+                    if (techArray.length > 0) {
+                        setAvailableTechniques(techArray)
+                        setSelectedTechnique(techArray[0])
+                    } else {
+                        const fallback = ['Tugas', 'Kuis', 'Ujian Tulis']
+                        setAvailableTechniques(fallback)
+                        setSelectedTechnique(fallback[0])
+                    }
+                } else {
+                    setAllMappings([])
+                    setAvailableTechniques(['Tugas', 'Kuis', 'Ujian Tulis'])
+                    setSelectedTechnique('Tugas')
+                }
+                setSelectedClos([])
+                setCloLoading(false)
+            } catch {
+                setCloLoading(false)
+            }
+            
+            // Fetch assessments for duplication
+            try {
+                const dupRes = await getAssessmentsBySubject(selectedCourse.subjectId, selectedCourse.id)
+                if (dupRes.success && dupRes.assessments) {
+                    setDuplicationAssessments(dupRes.assessments)
+                } else {
+                    setDuplicationAssessments([])
+                }
+            } catch {
+                setDuplicationAssessments([])
+            }
+        }
+        fetchCourseData()
+    }, [selectedCourseId, courses])
 
     function addClo(cloId: string) {
         if (selectedClos.find(c => c.cloId === cloId)) return
@@ -200,7 +216,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
 
         if (res.success) {
             setOpen(false)
-            setSelectedCourseId('')
+            setSelectedCourseId(courses.length === 1 ? courses[0].id : '')
             setSelectedClos([])
             if (format === 'quiz' && res.assessmentId) {
                 router.push(`/teacher/course/${courseId}/assessment/${res.assessmentId}/builder`)
@@ -248,7 +264,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                     Tambah Tugas Baru
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-175 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Buat atau Salin Tugas</DialogTitle>
                     <DialogDescription>
@@ -393,7 +409,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                 {cloLoading && <p className="text-xs text-muted-foreground">Memuat CLO...</p>}
 
                                 {!cloLoading && availableClos.length === 0 && (
-                                    <div className="text-xs text-muted-foreground bg-orange-50 text-orange-800 p-2 rounded border border-orange-200">
+                                    <div className="text-xs text-muted-foreground bg-orange-50 p-2 rounded border border-orange-200">
                                         <span className="font-semibold block mb-1">Perhatian!</span>
                                         Tidak ada CLO yang terhubung dengan teknik penilaian <b>{selectedTechnique}</b> pada kurikulum mata kuliah ini. 
                                         <br/>Silakan pilih teknik penilaian lain, atau hubungi QA untuk memperbarui pemetaan OBL.
@@ -451,7 +467,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         {/* Description */}
                         <div className="grid gap-2">
                             <Label htmlFor="description">Deskripsi</Label>
-                            <Textarea id="description" name="description" placeholder="Instruksi pengerjaan tugas..." className="min-h-[80px]" required />
+                            <Textarea id="description" name="description" placeholder="Instruksi pengerjaan tugas..." className="min-h-20" required />
                         </div>
 
                         {/* Due date */}
@@ -479,7 +495,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         ) : (
                             <div className="space-y-4">
                                 <Label>Pilih Tugas/Kuis yang akan diduplikat:</Label>
-                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                                <div className="space-y-2 max-h-75 overflow-y-auto pr-2">
                                     {duplicationAssessments.map(ass => (
                                         <div 
                                             key={ass.id} 
@@ -497,7 +513,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                         </div>
                                     ))}
                                 </div>
-                                <p className="text-xs text-muted-foreground bg-blue-50 text-blue-800 p-2 rounded">
+                                <p className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
                                     Info: Menduplikat tugas ini akan menyalin seluruh pengaturan, pemetaan CLO, bobot, beserta semua butir soal dan kunci jawabannya ke kelas ini.
                                 </p>
                             </div>

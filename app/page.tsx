@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, LogIn } from 'lucide-react'
-import { useUserStore } from '@/lib/store/useUserStore'
-import { useRouter } from 'next/navigation'
+import { useUserStore, UserRole } from '@/lib/store/useUserStore'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -17,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function Home() {
   const { activeRole, _hasHydrated, setActiveRole, setRoles, setUserName, setUserId } = useUserStore()
-  const router = useRouter()
   const [isInitializing, setIsInitializing] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -116,7 +114,7 @@ export default function Home() {
 
     if (res.success && res.user) {
       console.log('Login successful. res.user:', res.user)
-      setActiveRole(res.user.activeRole as any)
+      setActiveRole(res.user.activeRole as UserRole)
       setRoles(res.user.roles || [])
       setUserName(res.user.name)
       setUserId(res.user.id)
@@ -126,15 +124,18 @@ export default function Home() {
       if (res.user.departmentRoles) {
         useUserStore.getState().setDepartmentRoles(res.user.departmentRoles)
       }
-      if ((res.user as any).facultyName) {
-        useUserStore.getState().setFacultyName((res.user as any).facultyName)
+      if ('facultyName' in res.user && (res.user as { facultyName?: string }).facultyName) {
+        useUserStore.getState().setFacultyName((res.user as { facultyName?: string }).facultyName as string)
       }
 
       let defaultDeps = userDepartments
+      type PrismaDepartment = { id: string; name: string; createdAt: Date; updatedAt: Date; code: string; facultyId: string; activeHeadId: string | null; };
+      type DepartmentRole = { departmentId: string; role: string; department?: PrismaDepartment };
+      
       if (res.user.activeRole !== 'super_admin' && res.user.departmentRoles) {
           defaultDeps = res.user.departmentRoles
-              .filter((dr: any) => dr.role.split(',').map((r: string) => r.trim()).includes(res.user.activeRole) && dr.department)
-              .map((dr: any) => dr.department)
+              .filter((dr: DepartmentRole) => dr.role.split(',').map((r: string) => r.trim()).includes(res.user.activeRole as string) && dr.department)
+              .map((dr: DepartmentRole) => dr.department as PrismaDepartment)
       }
 
       // Auto-select the first department if available
@@ -179,19 +180,10 @@ export default function Home() {
     if (res.success) {
       toast({ title: 'Berhasil', description: 'Password berhasil diubah. Anda akan langsung login sekarang.' })
       // Auto login with new password
-      const formData = new FormData()
-      formData.set('email', forceChangeEmail)
-      formData.set('password', newPassword)
-      const fakeEvent = {
-        preventDefault: () => {},
-        currentTarget: {
-          elements: { email: { value: forceChangeEmail }, password: { value: newPassword } }
-        }
-      } as any
-      // A little hack to reuse handleSubmit
+      // A little hack to reuse handleSubmit (now just calling loginWithEmail directly)
       const resLogin = await loginWithEmail(forceChangeEmail, newPassword)
       if (resLogin.success && resLogin.user) {
-        setActiveRole(resLogin.user.activeRole as any)
+        setActiveRole(resLogin.user.activeRole as UserRole)
         setRoles(resLogin.user.roles || [])
         setUserName(resLogin.user.name)
         setUserId(resLogin.user.id)
@@ -230,7 +222,7 @@ export default function Home() {
       // Auto login with saved password
       const resLogin = await loginWithEmail(forceProfileEmail, savedPassword)
       if (resLogin.success && resLogin.user) {
-        setActiveRole(resLogin.user.activeRole as any)
+        setActiveRole(resLogin.user.activeRole as UserRole)
         setRoles(resLogin.user.roles || [])
         setUserName(resLogin.user.name)
         setUserId(resLogin.user.id)

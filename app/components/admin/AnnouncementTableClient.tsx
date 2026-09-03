@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Announcement, Department } from '@prisma/client'
+import { Announcement } from '@prisma/client'
 import { deleteAnnouncement, updateAnnouncement } from '@/app/actions/announcementActions'
 import { AnnouncementDialog } from './AnnouncementDialog'
 import { Trash2, Globe, Building2, Search, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -31,7 +31,7 @@ export function AnnouncementTableClient({
     activeDepartmentId,
 }: {
     announcements: ExtendedAnnouncement[]
-    departments: Department[]
+    departments: { id: string; name: string; code: string }[]
     activeRole: string
     activeDepartmentId?: string | null
 }) {

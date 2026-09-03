@@ -17,14 +17,14 @@ import {
 import { createAnnouncement, updateAnnouncement } from '@/app/actions/announcementActions'
 import { Plus, Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { Announcement, Department } from '@prisma/client'
+import { Announcement } from '@prisma/client'
 
 const TAGS = ['Info', 'Fitur Baru', 'Pengumuman', 'Penting']
 
 interface Props {
     mode?: 'create' | 'edit'
     announcement?: Announcement
-    departments?: Department[]
+    departments?: { id: string; name: string; code: string }[]
     activeRole?: string
     activeDepartmentId?: string | null
 }

@@ -206,14 +206,14 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                     <Pencil className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-130 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>Edit Penugasan</DialogTitle>
                         <DialogDescription>
                             Ubah detail penugasan.
                             {hasGradedSubmissions && (
-                                <span className="block mt-2 p-2 bg-orange-100 text-orange-800 rounded text-xs flex items-start gap-2">
+                                <span className="block mt-2 p-2 bg-orange-100 text-orange-800 rounded text-xs items-start gap-2">
                                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                                     <span>Tugas ini sudah dinilai. Teknik Penilaian dan Pemetaan CLO dikunci agar tidak merusak perhitungan OBE mahasiswa.</span>
                                 </span>

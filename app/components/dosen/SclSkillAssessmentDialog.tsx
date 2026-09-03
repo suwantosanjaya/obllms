@@ -17,6 +17,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { upsertSclSkillAssessment } from '@/app/actions/sclActions'
 import { Slider } from '@/components/ui/slider'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function SclSkillAssessmentDialog({
     enrollmentId,
@@ -54,6 +60,12 @@ export function SclSkillAssessmentDialog({
     })
     const [notes, setNotes] = useState(initialData?.notes ?? '')
 
+    const hasAnySkillEnabled = 
+        enabledSkills?.entrepreneurship !== false || 
+        enabledSkills?.leadership !== false || 
+        enabledSkills?.industryKnowledge !== false || 
+        enabledSkills?.employabilitySkill !== false;
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setLoading(true)
@@ -76,15 +88,34 @@ export function SclSkillAssessmentDialog({
         setLoading(false)
     }
 
+    const TriggerComponent = triggerButton ? triggerButton : (
+        <Button variant={initialData ? 'outline' : 'default'} size="sm" disabled={!hasAnySkillEnabled}>
+            <ClipboardCheck className="mr-2 h-4 w-4" />
+            {initialData ? 'Edit Penilaian SCL' : 'Penilaian SCL'}
+        </Button>
+    )
+
+    if (!hasAnySkillEnabled) {
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span tabIndex={0} className="inline-block cursor-not-allowed">
+                            {TriggerComponent}
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Aktifkan komponen SCL di pengaturan mata kuliah untuk memberikan penilaian.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                {triggerButton ? triggerButton : (
-                    <Button variant={initialData ? 'outline' : 'default'} size="sm">
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        {initialData ? 'Edit Penilaian SCL' : 'Penilaian SCL'}
-                    </Button>
-                )}
+                {TriggerComponent}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <form onSubmit={handleSubmit}>
@@ -96,8 +127,9 @@ export function SclSkillAssessmentDialog({
                     </DialogHeader>
 
                     <div className="grid gap-6 py-4">
-                        <div className="space-y-4 rounded-lg border p-4 bg-muted/10">
-                            {enabledSkills?.entrepreneurship !== false && (
+                        {hasAnySkillEnabled ? (
+                            <div className="space-y-4 rounded-lg border p-4 bg-muted/10">
+                                {enabledSkills?.entrepreneurship !== false && (
                                 <div>
                                     <div className="flex justify-between mb-2">
                                         <Label>Kewirausahaan (Entrepreneurship)</Label>
@@ -156,7 +188,12 @@ export function SclSkillAssessmentDialog({
                                     <p className="text-xs text-muted-foreground mt-1">Kemampuan komunikasi, kerjasama tim, dan problem-solving di dunia kerja.</p>
                                 </div>
                             )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-muted-foreground text-center py-6 border rounded-lg bg-muted/10">
+                                Tidak ada komponen SCL yang diaktifkan untuk mata kuliah ini.
+                            </div>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="notes">Catatan Tambahan (Opsional)</Label>
@@ -176,7 +213,7 @@ export function SclSkillAssessmentDialog({
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Batal
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading || !hasAnySkillEnabled}>
                             {loading ? 'Menyimpan...' : 'Simpan Evaluasi SCL'}
                         </Button>
                     </DialogFooter>

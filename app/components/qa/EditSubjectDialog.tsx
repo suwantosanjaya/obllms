@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Dialog,
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -31,14 +30,29 @@ import { getFacultyList } from '@/app/actions/institutionActions'
 type Department = { id: string; code: string; name: string }
 type Faculty = { id: string; code: string; name: string; departments: Department[] }
 
-export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, defaultDepartmentId }: { subject: any, isLocked?: boolean, defaultFacultyId?: string, defaultDepartmentId?: string }) {
+type SubjectData = {
+    id: string;
+    code: string;
+    title: string;
+    description?: string | null;
+    type?: 'wajib' | 'pilihan';
+    scope?: 'universitas' | 'faculty' | 'department' | 'prodi';
+    credits?: number | string;
+    facultyId?: string | null;
+    departmentId?: string | null;
+    department?: {
+        facultyId?: string | null;
+    } | null;
+}
+
+export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, defaultDepartmentId }: { subject: SubjectData, isLocked?: boolean, defaultFacultyId?: string, defaultDepartmentId?: string }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
     const router = useRouter()
 
     const [type, setType] = useState<'wajib' | 'pilihan'>(subject.type || 'wajib')
-    const [scope, setScope] = useState<'universitas' | 'faculty' | 'department'>(subject.scope || 'department')
+    const [scope, setScope] = useState<'universitas' | 'faculty' | 'department'>((subject.scope === 'prodi' ? 'department' : subject.scope) || 'department')
     const [credits, setCredits] = useState<string>(subject.credits?.toString() || '3')
     const [facultyId, setFakultasId] = useState<string>(subject.facultyId || '')
     const [departmentId, setProdiId] = useState<string>(subject.departmentId || '')
@@ -55,9 +69,9 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
 
     // SCL Config removed
 
-    // Load faculty list when dialog opens
-    useEffect(() => {
-        if (open) {
+    // Reset states and fetch data when dialog opens
+    const handleOpenChange = (newOpen: boolean) => {
+        if (newOpen) {
             setLoadingFakultas(true)
             getFacultyList().then(res => {
                 if (res.success && res.facultyList) setFakultasList(res.facultyList as Faculty[])
@@ -74,9 +88,9 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                 title: subject.title || '',
                 description: subject.description || ''
             })
-            // SCL set states removed
         }
-    }, [open, subject])
+        setOpen(newOpen)
+    }
 
     // Reset department selection when faculty changes (only if it wasn't the initial load match)
     const handleFakultasChange = (newFakultasId: string) => {
@@ -119,13 +133,13 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 px-2">
                     <Pencil className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[520px]">
+            <DialogContent className="sm:max-w-130">
                 <form onSubmit={onSubmit}>
                     <DialogHeader>
                         <DialogTitle>Edit Mata Kuliah</DialogTitle>
@@ -161,7 +175,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                         {/* Tipe */}
                         <div className="grid gap-2">
                             <Label>Tipe</Label>
-                            <Select value={type} onValueChange={v => setType(v as any)}>
+                            <Select value={type} onValueChange={v => setType(v as 'wajib' | 'pilihan')}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -190,7 +204,7 @@ export function EditSubjectDialog({ subject, isLocked, defaultFacultyId, default
                         <div className="grid gap-2">
                             <Label>Cakupan</Label>
                             <Select value={scope} onValueChange={v => { 
-                                setScope(v as any); 
+                                setScope(v as 'universitas' | 'faculty' | 'department'); 
                                 if (isLocked) {
                                     setFakultasId(defaultFacultyId || '');
                                     setProdiId(v === 'department' ? (defaultDepartmentId || '') : '');
