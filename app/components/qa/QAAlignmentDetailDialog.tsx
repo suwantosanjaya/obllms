@@ -68,14 +68,14 @@ export function QAAlignmentDetailDialog({ row }: QAAlignmentDetailDialogProps) {
                                     <TableBody>
                                         {details.map((detail: any, index: number) => (
                                             <TableRow key={index}>
-                                                <TableCell className="font-semibold text-primary">{detail.cloCode}</TableCell>
-                                                <TableCell className="text-sm">{detail.cloDescription}</TableCell>
-                                                <TableCell>
+                                                <TableCell className="font-semibold text-primary align-top">{detail.cloCode}</TableCell>
+                                                <TableCell className="text-sm whitespace-normal break-words min-w-[250px] align-top">{detail.cloDescription}</TableCell>
+                                                <TableCell className="align-top">
                                                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                                         {detail.ploCode}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-sm">{detail.ploDescription}</TableCell>
+                                                <TableCell className="text-sm whitespace-normal break-words min-w-[250px] align-top">{detail.ploDescription}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

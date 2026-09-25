@@ -58,6 +58,7 @@ export const useUserStore = create<UserState>()(
         }),
         {
             name: 'user-storage', // name of the item in the storage (must be unique)
+            version: 1, // bump this number to force clients to clear their localStorage cache
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true)
             }

@@ -113,7 +113,7 @@ export default async function TeacherOBLPage() {
                                                 </TableCell>
                                             )}
                                             <TableCell className="font-semibold align-top border-r">{mapping.clo.code}</TableCell>
-                                            <TableCell className="max-w-[300px] align-top border-r">
+                                            <TableCell className="max-w-[400px] whitespace-normal break-words align-top border-r">
                                                 {mapping.clo.description}
                                             </TableCell>
                                             <TableCell className="align-top border-r">
