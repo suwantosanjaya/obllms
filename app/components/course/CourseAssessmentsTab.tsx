@@ -11,6 +11,7 @@ import { TogglePublishAssessmentButton } from '@/app/components/dosen/TogglePubl
 import { DeleteAssessmentButton } from '@/app/components/dosen/DeleteAssessmentButton'
 import { BookOpen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ExpandableRichText } from '@/components/ui/expandable-rich-text'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import prisma from '@/lib/db'
 
@@ -93,9 +94,9 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                 )}
                                             </div>
                                             {assessment.description && (
-                                                <p className="text-xs text-muted-foreground max-w-62.5 truncate">
-                                                    {assessment.description}
-                                                </p>
+                                                <div className="mt-2 text-xs text-muted-foreground max-w-2xl">
+                                                    <ExpandableRichText content={assessment.description} maxHeight="100px" className="prose prose-sm max-w-none dark:prose-invert" />
+                                                </div>
                                             )}
                                         </TableCell>
                                         <TableCell>

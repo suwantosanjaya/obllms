@@ -30,6 +30,8 @@
     "react-dom": "19.2.3",
     "react-quill-new": "^3.8.3",
     "recharts": "^3.8.1",
+    "suneditor": "^2.47.12",
+    "suneditor-react": "^3.6.1",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.11"
   },

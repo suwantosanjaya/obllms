@@ -124,3 +124,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Make sure links inside prose components are explicitly blue and underlined */
+.prose a, .sun-editor-editable a {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+.prose a:hover, .sun-editor-editable a:hover {
+  color: #2563eb !important;
+}

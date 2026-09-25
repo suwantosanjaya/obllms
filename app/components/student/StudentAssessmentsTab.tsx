@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessmentDialog'
+import { ExpandableRichText } from '@/components/ui/expandable-rich-text'
 import prisma from '@/lib/db'
 
 export async function StudentAssessmentsTab({ courseId, studentId }: { courseId: string, studentId: string }) {
@@ -57,7 +58,7 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                         <Badge variant="destructive" className="shrink-0 sm:self-start bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 border-none">Belum Selesai</Badge>
                                     </div>
                                     {assessment.description && (
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 bg-muted/50 dark:bg-muted/30 p-2 rounded">{assessment.description}</p>
+                                        <ExpandableRichText content={assessment.description} />
                                     )}
                                     <div className="flex items-center justify-between mt-2 pt-4 border-t border-border/50">
                                         <span className="text-xs font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-1">

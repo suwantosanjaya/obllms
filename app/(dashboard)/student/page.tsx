@@ -103,7 +103,7 @@ export default async function MahasiswaDashboard() {
                                         </span>
                                     </div>
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/mahasiswa/assessments?courseId=${assessment.courseId}`}>Kerjakan</Link>
+                                        <Link href={`/student/assessments?courseId=${assessment.courseId}`}>Kerjakan</Link>
                                     </Button>
                                 </div>
                             ))
@@ -121,7 +121,7 @@ export default async function MahasiswaDashboard() {
                                     <span className="text-sm text-red-600">Anda belum mencapai target jam belajar Anda.</span>
                                 </div>
                                 <Button variant="destructive" size="sm" asChild>
-                                    <Link href="/mahasiswa/srl">Update Jurnal</Link>
+                                    <Link href="/student/srl">Update Jurnal</Link>
                                 </Button>
                             </div>
                         )}
@@ -161,7 +161,7 @@ export default async function MahasiswaDashboard() {
                         )}
 
                         <Button variant="ghost" className="w-full mt-2" asChild>
-                            <Link href="/mahasiswa/courses">
+                            <Link href="/student/courses">
                                 Lihat Semua Mata Kuliah <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>

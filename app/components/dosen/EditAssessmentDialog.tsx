@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { createAssessment } from '@/app/actions/assessmentActions'
 import { getCLOsBySubject } from '@/app/actions/obeActions'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 
 type CLO = { id: string; code: string; description: string }
 type SelectedCLO = { cloId: string; weight: number }
@@ -46,7 +47,9 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
     const [allowReview, setAllowReview] = useState(assessment.allowReview ?? false)
     const [isScorePublished, setIsScorePublished] = useState(assessment.isScorePublished ?? true)
     const [shuffleQuestions, setShuffleQuestions] = useState(assessment.shuffleQuestions ?? false)
+    const [timeLimit, setTimeLimit] = useState<number | ''>(assessment.timeLimit ?? '')
     const [cloLoading, setCloLoading] = useState(false)
+    const [description, setDescription] = useState(assessment.description || '')
 
     // Setup default due date: existing
     const defaultDueDateStr = new Date(assessment.dueDate.getTime() - (assessment.dueDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
@@ -394,7 +397,12 @@ export function EditAssessmentDialog({ courses, assessment, hasGradedSubmissions
                         {/* Description */}
                         <div className="grid gap-2">
                             <Label htmlFor="description">Deskripsi</Label>
-                            <Textarea id="description" name="description" defaultValue={assessment.description} placeholder="Instruksi pengerjaan tugas..." className="min-h-[80px]" required />
+                            <input type="hidden" name="description" value={description} />
+                            <RichTextEditor 
+                                value={description} 
+                                onChange={setDescription} 
+                                placeholder="Instruksi pengerjaan tugas..." 
+                            />
                         </div>
 
                         {/* Due date */}

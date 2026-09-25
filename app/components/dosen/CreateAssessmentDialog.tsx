@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { createAssessment, duplicateAssessment, getAssessmentsBySubject } from '@/app/actions/assessmentActions'
 import { getCLOsBySubject } from '@/app/actions/obeActions'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 
 type CLO = { id: string; code: string; description: string; curriculumYearId?: string | null }
 type SelectedCLO = { cloId: string; weight: number }
@@ -55,6 +56,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
     const [shuffleQuestions, setShuffleQuestions] = useState(false)
     const [timeLimit, setTimeLimit] = useState<number | ''>('')
     const [cloLoading, setCloLoading] = useState(false)
+    const [description, setDescription] = useState('')
     const { toast } = useToast()
 
     // Duplication state
@@ -218,6 +220,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
             setOpen(false)
             setSelectedCourseId(courses.length === 1 ? courses[0].id : '')
             setSelectedClos([])
+            setDescription('')
             if (format === 'quiz' && res.assessmentId) {
                 router.push(`/teacher/course/${courseId}/assessment/${res.assessmentId}/builder`)
             }
@@ -467,7 +470,12 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         {/* Description */}
                         <div className="grid gap-2">
                             <Label htmlFor="description">Deskripsi</Label>
-                            <Textarea id="description" name="description" placeholder="Instruksi pengerjaan tugas..." className="min-h-20" required />
+                            <input type="hidden" name="description" value={description} />
+                            <RichTextEditor 
+                                value={description} 
+                                onChange={setDescription} 
+                                placeholder="Instruksi pengerjaan tugas..." 
+                            />
                         </div>
 
                         {/* Due date */}
