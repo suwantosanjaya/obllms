@@ -396,7 +396,7 @@ export async function getStudentAssessments(studentId: string) {
     }
 }
 
-export async function submitAssessment(assessmentId: string, studentId: string, fileUrl: string) {
+export async function submitAssessment(assessmentId: string, studentId: string, fileUrls: string[]) {
     try {
         const submission = await prisma.submission.upsert({
             where: {
@@ -406,13 +406,15 @@ export async function submitAssessment(assessmentId: string, studentId: string, 
                 }
             },
             update: {
-                content: fileUrl,
+                content: fileUrls.length > 0 ? fileUrls[0] : null,
+                attachments: fileUrls,
                 submittedAt: new Date()
             },
             create: {
                 assessmentId,
                 studentId,
-                content: fileUrl
+                content: fileUrls.length > 0 ? fileUrls[0] : null,
+                attachments: fileUrls
             }
         })
         revalidatePath('/student/assessments')

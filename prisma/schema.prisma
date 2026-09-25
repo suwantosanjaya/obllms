@@ -440,6 +440,7 @@ model Submission {
   assessmentId String
   studentId    String
   content      String?  // Text submission or file URL
+  attachments  String[] @default([]) // Array of attachment links
   score        Float?   // Weighted average of all CLO scores (auto-computed)
   feedback     String?  // General feedback from Dosen
   submittedAt  DateTime @default(now())

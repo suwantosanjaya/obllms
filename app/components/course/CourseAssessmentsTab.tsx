@@ -185,6 +185,30 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                                         <span className="text-purple-600 text-xs italic flex items-center gap-1">
                                                                             ★ Dikonversi dari Papan Peringkat
                                                                         </span>
+                                                                    ) : (sub.attachments && sub.attachments.length > 0) ? (
+                                                                        <Dialog>
+                                                                            <DialogTrigger asChild>
+                                                                                <button type="button" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1 text-left cursor-pointer">
+                                                                                    Lihat Lampiran ({sub.attachments.length}) ↗
+                                                                                </button>
+                                                                            </DialogTrigger>
+                                                                            <DialogContent className="sm:max-w-md">
+                                                                                <DialogHeader>
+                                                                                    <DialogTitle>Lampiran Jawaban Mahasiswa</DialogTitle>
+                                                                                    <DialogDescription>
+                                                                                        {sub.student.name}
+                                                                                    </DialogDescription>
+                                                                                </DialogHeader>
+                                                                                <div className="flex flex-col gap-2 mt-2 max-h-[60vh] overflow-y-auto">
+                                                                                    {sub.attachments.map((url: string, i: number) => (
+                                                                                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="p-3 bg-muted/30 rounded-md border text-sm text-blue-600 hover:underline flex items-center justify-between">
+                                                                                            <span className="truncate pr-4">{url}</span>
+                                                                                            <span className="shrink-0 text-xs text-muted-foreground">Buka ↗</span>
+                                                                                        </a>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </DialogContent>
+                                                                        </Dialog>
                                                                     ) : sub.content ? (
                                                                         isValidUrl(sub.content) ? (
                                                                             <a href={sub.content} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary hover:underline text-xs flex items-center gap-1">
