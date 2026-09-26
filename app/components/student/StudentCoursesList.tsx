@@ -1,28 +1,59 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BookOpen, Users, Clock, ChevronRight, GraduationCap, Search, X } from 'lucide-react'
 import Link from 'next/link'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EnrollCourseButton } from '@/app/components/mahasiswa/EnrollCourseButton'
 import { UnenrollCourseButton } from '@/app/components/mahasiswa/UnenrollCourseButton'
 
 export function StudentCoursesList({ enrolledCourses, availableCourses, studentId }: { enrolledCourses: any[], availableCourses: any[], studentId: string }) {
+    const { academicYears, semesters, latestYear, latestSemester } = useMemo(() => {
+        const years = new Set<string>()
+        const sems = new Set<string>()
+
+        const processCourse = (course: any) => {
+            if (course?.academicYear) years.add(course.academicYear)
+            if (course?.semester) sems.add(course.semester)
+        }
+
+        enrolledCourses.forEach(e => processCourse(e.course))
+        availableCourses.forEach(c => processCourse(c))
+
+        const yearsArr = Array.from(years).sort().reverse()
+        const semsArr = Array.from(sems).sort()
+
+        let maxYear = yearsArr.length > 0 ? yearsArr[0] : ''
+        let currentSem = ''
+
+        if (maxYear) {
+            const semsInMaxYear = new Set<string>()
+            const checkSem = (course: any) => {
+                if (course?.academicYear === maxYear && course?.semester) semsInMaxYear.add(course.semester)
+            }
+            enrolledCourses.forEach(e => checkSem(e.course))
+            availableCourses.forEach(c => checkSem(c))
+            const semsInMaxYearArr = Array.from(semsInMaxYear)
+            if (semsInMaxYearArr.includes('Genap')) currentSem = 'Genap'
+            else if (semsInMaxYearArr.includes('Ganjil')) currentSem = 'Ganjil'
+            else currentSem = semsInMaxYearArr[0] || ''
+        }
+
+        return { academicYears: yearsArr, semesters: semsArr, latestYear: maxYear, latestSemester: currentSem }
+    }, [enrolledCourses, availableCourses])
+
+    const [selectedYear, setSelectedYear] = useState(latestYear || 'all')
+    const [selectedSemester, setSelectedSemester] = useState(latestSemester || 'all')
     const [searchQuery, setSearchQuery] = useState('')
 
-    const filteredEnrolled = enrolledCourses.filter(enrollment => {
-        const title = enrollment.course?.subject?.title || ''
-        const code = enrollment.course?.subject?.code || ''
-        const semester = enrollment.course?.semester || ''
-        const academicYear = enrollment.course?.academicYear || ''
-        const instructor = enrollment.course?.instructor?.name || ''
-        const q = searchQuery.toLowerCase()
-        return title.toLowerCase().includes(q) || code.toLowerCase().includes(q) || semester.toLowerCase().includes(q) || academicYear.toLowerCase().includes(q) || instructor.toLowerCase().includes(q)
-    })
+    const filterCourse = (course: any) => {
+        if (!course) return false
+        if (selectedYear !== 'all' && course.academicYear !== selectedYear) return false
+        if (selectedSemester !== 'all' && course.semester !== selectedSemester) return false
 
-    const filteredAvailable = availableCourses.filter(course => {
         const title = course.subject?.title || ''
         const code = course.subject?.code || ''
         const semester = course.semester || ''
@@ -30,25 +61,56 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
         const instructor = course.instructor?.name || ''
         const q = searchQuery.toLowerCase()
         return title.toLowerCase().includes(q) || code.toLowerCase().includes(q) || semester.toLowerCase().includes(q) || academicYear.toLowerCase().includes(q) || instructor.toLowerCase().includes(q)
-    })
+    }
+
+    const filteredEnrolled = enrolledCourses.filter(enrollment => filterCourse(enrollment.course))
+    const filteredAvailable = availableCourses.filter(course => filterCourse(course))
 
     const now = new Date()
 
     return (
         <div className="flex flex-col gap-8">
-            <div className="relative w-full md:max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                    placeholder="Cari kelas, mata kuliah, dosen, atau semester..." 
-                    className="pl-9 pr-9 bg-background shadow-sm border-muted-foreground/30"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Cari kelas, mata kuliah, dosen..." 
+                        className="pl-9 pr-9 bg-background shadow-sm border-muted-foreground/30"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-full sm:w-[160px] bg-background">
+                            <SelectValue placeholder="Tahun Ajaran" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Tahun</SelectItem>
+                            {academicYears.map(y => (
+                                <SelectItem key={y} value={y}>{y}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                        <SelectTrigger className="w-full sm:w-[150px] bg-background">
+                            <SelectValue placeholder="Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Semester</SelectItem>
+                            {semesters.map(s => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             {/* Kelas Anda */}
