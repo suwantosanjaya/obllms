@@ -2,6 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessmentDialog'
 import { ExpandableRichText } from '@/components/ui/expandable-rich-text'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { FileText } from 'lucide-react'
+import 'suneditor/dist/css/suneditor.min.css'
 import prisma from '@/lib/db'
 import { formatDateTime } from '@/lib/utils'
 
@@ -59,7 +63,30 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                         <Badge variant="destructive" className="shrink-0 sm:self-start bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 border-none">Belum Selesai</Badge>
                                     </div>
                                     {assessment.description && (
-                                        <ExpandableRichText content={assessment.description} />
+                                        <div className="mt-2">
+                                            <Sheet>
+                                                <SheetTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted">
+                                                        <FileText className="w-4 h-4 mr-2" />
+                                                        Baca Detail Tugas
+                                                    </Button>
+                                                </SheetTrigger>
+                                                <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0 flex flex-col z-[100]">
+                                                    <div className="p-6 border-b border-border/50 bg-muted/10">
+                                                        <SheetHeader>
+                                                            <SheetTitle className="text-xl text-primary">{assessment.title}</SheetTitle>
+                                                            <SheetDescription>Detail dan instruksi penugasan.</SheetDescription>
+                                                        </SheetHeader>
+                                                    </div>
+                                                    <div className="p-6">
+                                                        <div
+                                                            className="sun-editor-editable !bg-transparent !border-0 !p-0 rounded-lg text-sm dark:text-slate-200"
+                                                            dangerouslySetInnerHTML={{ __html: assessment.description }}
+                                                        />
+                                                    </div>
+                                                </SheetContent>
+                                            </Sheet>
+                                        </div>
                                     )}
                                     <div className="flex items-center justify-between mt-2 pt-4 border-t border-border/50">
                                         <span className="text-xs font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-1">
@@ -133,6 +160,32 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                                 <Badge variant="outline" className="bg-green-100 text-green-800 border-none dark:bg-green-900/40 dark:text-green-400">Terkumpul</Badge>
                                             )}
                                         </div>
+                                        {assessment.description && (
+                                            <div className="mt-1">
+                                                <Sheet>
+                                                    <SheetTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted">
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Lihat Detail Tugas
+                                                        </Button>
+                                                    </SheetTrigger>
+                                                    <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0 flex flex-col z-[100]">
+                                                        <div className="p-6 border-b border-border/50 bg-muted/10">
+                                                            <SheetHeader>
+                                                                <SheetTitle className="text-xl text-primary">{assessment.title}</SheetTitle>
+                                                                <SheetDescription>Detail dan instruksi penugasan.</SheetDescription>
+                                                            </SheetHeader>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            <div
+                                                                className="sun-editor-editable !bg-transparent !border-0 !p-0 rounded-lg text-sm dark:text-slate-200"
+                                                                dangerouslySetInnerHTML={{ __html: assessment.description }}
+                                                            />
+                                                        </div>
+                                                    </SheetContent>
+                                                </Sheet>
+                                            </div>
+                                        )}
                                         {submission.feedback && (
                                             <div className={`${submission.content === 'DITOLAK' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/50' : 'bg-blue-50 text-blue-900 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900/50'} p-3 rounded text-sm border`}>
                                                 <span className="font-semibold block mb-1">
