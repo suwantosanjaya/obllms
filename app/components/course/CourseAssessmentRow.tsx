@@ -46,7 +46,7 @@ export function CourseAssessmentRow({
                         <span>{assessment.title}</span>
                         <Badge variant="secondary" className="text-[10px] font-normal h-5">{assessment.type}</Badge>
                         {assessment.format === 'quiz' ? (
-                            <Badge variant="outline" className="text-[10px] font-normal h-5 bg-blue-50 text-blue-700 border-blue-200">Kuis Interaktif</Badge>
+                            <Badge variant="outline" className="text-[10px] font-normal h-5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800">Kuis Interaktif</Badge>
                         ) : (
                             <Badge variant="outline" className="text-[10px] font-normal h-5">Unggah File</Badge>
                         )}
@@ -58,7 +58,7 @@ export function CourseAssessmentRow({
                             <Badge
                                 key={ac.cloId}
                                 variant="outline"
-                                className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30 font-medium"
+                                className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-medium"
                             >
                                 {ac.clo.code} ({ac.weight}%)
                             </Badge>
@@ -163,10 +163,10 @@ export function CourseAssessmentRow({
                                     {assessment.assessmentClos.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {assessment.assessmentClos.map((ac: any) => (
-                                                <Badge key={ac.cloId} variant="outline" className="bg-blue-50/50 text-blue-700 border-blue-200 py-1.5 px-3">
+                                                <Badge key={ac.cloId} variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 py-1.5 px-3">
                                                     <span className="font-bold mr-1">{ac.clo.code}</span>
-                                                    <span className="text-muted-foreground mr-2">Bobot: {ac.weight}%</span>
-                                                    <span className="text-xs truncate max-w-[200px]" title={ac.clo.description}>{ac.clo.description}</span>
+                                                    <span className="text-blue-600/80 dark:text-blue-300/80 mr-2 font-medium">Bobot: {ac.weight}%</span>
+                                                    <span className="text-xs truncate max-w-[200px] text-blue-800 dark:text-blue-200" title={ac.clo.description}>{ac.clo.description}</span>
                                                 </Badge>
                                             ))}
                                         </div>
