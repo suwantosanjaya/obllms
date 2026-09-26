@@ -89,6 +89,10 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
                                                     ({enrollment.course.classCode || 'Kelas Reguler'})
                                                 </span>
                                             </h3>
+                                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                <Users className="h-3 w-3 shrink-0" />
+                                                Dosen: {enrollment.course.instructor?.name || 'Belum diutus'}
+                                            </span>
                                         </div>
                                     </div>
 
