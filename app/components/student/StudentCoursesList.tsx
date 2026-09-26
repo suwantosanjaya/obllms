@@ -17,8 +17,9 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
         const code = enrollment.course?.subject?.code || ''
         const semester = enrollment.course?.semester || ''
         const academicYear = enrollment.course?.academicYear || ''
+        const instructor = enrollment.course?.instructor?.name || ''
         const q = searchQuery.toLowerCase()
-        return title.toLowerCase().includes(q) || code.toLowerCase().includes(q) || semester.toLowerCase().includes(q) || academicYear.toLowerCase().includes(q)
+        return title.toLowerCase().includes(q) || code.toLowerCase().includes(q) || semester.toLowerCase().includes(q) || academicYear.toLowerCase().includes(q) || instructor.toLowerCase().includes(q)
     })
 
     const filteredAvailable = availableCourses.filter(course => {
