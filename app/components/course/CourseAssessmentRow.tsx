@@ -130,8 +130,8 @@ export function CourseAssessmentRow({
 
             {/* Assessment Detail Sheet */}
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent className="w-[95vw] sm:max-w-2xl overflow-y-auto" side="right">
-                    <SheetHeader className="mb-6 pb-6 border-b">
+                <SheetContent className="w-[95vw] sm:max-w-2xl overflow-y-auto p-0" side="right">
+                    <SheetHeader className="mb-6 pb-6 border-b p-6">
                         <div className="flex items-start justify-between gap-4 pr-6">
                             <div>
                                 <SheetTitle className="text-xl font-bold">{assessment.title}</SheetTitle>
@@ -143,7 +143,8 @@ export function CourseAssessmentRow({
                         </div>
                     </SheetHeader>
 
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <div className="px-6 pb-6">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-6">
                             <TabsTrigger value="detail">Detail Penugasan</TabsTrigger>
                             <TabsTrigger value="pengumpulan" className="flex items-center gap-2">
@@ -326,6 +327,7 @@ export function CourseAssessmentRow({
                             )}
                         </TabsContent>
                     </Tabs>
+                    </div>
                 </SheetContent>
             </Sheet>
         </React.Fragment>
