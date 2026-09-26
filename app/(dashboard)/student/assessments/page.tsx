@@ -5,8 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import { getStudentAssessments } from '@/app/actions/assessmentActions'
 import { getSessionUser } from '@/app/actions/userActions'
 import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessmentDialog'
-import { ClipboardList, CheckCircle2, Clock } from 'lucide-react'
+import { ClipboardList, CheckCircle2, Clock, FileText } from 'lucide-react'
 import { stripHtml, formatDateTime } from '@/lib/utils'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import 'suneditor/dist/css/suneditor.min.css'
 
 export default async function StudentAssessmentsPage() {
     const user = await getSessionUser()
@@ -85,10 +88,33 @@ export default async function StudentAssessmentsPage() {
                                                 <h3 className="font-semibold text-base text-primary">{assessment.title}</h3>
                                                 <p className="text-xs text-muted-foreground mt-1">{assessment.course?.subject?.code} — {assessment.course?.subject?.title}</p>
                                             </div>
-                                            <Badge variant="destructive" className="shrink-0 ml-2">Belum Selesai</Badge>
+                                            <Badge variant="destructive" className="shrink-0 ml-2 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 border-none">Belum Selesai</Badge>
                                         </div>
                                         {assessment.description && (
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{stripHtml(assessment.description)}</p>
+                                            <div className="mt-1">
+                                                <Sheet>
+                                                    <SheetTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted">
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Baca Detail Tugas
+                                                        </Button>
+                                                    </SheetTrigger>
+                                                    <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0 flex flex-col z-[100]">
+                                                        <div className="p-6 border-b border-border/50 bg-muted/10">
+                                                            <SheetHeader>
+                                                                <SheetTitle className="text-xl text-primary">{assessment.title}</SheetTitle>
+                                                                <SheetDescription>Detail dan instruksi penugasan.</SheetDescription>
+                                                            </SheetHeader>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            <div
+                                                                className="sun-editor-editable !bg-transparent !border-0 !p-0 rounded-lg text-sm dark:text-slate-200"
+                                                                dangerouslySetInnerHTML={{ __html: assessment.description }}
+                                                            />
+                                                        </div>
+                                                    </SheetContent>
+                                                </Sheet>
+                                            </div>
                                         )}
                                         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
                                             <span className="text-xs text-muted-foreground">
@@ -145,9 +171,35 @@ export default async function StudentAssessmentsPage() {
                                                 ) : submission.content === 'DITOLAK' ? (
                                                     <Badge variant="destructive" className="bg-red-100 text-red-800 border-none dark:bg-red-900/40 dark:text-red-400 shrink-0">Ditolak / Dikembalikan</Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 shrink-0">Menunggu Nilai</Badge>
+                                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800 shrink-0">Menunggu Nilai</Badge>
                                                 )}
                                             </div>
+                                            {assessment.description && (
+                                                <div className="mt-1">
+                                                    <Sheet>
+                                                        <SheetTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted">
+                                                                <FileText className="w-4 h-4 mr-2" />
+                                                                Lihat Detail Tugas
+                                                            </Button>
+                                                        </SheetTrigger>
+                                                        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0 flex flex-col z-[100]">
+                                                            <div className="p-6 border-b border-border/50 bg-muted/10">
+                                                                <SheetHeader>
+                                                                    <SheetTitle className="text-xl text-primary">{assessment.title}</SheetTitle>
+                                                                    <SheetDescription>Detail dan instruksi penugasan.</SheetDescription>
+                                                                </SheetHeader>
+                                                            </div>
+                                                            <div className="p-6">
+                                                                <div
+                                                                    className="sun-editor-editable !bg-transparent !border-0 !p-0 rounded-lg text-sm dark:text-slate-200"
+                                                                    dangerouslySetInnerHTML={{ __html: assessment.description }}
+                                                                />
+                                                            </div>
+                                                        </SheetContent>
+                                                    </Sheet>
+                                                </div>
+                                            )}
                                             {submission.feedback && (
                                                 <div className={`${submission.content === 'DITOLAK' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/50' : 'bg-blue-50 text-blue-900 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900/50'} p-3 rounded text-sm border`}>
                                                     <span className="font-semibold block mb-1">
