@@ -130,7 +130,8 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         {filteredEnrolled.map((enrollment: any) => {
                             const deadline = enrollment.course.config?.enrollmentDeadline ? new Date(enrollment.course.config.enrollmentDeadline) : null;
-                            const isClosed = deadline && now > deadline;
+                            const isEnrollmentClosed = deadline && now > deadline;
+                            const canUnenroll = deadline && now <= deadline;
                             
                             return (
                                 <div key={enrollment.id} className="flex flex-col p-4 border rounded-xl bg-card shadow-sm hover:shadow-md transition-all gap-3">
@@ -165,9 +166,9 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
                                             </span>
                                         )}
                                         {deadline && (
-                                            <span className={`text-xs font-medium px-2 py-1 rounded-md w-fit flex items-center gap-1 ${isClosed ? 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400' : 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+                                            <span className={`text-xs font-medium px-2 py-1 rounded-md w-fit flex items-center gap-1 ${isEnrollmentClosed ? 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400' : 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400'}`}>
                                                 <Clock className="w-3 h-3 shrink-0" />
-                                                {isClosed ? 'Sudah ditutup:' : 'Akan ditutup:'} {deadline.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                {isEnrollmentClosed ? 'Sudah ditutup:' : 'Akan ditutup:'} {deadline.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         )}
                                         {enrollment.course.config?.isGamificationEnabled && (
@@ -182,7 +183,7 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
                                     <div className="flex items-center justify-between border-t pt-3 mt-auto gap-2 flex-wrap">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2 py-1 rounded-full font-medium">Terdaftar</span>
-                                            {!isClosed && (
+                                            {canUnenroll && (
                                                 <UnenrollCourseButton studentId={studentId} courseId={enrollment.courseId} courseTitle={enrollment.course.subject.title} />
                                             )}
                                         </div>
