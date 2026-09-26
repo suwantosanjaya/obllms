@@ -8,6 +8,7 @@ import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessm
 import { ClipboardList, CheckCircle2, Clock, FileText } from 'lucide-react'
 import { stripHtml, formatDateTime } from '@/lib/utils'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import 'suneditor/dist/css/suneditor.min.css'
 
@@ -163,22 +164,26 @@ export default async function StudentAssessmentsPage() {
                                                     <h4 className="font-semibold text-base text-primary">{assessment.title}</h4>
                                                     <p className="text-xs text-muted-foreground mt-1">{assessment.course?.subject?.code} — {assessment.course?.subject?.title}</p>
                                                 </div>
-                                                {submission.score !== null ? (
+                                                {(submission.score !== null && assessment.isScorePublished) ? (
                                                     <div className="flex flex-col items-end bg-green-50/50 dark:bg-green-950/20 p-2 rounded-md border border-green-100 dark:border-green-900/50 shrink-0">
                                                         <span className="text-[10px] text-muted-foreground uppercase font-semibold">Nilai</span>
                                                         <span className="font-black text-xl text-green-600 dark:text-green-400 leading-none">{Number(submission.score.toFixed(1))}</span>
                                                     </div>
+                                                ) : (submission.score !== null && !assessment.isScorePublished) ? (
+                                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 shrink-0">Sudah Dinilai</Badge>
                                                 ) : submission.content === 'DITOLAK' ? (
                                                     <Badge variant="destructive" className="bg-red-100 text-red-800 border-none dark:bg-red-900/40 dark:text-red-400 shrink-0">Ditolak / Dikembalikan</Badge>
+                                                ) : submission.history && submission.history.length > 0 ? (
+                                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 shrink-0">Sudah Direvisi</Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800 shrink-0">Menunggu Nilai</Badge>
                                                 )}
                                             </div>
-                                            {assessment.description && (
-                                                <div className="mt-1">
+                                            <div className="mt-1 flex flex-wrap gap-2">
+                                                {assessment.description && (
                                                     <Sheet>
                                                         <SheetTrigger asChild>
-                                                            <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted">
+                                                            <Button variant="outline" size="sm" className="text-xs bg-muted/50 hover:bg-muted h-8">
                                                                 <FileText className="w-4 h-4 mr-2" />
                                                                 Lihat Detail Tugas
                                                             </Button>
@@ -198,8 +203,68 @@ export default async function StudentAssessmentsPage() {
                                                             </div>
                                                         </SheetContent>
                                                     </Sheet>
-                                                </div>
-                                            )}
+                                                )}
+                                                {submission.history && submission.history.length > 0 && (
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="text-xs text-muted-foreground bg-muted/50 hover:bg-muted h-8">
+                                                                Lihat Riwayat Penolakan ({submission.history.length})
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Riwayat Penolakan: {assessment.title}</DialogTitle>
+                                                                <DialogDescription>
+                                                                    Menampilkan tugas yang pernah dikembalikan beserta alasannya.
+                                                                </DialogDescription>
+                                                            </DialogHeader>
+                                                            <div className="flex flex-col gap-4 mt-2">
+                                                                {submission.history.map((h: any, i: number) => (
+                                                                    <div key={h.id} className="bg-muted/30 p-3 rounded-md border flex flex-col gap-2 text-sm text-left">
+                                                                        <div className="flex justify-between items-center border-b pb-2 mb-1">
+                                                                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                                                                                Penolakan ke-{submission.history.length - i}
+                                                                            </Badge>
+                                                                            <span className="text-muted-foreground text-xs">
+                                                                                {new Date(h.rejectedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                            </span>
+                                                                        </div>
+                                                                        {h.feedback && (
+                                                                            <div className="bg-red-50/50 p-2.5 rounded border border-red-100 text-red-800 text-sm">
+                                                                                <span className="font-semibold block mb-1 text-xs">Alasan Penolakan:</span>
+                                                                                {h.feedback}
+                                                                            </div>
+                                                                        )}
+                                                                        {(h.attachments && h.attachments.length > 0) ? (
+                                                                            <div className="flex flex-col gap-1 mt-1">
+                                                                                <span className="font-semibold text-muted-foreground text-xs">Lampiran yang ditolak:</span>
+                                                                                {h.attachments.map((url: string, idx: number) => (
+                                                                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                                                                        Berkas {idx + 1} ↗
+                                                                                    </a>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (h.content && h.content !== 'DITOLAK') ? (
+                                                                            <div className="mt-1">
+                                                                                <span className="font-semibold text-muted-foreground text-xs block mb-1">Jawaban yang ditolak:</span>
+                                                                                {h.content.startsWith('http') ? (
+                                                                                    <a href={h.content} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                                                                        Buka Link Jawaban ↗
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    <div className="bg-background p-3 rounded border max-h-40 overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+                                                                                        {h.content}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : null}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                )}
+                                            </div>
                                             {submission.feedback && (
                                                 <div className={`${submission.content === 'DITOLAK' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/50' : 'bg-blue-50 text-blue-900 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900/50'} p-3 rounded text-sm border`}>
                                                     <span className="font-semibold block mb-1">
@@ -208,8 +273,14 @@ export default async function StudentAssessmentsPage() {
                                                     {submission.feedback}
                                                 </div>
                                             )}
+
                                             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
                                                 <div className="flex flex-col gap-1">
+                                                    {assessment.dueDate && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Tenggat: {formatDateTime(assessment.dueDate, { dateStyle: 'medium', timeStyle: 'short' })}
+                                                        </span>
+                                                    )}
                                                     <span className="text-xs text-muted-foreground">
                                                         Dikumpulkan: {formatDateTime(submission.submittedAt, { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </span>

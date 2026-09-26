@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { calculateStudentOBEGrade } from '@/app/utils/obeCalculator'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { ExportExcelButton } from './ExportExcelButton'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { CourseTaskGradebookTab } from './CourseTaskGradebookTab'
 
 type CourseGradebookResponse = Exclude<Awaited<ReturnType<typeof getCourseGradebookData>>, { success: false }>
 type GradebookCourse = NonNullable<CourseGradebookResponse['course']>
@@ -79,10 +81,22 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
     })
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader className="bg-muted/30 border-b pb-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Tabs defaultValue="rekap-capaian" className="w-full space-y-6 mt-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">Rekap Capaian & Nilai</h2>
+                    <p className="text-muted-foreground text-sm">Lihat rekapitulasi nilai capaian mahasiswa dan buku nilai komponen.</p>
+                </div>
+                <TabsList>
+                    <TabsTrigger value="rekap-capaian">Rekap Capaian (OBE)</TabsTrigger>
+                    <TabsTrigger value="buku-nilai">Buku Nilai (Komponen)</TabsTrigger>
+                </TabsList>
+            </div>
+
+            <TabsContent value="rekap-capaian" className="space-y-6 mt-0">
+                <Card>
+                    <CardHeader className="bg-muted/30 border-b pb-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <CardTitle>Rekapitulasi Nilai & Capaian OBE</CardTitle>
                             <CardDescription className="mt-1">
@@ -119,7 +133,6 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                         <TableHead key={sc.id} colSpan={colSpan} className="text-center border-r border-b font-bold bg-blue-50/50 dark:bg-blue-900/20">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span>{sc.clo.code}</span>
-                                                <Badge variant="outline" className="text-[10px] bg-background">{sc.weight}%</Badge>
                                             </div>
                                         </TableHead>
                                     )
@@ -359,7 +372,6 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                                                             <span className="font-semibold text-blue-700 dark:text-blue-400">{sc.clo.code}</span>
                                                             {sc.clo.description && <p className="text-xs text-muted-foreground">{sc.clo.description}</p>}
                                                         </div>
-                                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap mt-1 sm:mt-0">{sc.weight}%</Badge>
                                                     </div>
                                                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                                                         {sc.techniques && sc.techniques.length > 0 ? (
@@ -437,6 +449,11 @@ export async function CourseGradebookTab({ courseId }: { courseId: string }) {
                     })}
                 </div>
             </div>
-        </div>
+            </TabsContent>
+
+            <TabsContent value="buku-nilai" className="mt-0">
+                <CourseTaskGradebookTab courseId={courseId} />
+            </TabsContent>
+        </Tabs>
     )
 }

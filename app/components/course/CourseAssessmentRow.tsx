@@ -290,6 +290,14 @@ export function CourseAssessmentRow({
                                                                     <span className="font-bold text-xl text-primary leading-none">{Math.round(sub.score * 100) / 100}</span>
                                                                 </div>
                                                             </div>
+                                                        ) : sub.status === 'REJECTED' ? (
+                                                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                                                Dikembalikan / Ditolak
+                                                            </Badge>
+                                                        ) : sub.SubmissionHistory && sub.SubmissionHistory.length > 0 ? (
+                                                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                                Sudah Direvisi
+                                                            </Badge>
                                                         ) : (
                                                             <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
                                                                 Menunggu Penilaian
@@ -319,6 +327,69 @@ export function CourseAssessmentRow({
                                                                     <span className="font-bold">{Math.round(cs.score * 100) / 100}</span>
                                                                 </Badge>
                                                             ))}
+                                                        </div>
+                                                    )}
+
+                                                    {sub.SubmissionHistory && sub.SubmissionHistory.length > 0 && (
+                                                        <div className="w-full mt-4 flex sm:justify-end border-t pt-3">
+                                                            <Dialog>
+                                                                <DialogTrigger asChild>
+                                                                    <Button variant="outline" size="sm" className="text-xs text-muted-foreground w-full sm:w-auto h-7">
+                                                                        Lihat Riwayat Penolakan ({sub.SubmissionHistory.length})
+                                                                    </Button>
+                                                                </DialogTrigger>
+                                                                <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>Riwayat Penolakan: {sub.student.name}</DialogTitle>
+                                                                        <DialogDescription>
+                                                                            Menampilkan tugas yang pernah dikembalikan beserta alasannya.
+                                                                        </DialogDescription>
+                                                                    </DialogHeader>
+                                                                    <div className="flex flex-col gap-4 mt-2">
+                                                                        {sub.SubmissionHistory.map((h: any, i: number) => (
+                                                                            <div key={h.id} className="bg-muted/30 p-3 rounded-md border flex flex-col gap-2 text-sm text-left">
+                                                                                <div className="flex justify-between items-center border-b pb-2 mb-1">
+                                                                                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                                                                                        Penolakan ke-{sub.SubmissionHistory.length - i}
+                                                                                    </Badge>
+                                                                                    <span className="text-muted-foreground text-xs">
+                                                                                        {new Date(h.rejectedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                                    </span>
+                                                                                </div>
+                                                                                {h.feedback && (
+                                                                                    <div className="bg-red-50/50 p-2.5 rounded border border-red-100 text-red-800 text-sm">
+                                                                                        <span className="font-semibold block mb-1 text-xs">Alasan Penolakan:</span>
+                                                                                        {h.feedback}
+                                                                                    </div>
+                                                                                )}
+                                                                                {(h.attachments && h.attachments.length > 0) ? (
+                                                                                    <div className="flex flex-col gap-1 mt-1">
+                                                                                        <span className="font-semibold text-muted-foreground text-xs">Lampiran yang ditolak:</span>
+                                                                                        {h.attachments.map((url: string, idx: number) => (
+                                                                                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                                                                                Berkas {idx + 1} ↗
+                                                                                            </a>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                ) : (h.content && h.content !== 'DITOLAK') ? (
+                                                                                    <div className="mt-1">
+                                                                                        <span className="font-semibold text-muted-foreground text-xs block mb-1">Jawaban yang ditolak:</span>
+                                                                                        {h.content.startsWith('http') ? (
+                                                                                            <a href={h.content} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                                                                                Buka Link Jawaban ↗
+                                                                                            </a>
+                                                                                        ) : (
+                                                                                            <div className="bg-background p-3 rounded border max-h-40 overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+                                                                                                {h.content}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ) : null}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </DialogContent>
+                                                            </Dialog>
                                                         </div>
                                                     )}
                                                 </div>

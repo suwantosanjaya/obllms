@@ -177,6 +177,9 @@ export async function getAssessmentsForCourse(courseId: string) {
                                     include: { options: true }
                                 }
                             }
+                        },
+                        SubmissionHistory: {
+                            orderBy: { rejectedAt: 'desc' }
                         }
                     }
                 }
@@ -234,7 +237,8 @@ export async function getCourseGradebookData(courseId: string) {
             include: {
                 cloScores: {
                     include: { clo: true }
-                }
+                },
+                SubmissionHistory: true
             }
         })
 
@@ -355,6 +359,7 @@ export async function gradeSubmission(
             data: {
                 score: hasValidScores ? Math.round(weightedAvg * 10) / 10 : null,
                 feedback,
+                status: 'GRADED'
             }
         })
 
@@ -387,7 +392,8 @@ export async function getStudentAssessments(studentId: string) {
                 submissions: {
                     where: { studentId },
                     include: {
-                        cloScores: { include: { clo: true } }
+                        cloScores: { include: { clo: true } },
+                        SubmissionHistory: { orderBy: { rejectedAt: 'desc' } }
                     }
                 }
             },
@@ -418,13 +424,15 @@ export async function submitAssessment(assessmentId: string, studentId: string, 
             update: {
                 content: fileUrls.length > 0 ? fileUrls[0] : null,
                 attachments: fileUrls,
-                submittedAt: new Date()
+                submittedAt: new Date(),
+                status: 'SUBMITTED'
             },
             create: {
                 assessmentId,
                 studentId,
                 content: fileUrls.length > 0 ? fileUrls[0] : null,
-                attachments: fileUrls
+                attachments: fileUrls,
+                status: 'SUBMITTED'
             }
         })
         revalidatePath('/student/assessments')
@@ -627,6 +635,7 @@ export async function submitQuizAnswers(data: {
             update: {
                 submittedAt: new Date(),
                 score: finalScore,
+                status: hasEssays ? 'SUBMITTED' : 'GRADED',
                 answers: {
                     deleteMany: {},
                     create: answerRecords
@@ -640,6 +649,7 @@ export async function submitQuizAnswers(data: {
                 assessmentId: data.assessmentId,
                 studentId: data.studentId,
                 score: finalScore,
+                status: hasEssays ? 'SUBMITTED' : 'GRADED',
                 answers: {
                     create: answerRecords
                 },
@@ -755,12 +765,25 @@ export async function resetSubmissionGrade(submissionId: string, rejectReason?: 
                     where: { id: submissionId }
                 })
             } else {
+                // Save to history before modifying the current submission
+                await tx.submissionHistory.create({
+                    data: {
+                        id: require('crypto').randomUUID(),
+                        submissionId,
+                        content: submission.content,
+                        attachments: submission.attachments,
+                        feedback: rejectReason || 'Tugas dikembalikan oleh dosen. Silakan kumpulkan ulang.',
+                        rejectedAt: new Date()
+                    }
+                })
+
                 // For assignments (or CBT with explicit reject reason), we update instead
                 await tx.submission.update({
                     where: { id: submissionId },
                     data: {
                         score: null,
                         content: 'DITOLAK',
+                        status: 'REJECTED',
                         feedback: rejectReason || 'Tugas dikembalikan oleh dosen. Silakan kumpulkan ulang.'
                     }
                 })

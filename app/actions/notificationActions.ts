@@ -53,7 +53,7 @@ export async function getStudentNotifications(studentId: string, departmentId: s
             } else {
                 const sub = a.submissions[0]
                 // 3a. Rejected Submissions
-                if (sub.content === 'DITOLAK') {
+                if (sub.status === 'REJECTED') {
                     notifications.push({
                         id: `rej-${sub.id}`,
                         type: 'risk',

@@ -80,6 +80,7 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                         isForumEnabled={course.config?.isForumEnabled}
                         isReflectionsEnabled={course.config?.isReflectionsEnabled}
                         isGamificationEnabled={course.config?.isGamificationEnabled}
+                        isTeacher={true}
                     >
                         <TabsContent value="materi" className="mt-0">
                             <Card>

@@ -11,12 +11,14 @@ export function CourseTabsWrapper({
   isReflectionsEnabled, 
   isGamificationEnabled,
   showFeedback,
+  isTeacher,
 }: { 
   children: React.ReactNode, 
   isForumEnabled?: boolean, 
   isReflectionsEnabled?: boolean, 
   isGamificationEnabled?: boolean,
   showFeedback?: boolean,
+  isTeacher?: boolean,
 }) {
     const searchParams = useSearchParams();
     const router = useRouter();
