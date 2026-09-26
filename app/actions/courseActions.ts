@@ -243,7 +243,8 @@ export async function enrollStudent(studentId: string, courseId: string) {
         const enrollment = await prisma.enrollment.create({
             data: {
                 studentId,
-                courseId
+                courseId,
+                status: 'pending'
             }
         })
         revalidatePath('/student')
@@ -734,5 +735,30 @@ export async function getInstructorDashboardMetrics(instructorId: string, active
     } catch (error) {
         console.error("Failed to fetch instructor dashboard metrics", error)
         return { success: false, error: "Gagal memuat metrics" }
+    }
+}
+
+export async function approveEnrollment(enrollmentId: string) {
+    try {
+        await prisma.enrollment.update({
+            where: { id: enrollmentId },
+            data: { status: 'active' }
+        })
+        revalidatePath('/teacher')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function rejectEnrollment(enrollmentId: string) {
+    try {
+        await prisma.enrollment.delete({
+            where: { id: enrollmentId }
+        })
+        revalidatePath('/teacher')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
 }

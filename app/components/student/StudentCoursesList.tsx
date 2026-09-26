@@ -182,17 +182,27 @@ export function StudentCoursesList({ enrolledCourses, availableCourses, studentI
 
                                     <div className="flex items-center justify-between border-t pt-3 mt-auto gap-2 flex-wrap">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2 py-1 rounded-full font-medium">Terdaftar</span>
+                                            {enrollment.status === 'pending' ? (
+                                                <span className="text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-2 py-1 rounded-full font-medium">Menunggu Persetujuan</span>
+                                            ) : (
+                                                <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2 py-1 rounded-full font-medium">Terdaftar</span>
+                                            )}
                                             {canUnenroll && (
                                                 <UnenrollCourseButton studentId={studentId} courseId={enrollment.courseId} courseTitle={enrollment.course.subject.title} />
                                             )}
                                         </div>
-                                        <Button asChild size="sm" variant="default" className="shrink-0">
-                                            <Link href={`/student/course/${enrollment.courseId}`}>
-                                                <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Masuk Kelas
-                                                <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                                            </Link>
-                                        </Button>
+                                        {enrollment.status === 'pending' ? (
+                                            <Button disabled size="sm" variant="secondary" className="shrink-0 opacity-50 cursor-not-allowed">
+                                                <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Menunggu Dosen
+                                            </Button>
+                                        ) : (
+                                            <Button asChild size="sm" variant="default" className="shrink-0">
+                                                <Link href={`/student/course/${enrollment.courseId}`}>
+                                                    <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Masuk Kelas
+                                                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                                </Link>
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             )

@@ -9,6 +9,7 @@ import { DeleteModuleButton } from '@/app/components/dosen/DeleteModuleButton'
 import { Button } from '@/components/ui/button'
 import { TeacherStudentManagementDialog } from '@/app/components/teacher/TeacherStudentManagementDialog'
 import { RemoveStudentButton } from '@/app/components/teacher/RemoveStudentButton'
+import { ApproveStudentButton } from '@/app/components/teacher/ApproveStudentButton'
 import { redirect } from 'next/navigation'
 import { TabsContent } from "@/components/ui/tabs"
 import { ForumTab } from '@/app/components/course/ForumTab'
@@ -191,27 +192,33 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                {enr.student.isActive ? (
-                                                    <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
-                                                        Aktif
-                                                    </Badge>
+                                                {enr.status === 'pending' ? (
+                                                    <ApproveStudentButton enrollmentId={enr.id} studentName={enr.student.name} />
                                                 ) : (
-                                                    <Badge variant="secondary" className="bg-red-100 text-red-600 hover:bg-red-100 border-none">
-                                                        Nonaktif
-                                                    </Badge>
+                                                    <>
+                                                        {enr.student.isActive ? (
+                                                            <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+                                                                Aktif
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="secondary" className="bg-red-100 text-red-600 hover:bg-red-100 border-none">
+                                                                Nonaktif
+                                                            </Badge>
+                                                        )}
+                                                        <SclSkillAssessmentDialog 
+                                                            enrollmentId={enr.id}
+                                                            studentName={enr.student.name}
+                                                            initialData={enr.skillAssessment}
+                                                            enabledSkills={{
+                                                                entrepreneurship: curSubj?.isEntrepreneurshipEnabled ?? false,
+                                                                leadership: curSubj?.isLeadershipEnabled ?? false,
+                                                                industryKnowledge: curSubj?.isIndustrySkillEnabled ?? false,
+                                                                employabilitySkill: curSubj?.isEmployabilitySkillEnabled ?? false,
+                                                            }}
+                                                        />
+                                                        <RemoveStudentButton studentId={enr.studentId} courseId={course.id} studentName={enr.student.name} />
+                                                    </>
                                                 )}
-                                                <SclSkillAssessmentDialog 
-                                                    enrollmentId={enr.id}
-                                                    studentName={enr.student.name}
-                                                    initialData={enr.skillAssessment}
-                                                    enabledSkills={{
-                                                        entrepreneurship: curSubj?.isEntrepreneurshipEnabled ?? false,
-                                                        leadership: curSubj?.isLeadershipEnabled ?? false,
-                                                        industryKnowledge: curSubj?.isIndustrySkillEnabled ?? false,
-                                                        employabilitySkill: curSubj?.isEmployabilitySkillEnabled ?? false,
-                                                    }}
-                                                />
-                                                <RemoveStudentButton studentId={enr.studentId} courseId={course.id} studentName={enr.student.name} />
                                             </div>
                                         </div>
                                     ))}
