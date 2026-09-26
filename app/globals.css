@@ -152,3 +152,8 @@
 .dark .sun-editor-editable [style*="background-color: #fff"] {
   background-color: transparent !important;
 }
+
+/* Force sun-editor-editable text color to inherit so it adapts to dark mode */
+.sun-editor-editable {
+  color: inherit !important;
+}
