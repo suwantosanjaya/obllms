@@ -9,6 +9,7 @@ import { GradeSubmissionDialog } from '@/app/components/dosen/GradeSubmissionDia
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { stripHtml, getLateDuration, formatDateTime } from '@/lib/utils'
 
 export default function TeacherAssessmentsClient({ 
     assessments, 
@@ -215,7 +216,7 @@ export default function TeacherAssessmentsClient({
                                             {assessment.title}
                                             {assessment.description && (
                                                 <p className="text-xs text-muted-foreground max-w-[250px] truncate mt-1">
-                                                    {assessment.description}
+                                                    {stripHtml(assessment.description)}
                                                 </p>
                                             )}
                                         </TableCell>
@@ -251,7 +252,7 @@ export default function TeacherAssessmentsClient({
                                         </TableCell>
                                         <TableCell>
                                             <span className={new Date(assessment.dueDate) < new Date() ? 'text-red-500 font-medium' : ''}>
-                                                {new Date(assessment.dueDate).toLocaleString('id-ID', {
+                                                {formatDateTime(assessment.dueDate, {
                                                     dateStyle: 'medium',
                                                     timeStyle: 'short'
                                                 })}
@@ -275,9 +276,16 @@ export default function TeacherAssessmentsClient({
                                                             <div key={sub.id} className="flex items-center justify-between bg-card p-3 rounded border border-border text-sm">
                                                                 <div className="flex flex-col gap-1">
                                                                     <span className="font-medium">{sub.student.name}</span>
-                                                                    <a href={sub.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
-                                                                        Lihat File
-                                                                    </a>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <a href={sub.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
+                                                                            Lihat File
+                                                                        </a>
+                                                                        {assessment.dueDate && new Date(sub.submittedAt) > new Date(assessment.dueDate) && (
+                                                                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+                                                                                Terlambat {getLateDuration(sub.submittedAt, assessment.dueDate)}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
 
                                                                 {/* Per-CLO score breakdown */}
@@ -297,7 +305,7 @@ export default function TeacherAssessmentsClient({
 
                                                                 <div className="flex items-center gap-4">
                                                                     <span className="text-muted-foreground text-xs">
-                                                                        {new Date(sub.submittedAt).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                                                                        {formatDateTime(sub.submittedAt, { dateStyle: 'short', timeStyle: 'short' })}
                                                                     </span>
                                                                     {sub.score !== null && sub.score !== undefined ? (
                                                                         <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">

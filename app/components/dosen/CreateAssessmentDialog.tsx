@@ -54,6 +54,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
     const [allowReview, setAllowReview] = useState(false)
     const [isScorePublished, setIsScorePublished] = useState(false)
     const [shuffleQuestions, setShuffleQuestions] = useState(false)
+    const [allowLateSubmission, setAllowLateSubmission] = useState(true)
     const [timeLimit, setTimeLimit] = useState<number | ''>('')
     const [cloLoading, setCloLoading] = useState(false)
     const [description, setDescription] = useState('')
@@ -213,6 +214,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
             allowReview,
             isScorePublished,
             shuffleQuestions,
+            allowLateSubmission,
             timeLimit: timeLimit === '' ? null : Number(timeLimit)
         })
 
@@ -479,9 +481,22 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                         </div>
 
                         {/* Due date */}
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 border p-3 rounded-lg bg-card mt-2">
                             <Label htmlFor="dueDate">Tenggat Waktu (Due Date)</Label>
                             <Input id="dueDate" name="dueDate" type="datetime-local" defaultValue={defaultDueDateStr} required />
+                            
+                            <div className="flex items-center justify-between pt-2 border-t mt-2">
+                                <div className="space-y-0.5">
+                                    <Label>Izinkan Pengumpulan Terlambat</Label>
+                                    <p className="text-xs text-muted-foreground max-w-[280px] sm:max-w-[320px]">
+                                        Mahasiswa tetap dapat mengumpulkan dengan status Terlambat. Jika dimatikan, akses akan ditutup total.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={allowLateSubmission}
+                                    onCheckedChange={setAllowLateSubmission}
+                                />
+                            </div>
                         </div>
 
                         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

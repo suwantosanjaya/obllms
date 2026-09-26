@@ -6,6 +6,7 @@ import { getStudentAssessments } from '@/app/actions/assessmentActions'
 import { getSessionUser } from '@/app/actions/userActions'
 import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessmentDialog'
 import { ClipboardList, CheckCircle2, Clock } from 'lucide-react'
+import { stripHtml, formatDateTime } from '@/lib/utils'
 
 export default async function StudentAssessmentsPage() {
     const user = await getSessionUser()
@@ -87,12 +88,12 @@ export default async function StudentAssessmentsPage() {
                                             <Badge variant="destructive" className="shrink-0 ml-2">Belum Selesai</Badge>
                                         </div>
                                         {assessment.description && (
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{assessment.description}</p>
+                                            <p className="text-sm text-muted-foreground line-clamp-2">{stripHtml(assessment.description)}</p>
                                         )}
                                         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
                                             <span className="text-xs text-muted-foreground">
                                                 Tenggat: {assessment.dueDate
-                                                    ? new Date(assessment.dueDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+                                                    ? formatDateTime(assessment.dueDate, { dateStyle: 'medium', timeStyle: 'short' })
                                                     : 'Tidak ada tenggat'}
                                             </span>
                                             <div className="w-full sm:w-auto">
@@ -103,6 +104,7 @@ export default async function StudentAssessmentsPage() {
                                                     isSubmitted={false}
                                                     title={assessment.title}
                                                     format={assessment.format}
+                                                    isPastDue={assessment.dueDate && !assessment.allowLateSubmission ? new Date(assessment.dueDate) < new Date() : false}
                                                 />
                                             </div>
                                         </div>
@@ -157,7 +159,7 @@ export default async function StudentAssessmentsPage() {
                                             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="text-xs text-muted-foreground">
-                                                        Dikumpulkan: {new Date(submission.submittedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                        Dikumpulkan: {formatDateTime(submission.submittedAt, { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </span>
                                                     {submission.content === 'DITOLAK' ? (
                                                         <span className="text-xs text-red-600 font-semibold italic">Silakan kerjakan/kumpulkan ulang</span>
@@ -175,6 +177,7 @@ export default async function StudentAssessmentsPage() {
                                                         isSubmitted={true}
                                                         title={assessment.title}
                                                         format={assessment.format}
+                                                        isPastDue={assessment.dueDate && !assessment.allowLateSubmission ? new Date(assessment.dueDate) < new Date() : false}
                                                     />
                                                 </div>
                                             </div>

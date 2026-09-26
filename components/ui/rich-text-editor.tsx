@@ -53,7 +53,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     return (
         <div className="rich-text-editor">
             <SunEditor 
-                setContents={value} 
+                defaultValue={value} 
                 onChange={onChange} 
                 onImageUploadBefore={handleImageUploadBefore}
                 onVideoUploadBefore={handleVideoUploadBefore}

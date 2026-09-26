@@ -134,3 +134,21 @@
 .prose a:hover, .sun-editor-editable a:hover {
   color: #2563eb !important;
 }
+/* Fix for pasted black text or white backgrounds in dark mode rich text */
+.dark .prose [style*="color: rgb(0, 0, 0)"],
+.dark .prose [style*="color: #000000"],
+.dark .prose [style*="color: #000"],
+.dark .sun-editor-editable [style*="color: rgb(0, 0, 0)"],
+.dark .sun-editor-editable [style*="color: #000000"],
+.dark .sun-editor-editable [style*="color: #000"] {
+  color: inherit !important;
+}
+
+.dark .prose [style*="background-color: rgb(255, 255, 255)"],
+.dark .prose [style*="background-color: #ffffff"],
+.dark .prose [style*="background-color: #fff"],
+.dark .sun-editor-editable [style*="background-color: rgb(255, 255, 255)"],
+.dark .sun-editor-editable [style*="background-color: #ffffff"],
+.dark .sun-editor-editable [style*="background-color: #fff"] {
+  background-color: transparent !important;
+}

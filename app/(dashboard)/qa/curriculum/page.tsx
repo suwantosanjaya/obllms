@@ -10,6 +10,7 @@ import { ArrowRight, FileEdit, Eye, PlusCircle, Clock, CheckCheck } from 'lucide
 import { CurriculumApprovalCardActions } from '@/app/components/qa/CurriculumApprovalCardActions'
 import { CurriculumRevisionRequestButton } from '@/app/components/qa/CurriculumRevisionRequestButton'
 import { SetDefaultCurriculumButton } from '@/app/components/qa/SetDefaultCurriculumButton'
+import { formatDateTime } from '@/lib/utils'
 export default async function QaCurriculumDashboard() {
     const user = await getSessionUser()
     const departmentId = user?.activeDepartmentId
@@ -195,7 +196,7 @@ export default async function QaCurriculumDashboard() {
                                                              event.type === 'APPROVED' ? 'Disetujui' : 
                                                              'Permintaan Revisi'}
                                                         </p>
-                                                        <p className="text-xs text-muted-foreground">{event.date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                                                        <p className="text-xs text-muted-foreground">{formatDateTime(event.date, { dateStyle: 'medium', timeStyle: 'short' })}</p>
                                                         {event.by && <p className="text-xs text-muted-foreground">oleh: <span className="font-medium text-foreground">{actorMap[event.by] || event.by}</span></p>}
                                                         
                                                         {event.type === 'REVISION_REQUESTED' && event.note && (
@@ -204,7 +205,7 @@ export default async function QaCurriculumDashboard() {
                                                         {event.type === 'REVISION_REQUESTED' && event.resultAt && (
                                                             <p className={`text-xs font-medium mt-0.5 ${event.result === 'APPROVED' ? 'text-green-700' : 'text-red-600'}`}>
                                                                 → {event.result === 'APPROVED' ? 'Revisi Diizinkan' : 'Permintaan Ditolak'}
-                                                                {' '}({new Date(event.resultAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })})
+                                                                {' '}({formatDateTime(event.resultAt, { dateStyle: 'medium', timeStyle: 'short' })})
                                                             </p>
                                                         )}
                                                     </div>

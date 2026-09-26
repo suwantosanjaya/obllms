@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { ExpandableRichText } from '@/components/ui/expandable-rich-text'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import prisma from '@/lib/db'
+import { getLateDuration, formatDateTime } from '@/lib/utils'
 
 const isValidUrl = (string: string) => {
     try {
@@ -121,7 +122,7 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                         <TableCell>
                                             {assessment.dueDate ? (
                                                 <span className={new Date(assessment.dueDate!) < new Date() ? 'text-red-600 font-medium text-xs' : 'text-xs'}>
-                                                    {new Date(assessment.dueDate!).toLocaleString('id-ID', {
+                                                    {formatDateTime(assessment.dueDate!, {
                                                         dateStyle: 'medium',
                                                         timeStyle: 'short'
                                                     })}
@@ -164,7 +165,14 @@ export async function CourseAssessmentsTab({ courseId }: { courseId: string }) {
                                                         {assessment.submissions.map((sub: SubmissionType) => (
                                                             <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-background p-3 rounded-lg border shadow-sm text-sm gap-4">
                                                                 <div className="flex flex-col gap-1 min-w-50">
-                                                                    <span className="font-semibold text-primary">{sub.student.name}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-semibold text-primary">{sub.student.name}</span>
+                                                                        {assessment.dueDate && new Date(sub.submittedAt) > new Date(assessment.dueDate) && (
+                                                                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+                                                                                Terlambat {getLateDuration(sub.submittedAt, assessment.dueDate)}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                     {assessment.format === 'quiz' ? (
                                                                             <GradeSubmissionDialog
                                                                                 submissionId={sub.id}

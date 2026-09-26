@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { SubmitAssessmentDialog } from '@/app/components/mahasiswa/SubmitAssessmentDialog'
 import { ExpandableRichText } from '@/components/ui/expandable-rich-text'
 import prisma from '@/lib/db'
+import { formatDateTime } from '@/lib/utils'
 
 export async function StudentAssessmentsTab({ courseId, studentId }: { courseId: string, studentId: string }) {
     const assessments = await prisma.assessment.findMany({
@@ -62,7 +63,7 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                     )}
                                     <div className="flex items-center justify-between mt-2 pt-4 border-t border-border/50">
                                         <span className="text-xs font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-1">
-                                            Tenggat: {new Date(assessment.dueDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                            Tenggat: {formatDateTime(assessment.dueDate, { dateStyle: 'medium', timeStyle: 'short' })}
                                         </span>
                                         <SubmitAssessmentDialog
                                             assessmentId={assessment.id}
@@ -71,6 +72,7 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                             isSubmitted={false}
                                             title={assessment.title}
                                             format={assessment.format}
+                                            isPastDue={assessment.dueDate && !assessment.allowLateSubmission ? new Date(assessment.dueDate) < new Date() : false}
                                         />
                                     </div>
                                 </div>
@@ -142,7 +144,7 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                         <div className="flex flex-wrap items-center justify-between gap-3 mt-2 pt-4 border-t border-border/50">
                                             <div className="flex flex-col gap-1 min-w-0">
                                                 <span className="text-xs text-muted-foreground">
-                                                    Dikumpulkan: {new Date(submission.submittedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    Dikumpulkan: {formatDateTime(submission.submittedAt, { dateStyle: 'medium', timeStyle: 'short' })}
                                                 </span>
                                                 {submission.content === 'DITOLAK' ? (
                                                     <span className="text-xs text-red-600 font-semibold italic">Silakan kerjakan/kumpulkan ulang</span>
@@ -160,6 +162,7 @@ export async function StudentAssessmentsTab({ courseId, studentId }: { courseId:
                                                     isSubmitted={true}
                                                     title={assessment.title}
                                                     format={assessment.format}
+                                                    isPastDue={assessment.dueDate && !assessment.allowLateSubmission ? new Date(assessment.dueDate) < new Date() : false}
                                                 />
                                             </div>
                                         </div>

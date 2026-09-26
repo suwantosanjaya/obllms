@@ -414,6 +414,7 @@ model Assessment {
   isScorePublished Boolean   @default(false)
   shuffleQuestions Boolean   @default(false)
   timeLimit        Int?      // Optional time limit for CBT quizzes in minutes
+  allowLateSubmission Boolean @default(true) // If true, allow submission after dueDate
 
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions    Submission[]

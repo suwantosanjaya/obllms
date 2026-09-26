@@ -16,6 +16,7 @@ export async function createAssessment(data: {
     isScorePublished?: boolean;
     shuffleQuestions?: boolean;
     timeLimit?: number | null;
+    allowLateSubmission?: boolean;
 }) {
     try {
         const assessment = await prisma.assessment.create({
@@ -28,6 +29,7 @@ export async function createAssessment(data: {
                 isScorePublished: data.isScorePublished ?? true,
                 shuffleQuestions: data.shuffleQuestions ?? false,
                 timeLimit: data.timeLimit || null,
+                allowLateSubmission: data.allowLateSubmission ?? true,
                 dueDate: data.dueDate,
                 courseId: data.courseId,
                 assessmentClos: {
@@ -57,6 +59,7 @@ export async function updateAssessment(data: {
     isScorePublished?: boolean;
     shuffleQuestions?: boolean;
     timeLimit?: number | null;
+    allowLateSubmission?: boolean;
 }) {
     try {
         // Find existing assessment and check submissions
@@ -85,6 +88,7 @@ export async function updateAssessment(data: {
                     ...(data.isScorePublished !== undefined ? { isScorePublished: data.isScorePublished } : {}),
                     ...(data.shuffleQuestions !== undefined ? { shuffleQuestions: data.shuffleQuestions } : {}),
                     ...(data.timeLimit !== undefined ? { timeLimit: data.timeLimit } : {}),
+                    ...(data.allowLateSubmission !== undefined ? { allowLateSubmission: data.allowLateSubmission } : {}),
                     // Only update type if not graded
                     ...(hasGradedSubmissions ? {} : { type: data.type })
                 }
@@ -398,6 +402,12 @@ export async function getStudentAssessments(studentId: string) {
 
 export async function submitAssessment(assessmentId: string, studentId: string, fileUrls: string[]) {
     try {
+        const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
+        if (!assessment) return { success: false, error: "Tugas tidak ditemukan." };
+        if (!assessment.allowLateSubmission && assessment.dueDate && new Date(assessment.dueDate) < new Date()) {
+            return { success: false, error: "Tenggat waktu pengumpulan tugas sudah terlewat dan pengumpulan terlambat tidak diizinkan." };
+        }
+
         const submission = await prisma.submission.upsert({
             where: {
                 studentId_assessmentId: {
@@ -527,6 +537,9 @@ export async function submitQuizAnswers(data: {
         })
 
         if (!assessment) throw new Error("Kuis tidak ditemukan")
+        if (!assessment.allowLateSubmission && assessment.dueDate && new Date(assessment.dueDate) < new Date()) {
+            return { success: false, error: "Tenggat waktu pengerjaan kuis sudah terlewat dan pengerjaan terlambat tidak diizinkan." }
+        }
 
         let totalScoreEarned = 0
         let totalPossibleScore = 0
