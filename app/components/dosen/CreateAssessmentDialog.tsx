@@ -335,6 +335,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                 <SelectContent>
                                     <SelectItem value="upload">Unggah File / Teks Biasa</SelectItem>
                                     <SelectItem value="quiz">Kuis Interaktif (CBT)</SelectItem>
+                                    <SelectItem value="offline">Penilaian Lisan/Offline (Tanpa Berkas)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -529,7 +530,7 @@ export function CreateAssessmentDialog({ courses }: { courses: { id: string, sub
                                                 <div>
                                                     <h4 className="font-semibold">{ass.title}</h4>
                                                     <p className="text-xs text-muted-foreground mt-1">Kelas Asal: {ass.course?.classCode || 'Unknown Class'}</p>
-                                                    <p className="text-xs text-muted-foreground">Tipe: {ass.type} • Format: {ass.format === 'quiz' ? 'CBT / Kuis Interaktif' : 'Unggah File'}</p>
+                                                    <p className="text-xs text-muted-foreground">Tipe: {ass.type} • Format: {ass.format === 'quiz' ? 'CBT / Kuis Interaktif' : ass.format === 'offline' ? 'Penilaian Lisan/Offline' : 'Unggah File'}</p>
                                                 </div>
                                                 <Badge variant="secondary">{ass.questions?.length || 0} Soal</Badge>
                                             </div>

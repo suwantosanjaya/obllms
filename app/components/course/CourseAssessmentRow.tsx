@@ -36,7 +36,15 @@ export function CourseAssessmentRow({
 }) {
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [activeTab, setActiveTab] = useState("detail")
+    
+    const enrollments = assessment.course?.enrollments || [];
+    const hasEnrollments = enrollments.length > 0;
     const hasSubmissions = assessment.submissions && assessment.submissions.length > 0;
+    
+    // Determine which list to render
+    const isOffline = assessment.format === 'offline';
+    const listToRender = isOffline ? enrollments : (assessment.submissions || []);
+    const isEmpty = isOffline ? !hasEnrollments : !hasSubmissions;
 
     return (
         <React.Fragment>
@@ -47,6 +55,8 @@ export function CourseAssessmentRow({
                         <Badge variant="secondary" className="text-[10px] font-normal h-5">{assessment.type}</Badge>
                         {assessment.format === 'quiz' ? (
                             <Badge variant="outline" className="text-[10px] font-normal h-5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800">Kuis Interaktif</Badge>
+                        ) : assessment.format === 'offline' ? (
+                            <Badge variant="outline" className="text-[10px] font-normal h-5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800">Lisan / Offline</Badge>
                         ) : (
                             <Badge variant="outline" className="text-[10px] font-normal h-5">Unggah File</Badge>
                         )}
@@ -150,7 +160,7 @@ export function CourseAssessmentRow({
                                 <TabsTrigger value="detail">Detail Penugasan</TabsTrigger>
                                 <TabsTrigger value="pengumpulan" className="flex items-center gap-2">
                                     Lembar Pengumpulan
-                                    {hasSubmissions && (
+                                    {assessment.submissions && assessment.submissions.length > 0 && (
                                         <Badge variant="secondary" className="px-1 text-[10px]">{assessment.submissions.length}</Badge>
                                     )}
                                 </TabsTrigger>
@@ -190,20 +200,36 @@ export function CourseAssessmentRow({
                             </TabsContent>
 
                             <TabsContent value="pengumpulan" className="space-y-4">
-                                {!hasSubmissions ? (
+                                {isEmpty ? (
                                     <div className="text-center py-12 border rounded-lg bg-muted/10">
                                         <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
-                                        <h3 className="text-sm font-medium">Belum Ada Pengumpulan</h3>
-                                        <p className="text-xs text-muted-foreground mt-1">Belum ada mahasiswa yang mengumpulkan tugas ini.</p>
+                                        <h3 className="text-sm font-medium">
+                                            {isOffline ? 'Belum Ada Mahasiswa' : 'Belum Ada Pengumpulan'}
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {isOffline 
+                                                ? 'Belum ada mahasiswa yang terdaftar di kelas ini.' 
+                                                : 'Belum ada mahasiswa yang mengumpulkan tugas ini.'}
+                                        </p>
                                     </div>
                                 ) : (
                                     <div className="grid gap-3">
-                                        {assessment.submissions.map((sub: any) => (
-                                            <div key={sub.id} className="flex flex-col sm:flex-row sm:items-start justify-between bg-card p-4 rounded-xl border shadow-sm gap-4 transition-all hover:border-primary/30">
+                                        {listToRender.map((item: any) => {
+                                            // item is either an enrollment (if isOffline) or a submission (if not isOffline)
+                                            const sub = isOffline ? assessment.submissions?.find((s: any) => s.studentId === item.studentId) : item;
+                                            const student = isOffline ? item.student : sub.student;
+                                            const keyId = isOffline ? item.id : sub.id;
+                                            
+                                            return (
+                                            <div key={keyId} className="flex flex-col sm:flex-row sm:items-start justify-between bg-card p-4 rounded-xl border shadow-sm gap-4 transition-all hover:border-primary/30">
                                                 <div className="flex flex-col gap-2 min-w-50 flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-primary">{sub.student.name}</span>
-                                                        {assessment.dueDate && new Date(sub.submittedAt) > new Date(assessment.dueDate) ? (
+                                                        <span className="font-semibold text-primary">{student.name}</span>
+                                                        {!sub ? (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground bg-muted/30">
+                                                                Belum Mengumpulkan
+                                                            </Badge>
+                                                        ) : assessment.dueDate && new Date(sub.submittedAt) > new Date(assessment.dueDate) ? (
                                                             <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
                                                                 Terlambat {getLateDuration(sub.submittedAt, assessment.dueDate)}
                                                             </Badge>
@@ -213,16 +239,25 @@ export function CourseAssessmentRow({
                                                             </Badge>
                                                         )}
                                                     </div>
+                                                    
+                                                    {sub && (
                                                     <div className="text-xs text-muted-foreground">
                                                         Dikumpulkan: {formatDateTime(sub.submittedAt, { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </div>
+                                                    )}
 
                                                     {/* Content / Attachments */}
                                                     <div className="mt-2 bg-muted/30 rounded-md p-3">
-                                                        {assessment.format === 'quiz' ? (
+                                                        {!sub ? (
+                                                            <span className="text-muted-foreground text-xs italic">
+                                                                Tidak ada lampiran (Penilaian Offline/Lisan).
+                                                            </span>
+                                                        ) : assessment.format === 'quiz' ? (
                                                             <GradeSubmissionDialog
                                                                 submissionId={sub.id}
-                                                                studentName={sub.student.name}
+                                                                studentId={student.id}
+                                                                assessmentId={assessment.id}
+                                                                studentName={student.name}
                                                                 currentScore={sub.score}
                                                                 currentFeedback={sub.feedback}
                                                                 assessmentClos={assessment.assessmentClos}
@@ -249,7 +284,7 @@ export function CourseAssessmentRow({
                                                                     </a>
                                                                 ))}
                                                             </div>
-                                                        ) : sub.content ? (
+                                                        ) : sub.content && sub.content !== 'Penilaian tanpa berkas (Offline/Lisan)' ? (
                                                             isValidUrl(sub.content) ? (
                                                                 <a href={sub.content} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
                                                                     Buka Link Jawaban ↗
@@ -263,7 +298,7 @@ export function CourseAssessmentRow({
                                                                     </DialogTrigger>
                                                                     <DialogContent className="sm:max-w-2xl">
                                                                         <DialogHeader>
-                                                                            <DialogTitle>Jawaban: {sub.student.name}</DialogTitle>
+                                                                            <DialogTitle>Jawaban: {student.name}</DialogTitle>
                                                                         </DialogHeader>
                                                                         <div className="bg-muted/30 p-4 rounded-md border text-sm whitespace-pre-wrap mt-2 max-h-[70vh] overflow-y-auto">
                                                                             {sub.content}
@@ -282,7 +317,11 @@ export function CourseAssessmentRow({
                                                 <div className="flex flex-col gap-4 sm:items-end w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-border/50">
                                                     {/* Penilaian Section */}
                                                     <div className="flex items-center sm:items-end gap-3 justify-between sm:justify-start w-full">
-                                                        {sub.score !== null && sub.score !== undefined ? (
+                                                        {!sub ? (
+                                                            <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">
+                                                                Belum Dinilai
+                                                            </Badge>
+                                                        ) : sub.score !== null && sub.score !== undefined ? (
                                                             <div className="flex items-center gap-2">
                                                                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                                                                 <div className="flex flex-col items-end">
@@ -306,20 +345,22 @@ export function CourseAssessmentRow({
 
                                                         {assessment.format !== 'quiz' && (
                                                             <GradeSubmissionDialog
-                                                                submissionId={sub.id}
-                                                                studentName={sub.student.name}
-                                                                currentScore={sub.score}
-                                                                currentFeedback={sub.feedback}
+                                                                submissionId={sub?.id}
+                                                                studentId={student.id}
+                                                                assessmentId={assessment.id}
+                                                                studentName={student.name}
+                                                                currentScore={sub?.score}
+                                                                currentFeedback={sub?.feedback}
                                                                 assessmentClos={assessment.assessmentClos}
-                                                                existingCloScores={sub.cloScores}
+                                                                existingCloScores={sub?.cloScores}
                                                                 format={assessment.format}
-                                                                answers={sub.answers}
+                                                                answers={sub?.answers}
                                                             />
                                                         )}
                                                     </div>
 
                                                     {/* Per-CLO Score Breakdown */}
-                                                    {sub.cloScores && sub.cloScores.length > 0 && (
+                                                    {sub?.cloScores && sub.cloScores.length > 0 && (
                                                         <div className="flex flex-wrap gap-1.5 sm:justify-end">
                                                             {sub.cloScores.map((cs: any) => (
                                                                 <Badge key={cs.cloId} variant="outline" className="bg-green-50 text-green-700 border-green-200 flex gap-1">
@@ -330,7 +371,7 @@ export function CourseAssessmentRow({
                                                         </div>
                                                     )}
 
-                                                    {sub.SubmissionHistory && sub.SubmissionHistory.length > 0 && (
+                                                    {sub?.SubmissionHistory && sub.SubmissionHistory.length > 0 && (
                                                         <div className="w-full mt-4 flex sm:justify-end border-t pt-3">
                                                             <Dialog>
                                                                 <DialogTrigger asChild>
@@ -394,7 +435,8 @@ export function CourseAssessmentRow({
                                                     )}
                                                 </div>
                                             </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 )}
                             </TabsContent>

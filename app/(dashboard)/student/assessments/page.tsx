@@ -286,6 +286,14 @@ export default async function StudentAssessmentsPage() {
                                                     </span>
                                                     {submission.content === 'DITOLAK' ? (
                                                         <span className="text-xs text-red-600 font-semibold italic">Silakan kerjakan/kumpulkan ulang</span>
+                                                    ) : (submission.attachments && submission.attachments.length > 0) ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            {submission.attachments.map((url: string, idx: number) => (
+                                                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium">
+                                                                    Lihat File {submission.attachments.length > 1 ? idx + 1 : ''} ↗
+                                                                </a>
+                                                            ))}
+                                                        </div>
                                                     ) : (
                                                         <a href={submission.content ?? '#'} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium">
                                                             Lihat File ↗

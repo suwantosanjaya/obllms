@@ -127,7 +127,18 @@ export async function getAssessmentsByInstructor(instructorId: string) {
             },
             include: {
                 course: {
-                    include: { subject: true }
+                    include: { 
+                        subject: true,
+                        enrollments: {
+                            include: {
+                                student: {
+                                    include: {
+                                        studentProfile: true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 assessmentClos: {
                     include: { clo: true }
@@ -156,7 +167,18 @@ export async function getAssessmentsForCourse(courseId: string) {
             where: { courseId },
             include: {
                 course: {
-                    include: { subject: true }
+                    include: { 
+                        subject: true,
+                        enrollments: {
+                            include: {
+                                student: {
+                                    include: {
+                                        studentProfile: true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 assessmentClos: {
                     include: { clo: true }
@@ -259,12 +281,40 @@ export async function getCourseGradebookData(courseId: string) {
 }
 
 export async function gradeSubmission(
-    submissionId: string,
+    submissionId: string | undefined,
     cloScores: { cloId: string; score: number }[],
     feedback: string,
-    essayScores?: { answerId: string; points: number }[]
+    essayScores?: { answerId: string; points: number }[],
+    studentId?: string,
+    assessmentId?: string
 ) {
     try {
+        let actualSubmissionId = submissionId;
+
+        if (!actualSubmissionId && studentId && assessmentId) {
+            const newSub = await prisma.submission.upsert({
+                where: {
+                    studentId_assessmentId: {
+                        studentId,
+                        assessmentId
+                    }
+                },
+                create: {
+                    studentId,
+                    assessmentId,
+                    content: 'Penilaian tanpa berkas (Offline/Lisan)',
+                    status: 'GRADED',
+                    submittedAt: new Date(),
+                },
+                update: {}
+            });
+            actualSubmissionId = newSub.id;
+        }
+
+        if (!actualSubmissionId) {
+            throw new Error("Missing submission ID");
+        }
+
         let hasValidScores = false
 
         if (essayScores) {
@@ -280,7 +330,7 @@ export async function gradeSubmission(
             
             // Re-fetch submission with updated answers to calculate CLO scores
             const submissionWithAnswers = await prisma.submission.findUnique({
-                where: { id: submissionId },
+                where: { id: actualSubmissionId },
                 include: {
                     answers: { include: { question: true } },
                     assessment: { include: { assessmentClos: true } }
@@ -325,16 +375,16 @@ export async function gradeSubmission(
             if (!isNaN(score) && score !== null) {
                 hasValidScores = true
                 await prisma.submissionCLOScore.upsert({
-                    where: { submissionId_cloId: { submissionId, cloId } },
+                    where: { submissionId_cloId: { submissionId: actualSubmissionId, cloId } },
                     update: { score },
-                    create: { submissionId, cloId, score },
+                    create: { submissionId: actualSubmissionId, cloId, score },
                 })
             }
         }
 
         // Compute weighted average using assessment weights
         const submission = await prisma.submission.findUnique({
-            where: { id: submissionId },
+            where: { id: actualSubmissionId },
             include: {
                 assessment: {
                     include: { assessmentClos: true }
@@ -355,7 +405,7 @@ export async function gradeSubmission(
         }
 
         const updated = await prisma.submission.update({
-            where: { id: submissionId },
+            where: { id: actualSubmissionId },
             data: {
                 score: hasValidScores ? Math.round(weightedAvg * 10) / 10 : null,
                 feedback,
@@ -381,7 +431,15 @@ export async function getStudentAssessments(studentId: string) {
         const courseIds = enrollments.map((e: { courseId: string }) => e.courseId)
 
         const assessments = await prisma.assessment.findMany({
-            where: { courseId: { in: courseIds }, isPublished: true },
+            where: { 
+                courseId: { in: courseIds }, 
+                isPublished: true,
+                course: {
+                    config: {
+                        isPublished: true
+                    }
+                }
+            },
             include: {
                 course: {
                     include: { subject: true }

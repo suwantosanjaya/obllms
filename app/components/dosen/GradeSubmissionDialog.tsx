@@ -50,8 +50,10 @@ export function GradeSubmissionDialog({
     answers,
     questions,
     triggerButton,
+    studentId,
+    assessmentId,
 }: {
-    submissionId: string
+    submissionId?: string
     studentName: string
     currentScore?: number | null
     currentFeedback?: string | null
@@ -61,6 +63,8 @@ export function GradeSubmissionDialog({
     answers?: any[]
     questions?: any[]
     triggerButton?: React.ReactNode
+    studentId?: string
+    assessmentId?: string
 }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -121,7 +125,7 @@ export function GradeSubmissionDialog({
             points: parseFloat(pointsStr || '0')
         })) : undefined
 
-        const res = await gradeSubmission(submissionId, cloScores, feedback, finalEssayScores)
+        const res = await gradeSubmission(submissionId, cloScores, feedback, finalEssayScores, studentId, assessmentId)
 
         if (res.success) {
             setOpen(false)
@@ -132,6 +136,7 @@ export function GradeSubmissionDialog({
     }
 
     const handleReset = async () => {
+        if (!submissionId) return;
         setResetting(true)
         const res = await resetSubmissionGrade(submissionId, feedback.trim() !== '' ? feedback : undefined)
         if (res.success) {
