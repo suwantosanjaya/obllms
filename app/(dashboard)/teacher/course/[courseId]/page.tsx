@@ -66,7 +66,7 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                             </Badge>
                         )}
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight mt-3">{course.subject.title}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight mt-3">{course.subject.title} - Kelas {course.classCode}</h1>
                     <p className="text-muted-foreground mt-2 max-w-3xl">{course.subject.description}</p>
                 </div>
                 <div className="flex gap-2">

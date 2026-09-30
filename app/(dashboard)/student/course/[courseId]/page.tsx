@@ -78,7 +78,7 @@ export default async function StudentCourseDetailPage(props: { params: Promise<{
                     <Badge variant="outline">{course.semester} {course.academicYear}</Badge>
                     {course.classCode && <Badge variant="outline">{course.classCode}</Badge>}
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight">{course.subject?.title}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{course.subject?.title} - Kelas {course.classCode}</h1>
                 <p className="text-muted-foreground mt-1">
                     Dosen: <span className="font-medium">{course.instructor?.name || 'Belum diutus'}</span>
                     {course.schedule && <span> · {course.schedule}</span>}
