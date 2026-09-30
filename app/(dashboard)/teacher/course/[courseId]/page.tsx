@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, AlertCircle, Trash2, Calendar, Users } from 'lucide-react'
 import { CreateModuleDialog } from '@/app/components/dosen/CreateModuleDialog'
+import { CopyModulesDialog } from '@/app/components/dosen/CopyModulesDialog'
 import { EditModuleDialog } from '@/app/components/dosen/EditModuleDialog'
 import { CourseSettingsDialog } from '@/app/components/dosen/CourseSettingsDialog'
 import { DeleteModuleButton } from '@/app/components/dosen/DeleteModuleButton'
@@ -89,10 +90,13 @@ export default async function DosenCourseDetailPage(props: { params: Promise<{ c
                                 <CardTitle>Materi & Aktivitas Mingguan</CardTitle>
                                 <CardDescription>Kelola struktur pembelajaran dan pemetaan CLO (Capaian Pembelajaran).</CardDescription>
                             </div>
-                            <CreateModuleDialog courseId={course.id} clos={(course.curriculumYearId
-                                ? course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId)
-                                : course.subject?.subjectClos ?? []
-                            )?.map((sc: any) => ({ id: sc.clo.id, code: sc.clo.code, description: sc.clo.description ?? '' })) ?? []} />
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <CopyModulesDialog currentCourseId={course.id} subjectId={course.subjectId} />
+                                <CreateModuleDialog courseId={course.id} clos={(course.curriculumYearId
+                                    ? course.subject?.subjectClos?.filter((sc: any) => sc.clo?.curriculumYearId === course.curriculumYearId)
+                                    : course.subject?.subjectClos ?? []
+                                )?.map((sc: any) => ({ id: sc.clo.id, code: sc.clo.code, description: sc.clo.description ?? '' })) ?? []} />
+                            </div>
                         </CardHeader>
                         <CardContent className="pt-6">
                             {course.modules.length === 0 ? (

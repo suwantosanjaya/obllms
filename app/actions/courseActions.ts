@@ -762,3 +762,78 @@ export async function rejectEnrollment(enrollmentId: string) {
         return { success: false, error: error.message }
     }
 }
+
+export async function getEligibleCoursesForModuleCopy(instructorId: string, subjectId: string, currentCourseId: string) {
+    try {
+        const courses = await prisma.course.findMany({
+            where: {
+                instructorId,
+                subjectId,
+                id: { not: currentCourseId }
+            },
+            include: {
+                modules: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        // Filter out courses that have no modules
+        const eligibleCourses = courses.filter((c: any) => c.modules && c.modules.length > 0);
+        return { success: true, courses: eligibleCourses };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function copyModulesFromCourse(sourceCourseId: string, targetCourseId: string, selectedModuleIds?: string[]) {
+    try {
+        const whereClause: any = { courseId: sourceCourseId };
+        if (selectedModuleIds && selectedModuleIds.length > 0) {
+            whereClause.id = { in: selectedModuleIds };
+        }
+
+        // Fetch the source modules with their CLO mappings
+        const sourceModules = await prisma.courseModule.findMany({
+            where: whereClause,
+            include: { moduleClos: true },
+            orderBy: { weekNumber: 'asc' }
+        });
+
+        if (sourceModules.length === 0) {
+            return { success: false, error: 'Kelas sumber tidak memiliki materi/topik untuk disalin.' };
+        }
+
+        // We use a transaction to safely copy all modules
+        await prisma.$transaction(async (tx: any) => {
+            for (const module of sourceModules) {
+                // Create the new module
+                const newModule = await tx.courseModule.create({
+                    data: {
+                        courseId: targetCourseId,
+                        title: module.title,
+                        content: module.content,
+                        weekNumber: module.weekNumber,
+                        estimatedDurationMinutes: module.estimatedDurationMinutes,
+                        cloId: module.cloId // Legacy relation if any
+                    }
+                });
+
+                // Copy module CLO mappings if they exist
+                if (module.moduleClos && module.moduleClos.length > 0) {
+                    await tx.courseModuleCLO.createMany({
+                        data: module.moduleClos.map((mc: any) => ({
+                            moduleId: newModule.id,
+                            cloId: mc.cloId
+                        }))
+                    });
+                }
+            }
+        });
+
+        revalidatePath(`/teacher/course/${targetCourseId}`);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
