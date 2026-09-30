@@ -41,7 +41,7 @@ export function CopyModulesDialog({
                 try {
                     const res = await getEligibleCoursesForModuleCopy(userId, subjectId, currentCourseId)
                     if (res.success) {
-                        setCourses(res.courses)
+                        setCourses(res.courses || [])
                     } else {
                         toast({ variant: 'destructive', title: res.error || 'Gagal memuat daftar kelas.' })
                     }
