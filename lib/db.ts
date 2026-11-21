@@ -3,20 +3,12 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 
-const prismaClientSingleton = () => {
-    let connectionString = process.env.POSTGRES_PRISMA_URL
-    let isHyperdrive = false
+type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>
 
-    try {
-        const { env } = getCloudflareContext()
-        if (env?.HYPERDRIVE?.connectionString) {
-            connectionString = env.HYPERDRIVE.connectionString
-            isHyperdrive = true
-        }
-    } catch {
-        // Fallback ke process.env saat proses build atau di luar konteks request Worker
-    }
-
+function createPrismaClient(
+    connectionString: string | undefined,
+    isHyperdrive: boolean
+) {
     const cleanConnectionString = connectionString
         ?.replace(/([?&])(sslmode|pgbouncer)=[^&]+(&|$)/g, '$1')
         .replace(/[?&]$/, '')
@@ -37,21 +29,39 @@ const prismaClientSingleton = () => {
     return new PrismaClient({ adapter })
 }
 
-declare const globalThis: {
-    prismaGlobal: ReturnType<typeof prismaClientSingleton>
-} & typeof global
+// Cache instance PrismaClient berdasarkan target koneksi agar parsing schema hanya dijalankan 1x
+const clientCache = new Map<string, ExtendedPrismaClient>()
 
-const prisma = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
-    get(_target, prop) {
-        if (process.env.NODE_ENV !== 'production') {
-            if (!globalThis.prismaGlobal) {
-                globalThis.prismaGlobal = prismaClientSingleton()
-            }
-            return Reflect.get(globalThis.prismaGlobal, prop)
+function getPrismaInstance(): ExtendedPrismaClient {
+    let connectionString = process.env.POSTGRES_PRISMA_URL
+    let isHyperdrive = false
+
+    try {
+        const { env } = getCloudflareContext()
+        if (env?.HYPERDRIVE?.connectionString) {
+            connectionString = env.HYPERDRIVE.connectionString
+            isHyperdrive = true
         }
+    } catch {
+        // Fallback ke process.env saat proses build atau di luar konteks request Worker
+    }
 
-        const client = prismaClientSingleton()
-        return Reflect.get(client, prop)
+    const cacheKey = `${isHyperdrive ? 'hd' : 'direct'}:${connectionString ?? 'default'}`
+
+    let client = clientCache.get(cacheKey)
+    if (!client) {
+        client = createPrismaClient(connectionString, isHyperdrive)
+        clientCache.set(cacheKey, client)
+    }
+
+    return client
+}
+
+const prisma = new Proxy({} as ExtendedPrismaClient, {
+    get(_target, prop) {
+        const client = getPrismaInstance()
+        const value = Reflect.get(client, prop)
+        return typeof value === 'function' ? value.bind(client) : value
     },
 })
 
