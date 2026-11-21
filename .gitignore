@@ -42,3 +42,11 @@ next-env.d.ts
 
 /lib/generated/prisma
 .env.local
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
