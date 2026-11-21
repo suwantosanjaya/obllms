@@ -5,26 +5,32 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 
 const prismaClientSingleton = () => {
     let connectionString = process.env.POSTGRES_PRISMA_URL
+    let isHyperdrive = false
 
     try {
         const { env } = getCloudflareContext()
         if (env?.HYPERDRIVE?.connectionString) {
             connectionString = env.HYPERDRIVE.connectionString
+            isHyperdrive = true
         }
     } catch {
         // Fallback ke process.env saat proses build atau di luar konteks request Worker
     }
 
-    // Hapus parameter sslmode dan pgbouncer dari URL agar tidak menimpa konfigurasi ssl objek Pool di pg
     const cleanConnectionString = connectionString
         ?.replace(/([?&])(sslmode|pgbouncer)=[^&]+(&|$)/g, '$1')
         .replace(/[?&]$/, '')
 
+    const isLocal =
+        !cleanConnectionString ||
+        cleanConnectionString.includes('localhost') ||
+        cleanConnectionString.includes('127.0.0.1')
+
     const pool = new Pool({
         connectionString: cleanConnectionString,
-        ssl: {
-            rejectUnauthorized: false,
-        },
+        // Matikan SSL jika lewat Hyperdrive atau database lokal; aktifkan SSL untuk koneksi langsung ke Supabase/cloud
+        ssl: isHyperdrive || isLocal ? false : { rejectUnauthorized: false },
+        max: 1,
     })
 
     const adapter = new PrismaPg(pool)
@@ -32,11 +38,9 @@ const prismaClientSingleton = () => {
 }
 
 declare const globalThis: {
-    prismaGlobal: ReturnType<typeof prismaClientSingleton>;
-} & typeof global;
+    prismaGlobal: ReturnType<typeof prismaClientSingleton>
+} & typeof global
 
-// Menggunakan Proxy agar instance baru dibuat sesuai konteks request di Cloudflare Workers,
-// dan tetap memakai singleton saat development lokal.
 const prisma = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
     get(_target, prop) {
         if (process.env.NODE_ENV !== 'production') {

@@ -27,7 +27,8 @@
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE",
-			"id": "954bd422c6a844fba95ff1c128da2a9c"
+			"id": "954bd422c6a844fba95ff1c128da2a9c",
+			"localConnectionString": "postgresql://postgres:1234567890@localhost:5432/olims"
 		}
 	]
 }
