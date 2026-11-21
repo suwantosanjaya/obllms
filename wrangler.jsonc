@@ -30,8 +30,5 @@
 			"id": "954bd422c6a844fba95ff1c128da2a9c",
 			"localConnectionString": "postgresql://postgres:1234567890@localhost:5432/olims"
 		}
-	],
-	"limits": {
-		"cpu_ms": 30000
-	}
+	]
 }
