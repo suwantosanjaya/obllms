@@ -2,14 +2,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getUniversityList, getFacultyList, getDepartmentList } from '@/app/actions/institutionActions'
 import { getHeadOfDepartmentCandidates, getDeanCandidates, getRectorCandidates } from '@/app/actions/adminActions'
 import { Building2, GraduationCap, Library } from 'lucide-react'
-import { 
-    UniversityTableClient, 
-    FacultyTableClient, 
-    DepartmentTableClient 
+import {
+    UniversityTableClient,
+    FacultyTableClient,
+    DepartmentTableClient
 } from '@/app/components/admin/InstitutionTableClient'
 
 export default async function AdminInstitutionsPage() {
-    const uniRes = await getUniversityList()
+    const uniRes = await getUniversityList()    // dari institutionAction
     const universities = uniRes.success && uniRes.universityList ? uniRes.universityList : []
 
     const facRes = await getFacultyList()
@@ -61,9 +61,9 @@ export default async function AdminInstitutionsPage() {
 
                 {/* Departments Tab */}
                 <TabsContent value="departments">
-                    <DepartmentTableClient 
-                        departments={departments} 
-                        faculties={faculties.map(f => ({ id: f.id, code: f.code, name: f.name }))} 
+                    <DepartmentTableClient
+                        departments={departments}
+                        faculties={faculties.map(f => ({ id: f.id, code: f.code, name: f.name }))}
                         candidatesMap={candidatesMap}
                     />
                 </TabsContent>
