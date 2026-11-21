@@ -9,7 +9,7 @@ import {
 } from '@/app/components/admin/InstitutionTableClient'
 
 export default async function AdminInstitutionsPage() {
-    const uniRes = await getUniversityList()    // dari institutionAction
+    const uniRes = await getUniversityList()
     const universities = uniRes.success && uniRes.universityList ? uniRes.universityList : []
 
     const facRes = await getFacultyList()
