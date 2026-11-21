@@ -99,10 +99,10 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
         }
 
         const res = await registerUser({
-            name, 
-            email, 
-            passwordPlain: password, 
-            role, 
+            name,
+            email,
+            passwordPlain: password,
+            role,
             departmentId: needsDepartment ? deptId : undefined,
             universityId: needsUniversity ? univId : undefined,
             ...(role === 'teacher' ? { nidn, nip, gelarDepan, gelarBelakang, isDlb } : {}),
@@ -128,7 +128,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                     <CardTitle className="text-2xl text-green-600">Registrasi Berhasil</CardTitle>
                     <CardDescription>
                         Akun Anda berhasil didaftarkan namun saat ini berstatus <strong>PENDING</strong>.
-                        Anda baru dapat login setelah akun Anda disetujui oleh otoritas terkait.
+                        Anda baru dapat login setelah akun Anda disetujui oleh Administrator terkait.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
@@ -155,7 +155,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                             {error}
                         </div>
                     )}
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2 sm:col-span-1">
                             <Label htmlFor="name">Nama Lengkap</Label>
@@ -264,7 +264,7 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label>Universitas</Label>
                                 <Select value={univId} onValueChange={(val) => { setUnivId(val); setFacId(''); setDeptId('') }} disabled={loading}>
@@ -281,27 +281,27 @@ export default function RegisterForm({ universities }: { universities: any[] }) 
                                 <>
                                     <div className="space-y-2">
                                         <Label>Fakultas</Label>
-                                <Select value={facId} onValueChange={(val) => { setFacId(val); setDeptId('') }} disabled={!univId || loading}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih Fakultas" /></SelectTrigger>
-                                    <SelectContent>
-                                        {faculties.map((f: any) => (
-                                            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                        <Select value={facId} onValueChange={(val) => { setFacId(val); setDeptId('') }} disabled={!univId || loading}>
+                                            <SelectTrigger><SelectValue placeholder="Pilih Fakultas" /></SelectTrigger>
+                                            <SelectContent>
+                                                {faculties.map((f: any) => (
+                                                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label>Program Studi / Program Studi</Label>
-                                <Select value={deptId} onValueChange={setDeptId} disabled={!facId || loading}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih Program Studi" /></SelectTrigger>
-                                    <SelectContent>
-                                        {departments.map((d: any) => (
-                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                    <div className="space-y-2">
+                                        <Label>Program Studi / Program Studi</Label>
+                                        <Select value={deptId} onValueChange={setDeptId} disabled={!facId || loading}>
+                                            <SelectTrigger><SelectValue placeholder="Pilih Program Studi" /></SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map((d: any) => (
+                                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </>
                             )}
                         </div>
